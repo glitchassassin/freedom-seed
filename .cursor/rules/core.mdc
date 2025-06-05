@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This app is built with React Router 7 on Cloudflare Workers.
+
