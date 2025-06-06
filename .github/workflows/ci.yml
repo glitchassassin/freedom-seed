@@ -54,7 +54,9 @@ jobs:
   deploy-preview:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    if: false
+    # if: github.event_name == 'pull_request'
+    needs: [ci, playwright]
     outputs:
       preview-url: ${{ steps.extract-url.outputs.preview-url }}
 
@@ -104,10 +106,11 @@ jobs:
   deploy-production:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if:
-      github.event_name == 'push' && (github.ref == 'refs/heads/main' ||
-      github.ref == 'refs/heads/master')
-    needs: ci
+    if: false
+    # if:
+    #   github.event_name == 'push' && (github.ref == 'refs/heads/main' ||
+    #   github.ref == 'refs/heads/master')
+    needs: [ci, playwright]
 
     steps:
       - name: Check out code
