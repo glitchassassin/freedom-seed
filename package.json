@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@epic-web/config": "^1.21.0",
+    "@react-router/fs-routes": "^7.6.2",
     "isbot": "^5.1.27",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
