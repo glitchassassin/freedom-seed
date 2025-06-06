@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "prettier": "@epic-web/config/prettier",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "react-router build",
     "cf-typegen": "wrangler types",
