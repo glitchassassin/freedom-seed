@@ -11,3 +11,12 @@ under the care of code agents into something beautiful
 - [Cloudflare](https://developers.cloudflare.com/llms.txt)
 - [React Router](https://reactrouter.com/home)
 - Playwright (built in to Cursor!)
+
+## GitHub Actions Config
+
+Set up your [action secrets](../../settings/secrets/actions):
+
+- `CLOUDFLARE_API_TOKEN` -
+  [Generate a token from the Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens)
+- `CLOUDFLARE_ACCOUNT_ID` -
+  [Account ID from Cloudflare dashboard](https://dash.cloudflare.com/)
