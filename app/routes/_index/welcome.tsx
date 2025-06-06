@@ -18,6 +18,9 @@ export function Welcome({ message }: { message: string }) {
 							className="hidden w-full dark:block"
 						/>
 					</div>
+					<h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+						Welcome to React Router
+					</h1>
 				</header>
 				<div className="w-full max-w-[300px] space-y-6 px-4">
 					<nav className="space-y-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">

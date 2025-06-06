@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 
 test.describe('Home Page', () => {
@@ -24,6 +25,10 @@ test.describe('Home Page', () => {
 
 		// Verify that the page has loaded completely by checking the main content area
 		await expect(page.locator('main')).toBeVisible()
+
+		// Run accessibility scan on the entire page
+		const accessibilityScanResults = await new AxeBuilder({ page }).analyze()
+		expect(accessibilityScanResults.violations).toEqual([])
 	})
 
 	test('should have working external links', async ({ page }) => {
