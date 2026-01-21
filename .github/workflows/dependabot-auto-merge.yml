@@ -48,7 +48,7 @@ jobs:
           steps.metadata.outputs.update-type == 'version-update:semver-patch' &&
           steps.wait-for-ci.outputs.conclusion == 'success' &&
           steps.wait-for-playwright.outputs.conclusion == 'success'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Auto-merge patch updates
         if: |
