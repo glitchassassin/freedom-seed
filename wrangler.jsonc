@@ -10,6 +10,13 @@
 	"vars": {
 		"ENVIRONMENT": "production",
 	},
+	"env": {
+		"development": {
+			"vars": {
+				"ENVIRONMENT": "development",
+			},
+		},
+	},
 	"observability": {
 		"enabled": true,
 	},
