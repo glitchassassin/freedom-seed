@@ -5,18 +5,17 @@ alwaysApply: true
 ---
 This app is built with React Router 7 on Cloudflare Workers.
 
-## Feature Development
+## Design Priorities
 
-Follow this to-do list for every feature:
+I should be able to make changes rapidly with confidence that I'm not breaking
+anything. Prioritize:
 
-1. Write concise and thorough human-readable test scenarios to docs/tests/{feature}.md, and have the user review
-2. Implement the feature
-3. Write e2e tests that follow the defined test scenarios, include Axe accessibility checking for any new pages
+- Modular architecture
+- Strong typing
+- Fast but thorough unit tests, if appropriate
+- End-to-end tests for user-facing web interfaces
+- Consistent lint & format rules
 
-## End-to-End Tests
+## Other Resources
 
-The app uses Playwright for e2e tests. When implementing a feature, write concise e2e tests that check the feature's acceptance criteria. Prefer to combine tests that cover the same path through the app. Write tests that cover the feature's "happy path" as well as error scenarios.
-
-## Components
-
-Wherever it makes sense, extract reusable components into app/components. This helps us standardize functionality as well as the look & feel of the app.
+- Manual ops instructions should be documented in docs/operations.
