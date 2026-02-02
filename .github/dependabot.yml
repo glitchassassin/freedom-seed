@@ -11,22 +11,16 @@ updates:
     groups:
       # Group minor updates
       minor-updates:
-        patterns:
-          - '*'
         update-types:
           - 'minor'
 
       # Group major updates
       major-updates:
-        patterns:
-          - '*'
         update-types:
           - 'major'
 
       # Group patch updates for auto-merge
       patch-updates:
-        patterns:
-          - '*'
         update-types:
           - 'patch'
 
