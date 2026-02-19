@@ -104,7 +104,34 @@ The deployment jobs are disabled by default. To enable them:
    - **vars**: Add any environment variables
    - **bindings**: Configure any Cloudflare bindings (KV, D1, R2, etc.)
 
-### Step 4: Deploy Your Worker
+### Step 4: Create the D1 Database
+
+For **local development**, no setup is required — Wrangler automatically creates
+a local SQLite file in `.wrangler/state/v3/d1/` when you run `npm run dev`.
+Apply migrations to it with:
+
+```bash
+npm run db:migrate
+```
+
+For **production deployment**, create the database in Cloudflare:
+
+1. Create the database:
+
+   ```bash
+   wrangler d1 create freedom-seed
+   ```
+
+2. Copy the `database_id` from the output and replace the `"TODO"` placeholder
+   in the top-level `d1_databases` section of `wrangler.jsonc`.
+
+3. Apply migrations to production after deploying:
+
+   ```bash
+   npm run db:migrate:remote
+   ```
+
+### Step 5: Deploy Your Worker
 
 1. Build your application:
 
@@ -127,7 +154,7 @@ The deployment jobs are disabled by default. To enable them:
 3. Verify the deployment in the
    [Cloudflare dashboard](https://dash.cloudflare.com/)
 
-### Step 5: Configure Custom Domain (Optional)
+### Step 6: Configure Custom Domain (Optional)
 
 Configure custom domains and routes in `wrangler.jsonc`:
 
@@ -170,7 +197,7 @@ Configure custom domains and routes in `wrangler.jsonc`:
    [Cloudflare Workers Routes documentation](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
    for more details.
 
-### Step 6: Set Up Environment Variables and Secrets
+### Step 7: Set Up Environment Variables and Secrets
 
 1. In the Cloudflare dashboard, go to **Workers & Pages** → Your Worker →
    **Settings**
