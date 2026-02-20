@@ -38,8 +38,9 @@ def main():
     # Walk the transcript in order, recording (index, event_type) for each
     # relevant tool call. Index is just a counter to preserve ordering.
     events = []
+    last_user_line_idx = -1
 
-    for line in lines:
+    for line_idx, line in enumerate(lines):
         line = line.strip()
         if not line:
             continue
@@ -53,6 +54,7 @@ def main():
         # Track real user messages (not tool results, which also appear as role=user)
         if entry_type == "user" and entry.get("userType") == "external":
             events.append("user_message")
+            last_user_line_idx = line_idx
             continue
 
         if entry_type != "assistant":
@@ -88,6 +90,13 @@ def main():
 
     if not has_unreviewed_changes:
         sys.exit(0)
+
+    # Fail open if a rate limit error appears after the last user message.
+    # Without this, the hook loops forever when Claude can't act due to limits.
+    RATE_LIMIT_MARKERS = ("rate_limit", "rate limit", "you've hit your limit", "hit your limit")
+    for line in lines[last_user_line_idx + 1 :]:
+        if any(marker in line.lower() for marker in RATE_LIMIT_MARKERS):
+            sys.exit(0)
 
     # Count how many code-review attempts have been made since the last user message.
     # If we've hit the limit, exit 0 to break the loop — the user will see the
