@@ -1,10 +1,22 @@
 # Freedom Seed
 
-An AI-ready starter template with React Router 7 on Cloudflare Workers. Includes
-sensible Cursor rules to speed development and establish guardrails.
+An opinionated framework for building small SaaS products with React Router 7 on
+Cloudflare Workers. Designed to keep human and AI developers moving fast without
+accumulating technical debt.
 
-This is a seed which, defined by good documentation and planning, will grow
-under the care of code agents into something beautiful
+**Efficiency** — Lightweight edge infrastructure with instant preview builds,
+hot reload in development, and a deploy pipeline that stays out of your way.
+
+**Robustness** — End-to-end tests with accessibility coverage, error boundaries
+on every route, and Cloudflare observability enabled by default.
+
+**Modularity** — Features are self-contained, files stay small, and
+cross-cutting concerns are documented rather than left implicit. The codebase
+stays readable as it grows.
+
+**Automation** — A local D1 database keeps development fully offline, all
+commands are documented for coding agents, and a CI pipeline runs type checks,
+linting, and E2E tests on every push.
 
 ## First Steps
 
