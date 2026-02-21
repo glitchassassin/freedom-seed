@@ -1,9 +1,11 @@
 import { createRequestHandler } from 'react-router'
+import { validateEnv } from './env'
+import type { ValidatedEnv } from './env'
 
 declare module 'react-router' {
 	export interface AppLoadContext {
 		cloudflare: {
-			env: Env
+			env: ValidatedEnv
 			ctx: ExecutionContext
 		}
 	}
@@ -14,10 +16,17 @@ const requestHandler = createRequestHandler(
 	import.meta.env.MODE,
 )
 
+// Validated once per cold start; throws immediately on misconfiguration.
+let validatedEnv: ValidatedEnv | null = null
+
 export default {
 	async fetch(request, env, ctx) {
+		if (!validatedEnv) {
+			validatedEnv = validateEnv(env)
+		}
+
 		const url = new URL(request.url)
-		const isDevelopment = env.ENVIRONMENT === 'development'
+		const isDevelopment = validatedEnv.ENVIRONMENT === 'development'
 
 		// Force HTTPS - redirect HTTP to HTTPS (except in development)
 		if (url.protocol === 'http:' && !isDevelopment) {
@@ -26,7 +35,7 @@ export default {
 		}
 
 		const response = await requestHandler(request, {
-			cloudflare: { env, ctx },
+			cloudflare: { env: validatedEnv, ctx },
 		})
 
 		// Add HSTS header for HTTPS-only enforcement (except in development)
