@@ -98,6 +98,8 @@ your app doesn't need it.
 
 ## Infrastructure
 
+- [timezones](./timezones.md) — SSR-safe timezone-aware date formatting via
+  client-hints cookies and @date-fns/tz.
 - [routing](./routing.md) — File-system routing via react-router-auto-routes:
   conventions, layouts, colocation, and best practices.
 - [database](./database.md) — Cloudflare D1 + Drizzle ORM: schema conventions,

@@ -1,8 +1,11 @@
+import { tz } from '@date-fns/tz'
+import { format } from 'date-fns'
 import { desc, eq, sql } from 'drizzle-orm'
 import { Link } from 'react-router'
 import type { Route } from './+types/route'
 import { getDb } from '~/db/client.server'
 import { auditLog } from '~/db/schema'
+import { getHints } from '~/utils/client-hints'
 
 const PAGE_SIZE = 50
 
@@ -15,6 +18,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 	const db = getDb(context.cloudflare.env)
 	const { teamId } = params
+	const { timeZone } = getHints(request)
 
 	const url = new URL(request.url)
 	const parsed = parseInt(url.searchParams.get('page') ?? '0', 10)
@@ -38,13 +42,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 	const count = countResult[0]?.count ?? 0
 	const totalPages = Math.ceil(count / PAGE_SIZE)
 
-	// Serialize Date → ISO string before returning so SSR and client render
-	// identically (toLocaleString() differs between the Worker locale and the
-	// user's browser locale, causing hydration mismatches).
 	return {
 		entries: entries.map((e) => ({
 			...e,
+			// ISO string for the <time datetime> attribute (machine-readable)
 			createdAt: e.createdAt.toISOString(),
+			// Formatted in the user's timezone on the server — no hydration mismatch
+			createdAtFormatted: format(e.createdAt, 'MMM d, yyyy, h:mm a zzz', {
+				in: tz(timeZone),
+			}),
 		})),
 		page,
 		totalPages,
@@ -80,7 +86,9 @@ export default function AuditLogPage({ loaderData }: Route.ComponentProps) {
 							{entries.map((entry) => (
 								<tr key={entry.id} className="border-b last:border-0">
 									<td className="py-3 pr-4 text-gray-600">
-										<time dateTime={entry.createdAt}>{entry.createdAt}</time>
+										<time dateTime={entry.createdAt}>
+											{entry.createdAtFormatted}
+										</time>
 									</td>
 									<td className="py-3 pr-4">{entry.actorEmail}</td>
 									<td className="py-3 pr-4">
