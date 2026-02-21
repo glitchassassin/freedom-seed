@@ -18,10 +18,10 @@ can be added separately behind authentication.
 Set these vars in `wrangler.jsonc` (or via the Cloudflare dashboard for
 production secrets), then run `npm run cf-typegen` to update types:
 
-| Variable           | Required | Description                                                                      |
-| ------------------ | -------- | -------------------------------------------------------------------------------- |
-| `PLAUSIBLE_DOMAIN` | Yes      | Your site's domain as registered in Plausible, e.g. `example.com`                |
-| `PLAUSIBLE_HOST`   | No       | Base URL of a self-hosted Plausible instance. Defaults to `https://plausible.io` |
+| Variable           | Required | Description                                                                                                 |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `PLAUSIBLE_DOMAIN` | No       | Your site's domain as registered in Plausible, e.g. `example.com`. Omit or leave empty to disable tracking. |
+| `PLAUSIBLE_HOST`   | No       | Base URL of a self-hosted Plausible instance. Defaults to `https://plausible.io`                            |
 
 **Cloud Plausible** — register your site at [plausible.io](https://plausible.io)
 and set `PLAUSIBLE_DOMAIN` only.
