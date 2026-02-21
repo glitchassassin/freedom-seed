@@ -3,8 +3,9 @@
 ## Description
 
 Conventions and service-selection guide for the Cloudflare Workers runtime. The
-worker entry point is `workers/app.ts`, which provides `AppLoadContext` with
-`cloudflare.env` and `cloudflare.ctx` to React Router loaders and actions.
+worker entry point is `workers/app.ts`, which seeds a `RouterContextProvider`
+with Cloudflare env/ctx. Routes access these via `getCloudflare(context)` from
+`app/utils/cloudflare-context.ts`.
 
 ## Conventions
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
 	isRouteErrorResponse,
 	Links,
@@ -6,15 +7,30 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from 'react-router'
+import { toast } from 'sonner'
 
 import type { Route } from './+types/root'
 import './app.css'
+import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
+import { getCloudflare } from './utils/cloudflare-context'
 import { getTheme } from './utils/theme.server'
+import { toastContext } from './utils/toast-context'
+import { getToast } from './utils/toast.server'
+
+export const middleware: Route.MiddlewareFunction[] = [
+	async ({ request, context }, next) => {
+		const { toast: toastData, setCookieHeader } = getToast(request)
+		context.set(toastContext, toastData)
+		const response = await next()
+		if (setCookieHeader) response.headers.append('set-cookie', setCookieHeader)
+		return response
+	},
+]
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-	const env = context.cloudflare.env
+	const { env } = getCloudflare(context)
 	const plausibleDomain = env.PLAUSIBLE_DOMAIN || null
 	const rawHost = env.PLAUSIBLE_HOST || 'https://plausible.io'
 	let plausibleHost = 'https://plausible.io'
@@ -25,11 +41,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		// Invalid URL — fall back to default
 	}
 
+	const toastData = context.get(toastContext)
 	return {
 		hints: getHints(request),
 		userPrefs: { theme: getTheme(request) },
 		plausibleDomain,
 		plausibleHost,
+		toast: toastData,
+		toastKey: toastData ? crypto.randomUUID() : null,
 	}
 }
 
@@ -68,7 +87,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-	const { plausibleDomain, plausibleHost } = loaderData
+	const {
+		plausibleDomain,
+		plausibleHost,
+		toast: toastData,
+		toastKey,
+	} = loaderData
+
+	useEffect(() => {
+		if (!toastData || !toastKey) return
+		toast[toastData.type](toastData.title, {
+			id: toastKey,
+			description: toastData.description,
+		})
+	}, [toastKey, toastData])
+
 	return (
 		<>
 			{plausibleDomain && (
@@ -79,6 +112,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 				/>
 			)}
 			<Outlet />
+			<Toaster />
 		</>
 	)
 }

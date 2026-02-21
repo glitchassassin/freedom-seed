@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
+import { Form } from 'react-router'
+import type { Route } from './+types/index'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
@@ -43,6 +45,37 @@ import {
 	TableRow,
 } from '~/components/ui/table'
 import { Textarea } from '~/components/ui/textarea'
+import { showToast } from '~/utils/toast.server'
+
+const toastTypes = ['success', 'error', 'warning', 'info'] as const
+
+export async function action({ request }: Route.ActionArgs) {
+	const formData = await request.formData()
+	const type = formData.get('type')
+	if (!toastTypes.includes(type as (typeof toastTypes)[number])) {
+		return showToast({ type: 'error', title: 'Invalid toast type' }, '/demo')
+	}
+	const labels: Record<string, string> = {
+		success: 'Changes saved successfully',
+		error: 'Something went wrong',
+		warning: 'Your session is about to expire',
+		info: 'A new version is available',
+	}
+	const descriptions: Record<string, string> = {
+		success: 'Your profile has been updated.',
+		error: 'Please try again or contact support.',
+		warning: 'You will be logged out in 5 minutes.',
+		info: 'Refresh the page to get the latest features.',
+	}
+	return showToast(
+		{
+			type: type as (typeof toastTypes)[number],
+			title: labels[type as string],
+			description: descriptions[type as string],
+		},
+		'/demo#toasts',
+	)
+}
 
 export function meta() {
 	return [{ title: 'Component Demo' }, { name: 'robots', content: 'noindex' }]
@@ -326,6 +359,25 @@ export default function DemoRoute() {
 						</TableRow>
 					</TableFooter>
 				</Table>
+			</Section>
+
+			{/* Toasts */}
+			<Section title="Toasts">
+				<p className="text-muted-foreground text-sm">
+					Toast notifications are triggered by Route actions via a flash cookie.
+					Each button below submits a form, sets a cookie, and redirects back —
+					the toast appears on the next render.
+				</p>
+				<div id="toasts" className="flex flex-wrap gap-3">
+					{toastTypes.map((type) => (
+						<Form key={type} method="POST">
+							<input type="hidden" name="type" value={type} />
+							<Button type="submit" variant="outline" className="capitalize">
+								{type}
+							</Button>
+						</Form>
+					))}
+				</div>
 			</Section>
 		</main>
 	)

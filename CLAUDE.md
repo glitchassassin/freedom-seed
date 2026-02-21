@@ -47,8 +47,11 @@ HTTP Request → workers/app.ts (Cloudflare Worker)
 
 ### Key Directories
 
-- `workers/app.ts` — Worker entry point; provides `AppLoadContext` with
-  `cloudflare.env` and `cloudflare.ctx`
+- `workers/app.ts` — Worker entry point; seeds a `RouterContextProvider` with
+  Cloudflare env/ctx via `cloudflareContext` (see
+  `app/utils/cloudflare-context.ts`)
+- `app/utils/cloudflare-context.ts` — typed context key; use
+  `getCloudflare(context)` in loaders/actions to access `{ env, ctx }`
 - `app/routes/` — React Router filesystem routes
 - `app/db/schema.ts` — Drizzle ORM schema (source of truth for DB)
 - `app/db/client.server.ts` — Database client factory (server-only)

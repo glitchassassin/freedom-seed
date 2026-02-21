@@ -104,6 +104,8 @@ your app doesn't need it.
   client-hints cookies and @date-fns/tz.
 - [routing](./routing.md) — File-system routing via react-router-auto-routes:
   conventions, layouts, colocation, and best practices.
+- [middleware](./middleware.md) — React Router v8 middleware: when to use it,
+  the context API, and current middleware inventory.
 - [database](./database.md) — Cloudflare D1 + Drizzle ORM: schema conventions,
   migration workflow, and server-only access patterns.
 - [cloudflare-workers](./cloudflare-workers.md) — Runtime conventions, service

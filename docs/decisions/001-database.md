@@ -58,9 +58,11 @@ Copy the `database_id` from the output and paste it into `wrangler.jsonc`.
 
 ```ts
 import { getDb } from '~/db/client.server'
+import { getCloudflare } from '~/utils/cloudflare-context'
 
 export async function loader({ context }: Route.LoaderArgs) {
-	const db = getDb(context.cloudflare.env)
+	const { env } = getCloudflare(context)
+	const db = getDb(env)
 	// use db...
 }
 ```
