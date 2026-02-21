@@ -51,6 +51,16 @@
 - Playwright for E2E tests (port 4173, preview build)
 - Node >= 22 required
 
+## Routing
+
+- Uses `react-router-auto-routes` (NOT `@react-router/fs-routes`)
+- `app/routes.ts` calls `autoRoutes()` -- no manual route registration
+- Route files should be named `index.tsx` (not `route.tsx` -- deprecated)
+- Colocated non-route files use `+` prefix (e.g., `+welcome.tsx`, `+helpers/`)
+- `_layout.tsx` creates nesting; folders without it are purely organizational
+- Recognized extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.md`, `.mdx`
+- Facet doc: `docs/facets/routing.md`
+
 ## Patterns & Conventions
 
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook
