@@ -5,7 +5,8 @@
 		"react-router.config.ts",
 		"playwright.config.ts",
 		"drizzle.config.ts",
-		"tests/**/*"
+		"tests/**/*",
+		"scripts/**/*"
 	],
 	"compilerOptions": {
 		"composite": true,

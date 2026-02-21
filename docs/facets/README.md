@@ -81,6 +81,8 @@ your app doesn't need it.
 
 - [ui-components](./ui-components.md) — shadcn/ui component library built on
   Radix UI and Tailwind.
+- [ui-icons](./ui-icons.md) — SVG sprite icon system sourced from icones.js.org
+  (Iconify).
 - [dark-mode](./dark-mode.md) — SSR-safe cookie-based theme switching.
 - [notifications](./notifications.md) — Flash cookie toast notification system
   for action feedback.
