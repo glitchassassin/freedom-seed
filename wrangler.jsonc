@@ -9,11 +9,19 @@
 	"main": "./workers/app.ts",
 	"vars": {
 		"ENVIRONMENT": "production",
+		// Set to your site's domain to enable Plausible analytics (e.g. "example.com").
+		// Leave empty to disable tracking. For self-hosted Plausible, also set PLAUSIBLE_HOST.
+		"PLAUSIBLE_DOMAIN": "",
+		// Optional: base URL of a self-hosted Plausible instance (e.g. "https://plausible.example.com").
+		// Defaults to "https://plausible.io" when omitted.
+		"PLAUSIBLE_HOST": "",
 	},
 	"env": {
 		"development": {
 			"vars": {
 				"ENVIRONMENT": "development",
+				"PLAUSIBLE_DOMAIN": "",
+				"PLAUSIBLE_HOST": "",
 			},
 			"d1_databases": [
 				{

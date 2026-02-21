@@ -10,6 +10,21 @@ import {
 import type { Route } from './+types/root'
 import './app.css'
 
+export async function loader({ context }: Route.LoaderArgs) {
+	const env = context.cloudflare.env
+	const plausibleDomain = env.PLAUSIBLE_DOMAIN || null
+	const rawHost = env.PLAUSIBLE_HOST || 'https://plausible.io'
+	let plausibleHost = 'https://plausible.io'
+	try {
+		const url = new URL(rawHost)
+		if (url.protocol === 'https:') plausibleHost = url.origin
+	} catch {
+		// Invalid URL — fall back to default
+	}
+
+	return { plausibleDomain, plausibleHost }
+}
+
 export const links: Route.LinksFunction = () => [
 	{ rel: 'preconnect', href: 'https://fonts.googleapis.com' },
 	{
@@ -41,8 +56,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export default function App() {
-	return <Outlet />
+export default function App({ loaderData }: Route.ComponentProps) {
+	const { plausibleDomain, plausibleHost } = loaderData
+	return (
+		<>
+			{plausibleDomain && (
+				<script
+					defer
+					data-domain={plausibleDomain}
+					src={`${plausibleHost}/js/script.js`}
+				/>
+			)}
+			<Outlet />
+		</>
+	)
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
