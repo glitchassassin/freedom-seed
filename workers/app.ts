@@ -1,15 +1,6 @@
-import { createRequestHandler } from 'react-router'
+import { createRequestHandler, RouterContextProvider } from 'react-router'
+import { cloudflareContext } from '../app/utils/cloudflare-context'
 import { validateEnv } from './env'
-import type { ValidatedEnv } from './env'
-
-declare module 'react-router' {
-	export interface AppLoadContext {
-		cloudflare: {
-			env: ValidatedEnv
-			ctx: ExecutionContext
-		}
-	}
-}
 
 const requestHandler = createRequestHandler(
 	() => import('virtual:react-router/server-build'),
@@ -17,7 +8,7 @@ const requestHandler = createRequestHandler(
 )
 
 // Validated once per cold start; throws immediately on misconfiguration.
-let validatedEnv: ValidatedEnv | null = null
+let validatedEnv: ReturnType<typeof validateEnv> | null = null
 
 export default {
 	async fetch(request, env, ctx) {
@@ -34,9 +25,10 @@ export default {
 			return Response.redirect(url.toString(), 301)
 		}
 
-		const response = await requestHandler(request, {
-			cloudflare: { env: validatedEnv, ctx },
-		})
+		const context = new RouterContextProvider()
+		context.set(cloudflareContext, { env: validatedEnv, ctx })
+
+		const response = await requestHandler(request, context)
 
 		// Add HSTS header for HTTPS-only enforcement (except in development)
 		const headers = new Headers(response.headers)

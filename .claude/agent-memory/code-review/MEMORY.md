@@ -51,6 +51,22 @@
 - Playwright for E2E tests (port 4173, preview build)
 - Node >= 22 required
 
+## Context API (v8_middleware)
+
+- `v8_middleware: true` is enabled in `react-router.config.ts`
+- Cloudflare env/ctx is provided via `RouterContextProvider` (not legacy
+  `AppLoadContext`)
+- `app/utils/cloudflare-context.ts` exports `cloudflareContext` (context key)
+  and `getCloudflare(context)` (typed accessor with null guard)
+- `app/utils/toast-context.ts` exports `toastContext` for the flash toast
+- In loaders/actions: use `getCloudflare(context)` to access `{ env, ctx }`
+- `workers/app.ts` creates `RouterContextProvider` per-request, sets
+  `cloudflareContext`
+- Root middleware in `app/root.tsx` reads toast cookie before `next()`, clears
+  it after
+- `ContextReader` duck-type interface in `cloudflare-context.ts` accepts both
+  `Readonly<RouterContextProvider>` and `RouterContextProvider`
+
 ## Routing
 
 - Uses `react-router-auto-routes` (NOT `@react-router/fs-routes`)

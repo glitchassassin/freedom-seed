@@ -6,6 +6,7 @@ import type { Route } from './+types/route'
 import { getDb } from '~/db/client.server'
 import { auditLog } from '~/db/schema'
 import { getHints } from '~/utils/client-hints'
+import { getCloudflare } from '~/utils/cloudflare-context'
 
 const PAGE_SIZE = 50
 
@@ -16,7 +17,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 	//   const member = await getTeamMember(db, teamId, session.userId)
 	//   if (!can(member, 'audit_log:read')) throw forbidden()
 
-	const db = getDb(context.cloudflare.env)
+	const { env } = getCloudflare(context)
+	const db = getDb(env)
 	const { teamId } = params
 	const { timeZone } = getHints(request)
 

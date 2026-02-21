@@ -4,7 +4,7 @@
 
 Cloudflare D1 (SQLite) accessed via Drizzle ORM. `app/db/schema.ts` is the
 single source of truth for the schema. Routes access the DB through
-`context.cloudflare.env.DB`; always wrap it with the Drizzle client from
+`getCloudflare(context).env.DB`; always wrap it with the Drizzle client from
 `app/db/client.server.ts`. Import all DB utilities from `.server.ts` files to
 ensure they remain server-side only. Migration files in `migrations/` are
 auto-generated — do not hand-edit them.
