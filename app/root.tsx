@@ -9,8 +9,9 @@ import {
 
 import type { Route } from './+types/root'
 import './app.css'
+import { ClientHintCheck, getHints } from './utils/client-hints'
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
 	const env = context.cloudflare.env
 	const plausibleDomain = env.PLAUSIBLE_DOMAIN || null
 	const rawHost = env.PLAUSIBLE_HOST || 'https://plausible.io'
@@ -22,7 +23,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 		// Invalid URL — fall back to default
 	}
 
-	return { plausibleDomain, plausibleHost }
+	return { hints: getHints(request), plausibleDomain, plausibleHost }
 }
 
 export const links: Route.LinksFunction = () => [
@@ -44,6 +45,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				{/* TODO: pass nonce={nonce} once the security-headers facet adds CSP */}
+				<ClientHintCheck />
 				<Meta />
 				<Links />
 			</head>
