@@ -9,7 +9,9 @@ import {
 
 import type { Route } from './+types/root'
 import './app.css'
+import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
+import { getTheme } from './utils/theme.server'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
 	const env = context.cloudflare.env
@@ -23,7 +25,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		// Invalid URL — fall back to default
 	}
 
-	return { hints: getHints(request), plausibleDomain, plausibleHost }
+	return {
+		hints: getHints(request),
+		userPrefs: { theme: getTheme(request) },
+		plausibleDomain,
+		plausibleHost,
+	}
 }
 
 export const links: Route.LinksFunction = () => [
@@ -40,8 +47,9 @@ export const links: Route.LinksFunction = () => [
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {
+	const theme = useOptionalTheme()
 	return (
-		<html lang="en">
+		<html lang="en" className={theme === 'dark' ? 'dark' : ''}>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />

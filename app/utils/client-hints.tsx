@@ -1,18 +1,27 @@
 /**
  * Utilities for reading client hints — browser capabilities the server needs
- * but only the browser knows. Currently used for timezone detection.
+ * but only the browser knows. Used for timezone detection and color scheme
+ * (system dark/light preference) detection.
  *
- * On first visit the cookie is absent, so the server falls back to UTC and the
- * inline script sets the real timezone cookie and reloads the page. Subsequent
- * requests arrive with the correct cookie and render in the user's timezone
- * without hydration mismatches.
+ * On first visit the cookies are absent, so the server falls back to defaults
+ * and the inline script sets the correct cookies and reloads the page.
+ * Subsequent requests arrive with the correct cookies and render without
+ * hydration mismatches.
  */
 import { getHintUtils } from '@epic-web/client-hints'
+import {
+	clientHint as colorSchemeHint,
+	subscribeToSchemeChange,
+} from '@epic-web/client-hints/color-scheme'
 import { clientHint as timeZoneHint } from '@epic-web/client-hints/time-zone'
-import { useRouteLoaderData } from 'react-router'
+import * as React from 'react'
+import { useRevalidator, useRouteLoaderData } from 'react-router'
 import type { loader as rootLoader } from '~/root'
 
-const hintsUtils = getHintUtils({ timeZone: timeZoneHint })
+const hintsUtils = getHintUtils({
+	theme: colorSchemeHint,
+	timeZone: timeZoneHint,
+})
 
 export const { getHints } = hintsUtils
 
@@ -30,14 +39,31 @@ export function useHints() {
 }
 
 /**
+ * Like useHints but returns undefined when root loader data is unavailable
+ * (e.g. during error boundary rendering).
+ */
+export function useOptionalHints() {
+	const data = useRouteLoaderData<typeof rootLoader>('root')
+	return data?.hints
+}
+
+/**
  * Inline `<script>` that runs immediately in `<head>`. It reads the browser's
- * timezone, compares it to the existing cookie, and reloads if they differ so
- * the server can re-render with the correct timezone.
+ * timezone and color scheme preference, compares them to existing cookies, and
+ * reloads if they differ so the server can re-render with correct values.
+ *
+ * Also subscribes to OS-level color scheme changes and triggers a revalidation
+ * so the UI updates without a full reload.
  *
  * Place this inside `<head>` before any other scripts.
  * Pass `nonce` when a Content-Security-Policy is in effect.
  */
 export function ClientHintCheck({ nonce }: { nonce?: string } = {}) {
+	const { revalidate } = useRevalidator()
+	React.useEffect(
+		() => subscribeToSchemeChange(() => revalidate()),
+		[revalidate],
+	)
 	return (
 		<script
 			nonce={nonce}
