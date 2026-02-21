@@ -93,6 +93,15 @@ your app doesn't need it.
   gradual rollout and per-account overrides.
 - [test-factories](./test-factories.md) — Typed factory helpers and seed scripts
   for generating test data.
+- [e2e-testing](./e2e-testing.md) — Playwright E2E tests with axe-core
+  accessibility checks against the preview build.
+
+## Infrastructure
+
+- [database](./database.md) — Cloudflare D1 + Drizzle ORM: schema conventions,
+  migration workflow, and server-only access patterns.
+- [cloudflare-workers](./cloudflare-workers.md) — Runtime conventions, service
+  selection guide, and binding management.
 
 ## Storage
 

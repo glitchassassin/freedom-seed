@@ -55,3 +55,15 @@
 
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook
   implementation patterns
+
+## Facets System
+
+- `docs/facets/README.md` is the index of all facets
+- Facet files must stay under 100 lines (documented lint rule in README)
+- Standard facet sections: `## Description`, `## Related Files`, `## Removal`
+- Some facets add extra sections (e.g., `## Commands`, `## Configuration`) --
+  this is acceptable
+- Stub facets use `_Not yet implemented._` for Related Files and Removal
+- Implemented facets list actual files and removal steps
+- CLAUDE.md should cross-reference facets but retain cross-cutting safety rules
+  (e.g., `.server.ts` import constraint, `cf-typegen` trigger conditions)
