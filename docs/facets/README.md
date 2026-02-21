@@ -98,6 +98,8 @@ your app doesn't need it.
 
 ## Infrastructure
 
+- [routing](./routing.md) — File-system routing via react-router-auto-routes:
+  conventions, layouts, colocation, and best practices.
 - [database](./database.md) — Cloudflare D1 + Drizzle ORM: schema conventions,
   migration workflow, and server-only access patterns.
 - [cloudflare-workers](./cloudflare-workers.md) — Runtime conventions, service
