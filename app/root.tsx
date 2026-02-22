@@ -15,6 +15,8 @@ import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getCloudflare } from './utils/cloudflare-context'
+import { sessionContext } from './utils/session-context'
+import { getSessionUser, makeSessionCookie } from './utils/session.server'
 import { getTheme } from './utils/theme.server'
 import { toastContext } from './utils/toast-context'
 import { getToast } from './utils/toast.server'
@@ -25,6 +27,17 @@ export const middleware: Route.MiddlewareFunction[] = [
 		context.set(toastContext, toastData)
 		const response = await next()
 		if (setCookieHeader) response.headers.append('set-cookie', setCookieHeader)
+		return response
+	},
+	async ({ request, context }, next) => {
+		const { env } = getCloudflare(context)
+		const { user, signedToken } = await getSessionUser(request, env)
+		context.set(sessionContext, user)
+		const response = await next()
+		// Re-issue the cookie on every valid request to slide the idle window
+		if (user && signedToken) {
+			response.headers.append('set-cookie', makeSessionCookie(signedToken))
+		}
 		return response
 	},
 ]

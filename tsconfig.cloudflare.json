@@ -9,6 +9,10 @@
 		"worker-configuration.d.ts",
 		"reset.d.ts"
 	],
+	// +routes.ts generates invalid `page: ;` for pathless layout routes in
+	// @react-router/dev ≤7.13.0 — exclude it until upstream fixes typegen.
+	// Route-specific types (.react-router/types/app/routes/**) still compile.
+	"exclude": [".react-router/types/+routes.ts"],
 	"compilerOptions": {
 		"composite": true,
 		"strict": true,

@@ -15,6 +15,8 @@
 		// Optional: base URL of a self-hosted Plausible instance (e.g. "https://plausible.example.com").
 		// Defaults to "https://plausible.io" when omitted.
 		"PLAUSIBLE_HOST": "",
+		// Auth session signing key — set the real value via `wrangler secret put SESSION_SECRET`
+		"SESSION_SECRET": "",
 	},
 	"env": {
 		"development": {
@@ -22,6 +24,7 @@
 				"ENVIRONMENT": "development",
 				"PLAUSIBLE_DOMAIN": "",
 				"PLAUSIBLE_HOST": "",
+				"SESSION_SECRET": "",
 			},
 			"d1_databases": [
 				{

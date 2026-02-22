@@ -12,6 +12,9 @@ export const envSchema = z.object({
 	// Analytics — omit or set to empty string to disable tracking
 	PLAUSIBLE_DOMAIN: z.string().default(''),
 	PLAUSIBLE_HOST: z.string().default(''),
+
+	// Auth sessions — set in .dev.vars (local) and wrangler secret (production)
+	SESSION_SECRET: z.string().min(32),
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>
