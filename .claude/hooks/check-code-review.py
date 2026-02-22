@@ -7,15 +7,40 @@ code changes since the last code-review invocation in the transcript.
 import json
 import sys
 
-CODE_CHANGE_TOOLS = {"Edit", "Write", "NotebookEdit"}
 CODE_REVIEW_AGENT_TYPES = {"code-review", "best-practices-reviewer"}
 MAX_REVIEW_ATTEMPTS = 3
+DOCS_ONLY_PREFIXES = ("docs/",)
+RATE_LIMIT_MARKERS = ("rate_limit", "rate limit", "you've hit your limit", "hit your limit")
+
+# Maps each file-editing tool to the input key that holds the file path.
+# Only tools listed here are treated as code changes.
+CODE_CHANGE_TOOLS = {
+    "Edit": "file_path",
+    "Write": "file_path",
+    "NotebookEdit": "notebook_path",
+}
+
+
+def is_docs_only_path(path: str, cwd: str = "") -> bool:
+    """Return True if the path is under a docs-only directory."""
+    normalised = path
+    # Strip the project root so absolute paths become project-relative.
+    # Ensure cwd ends with "/" so we only match on a directory boundary.
+    if cwd:
+        cwd_prefix = cwd if cwd.endswith("/") else cwd + "/"
+        if normalised.startswith(cwd_prefix):
+            normalised = normalised[len(cwd_prefix):]
+    normalised = normalised.lstrip("/")
+    if normalised.startswith("./"):
+        normalised = normalised[2:]
+    return any(normalised.startswith(prefix) for prefix in DOCS_ONLY_PREFIXES)
 
 
 def main():
     try:
         hook_input = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
+        print("check-code-review: failed to parse hook input JSON", file=sys.stderr)
         sys.exit(0)
 
     # Note: we intentionally do NOT skip when stop_hook_active is True.
@@ -25,6 +50,7 @@ def main():
     # letting Claude stop. This ensures fixes introduced by a review invocation
     # are themselves re-reviewed, up to the limit.
 
+    cwd = hook_input.get("cwd", "")
     transcript_path = hook_input.get("transcript_path")
     if not transcript_path:
         sys.exit(0)
@@ -32,13 +58,14 @@ def main():
     try:
         with open(transcript_path, "r") as f:
             lines = f.readlines()
-    except (FileNotFoundError, OSError):
+    except (FileNotFoundError, OSError) as e:
+        print(f"check-code-review: could not read transcript: {e}", file=sys.stderr)
         sys.exit(0)
 
     # Walk the transcript in order, recording (index, event_type) for each
     # relevant tool call. Index is just a counter to preserve ordering.
     events = []
-    last_user_line_idx = -1
+    last_user_line_idx = -1  # index into `lines` (JSONL), NOT into `events`
 
     for line_idx, line in enumerate(lines):
         line = line.strip()
@@ -72,7 +99,10 @@ def main():
             name = item.get("name", "")
 
             if name in CODE_CHANGE_TOOLS:
-                events.append("code_change")
+                path_key = CODE_CHANGE_TOOLS[name]
+                file_path = item.get("input", {}).get(path_key, "")
+                if not is_docs_only_path(file_path, cwd):
+                    events.append("code_change")
             elif name == "Task":
                 subagent_type = item.get("input", {}).get("subagent_type", "")
                 if subagent_type in CODE_REVIEW_AGENT_TYPES:
@@ -93,7 +123,6 @@ def main():
 
     # Fail open if a rate limit error appears after the last user message.
     # Without this, the hook loops forever when Claude can't act due to limits.
-    RATE_LIMIT_MARKERS = ("rate_limit", "rate limit", "you've hit your limit", "hit your limit")
     for line in lines[last_user_line_idx + 1 :]:
         if any(marker in line.lower() for marker in RATE_LIMIT_MARKERS):
             sys.exit(0)
