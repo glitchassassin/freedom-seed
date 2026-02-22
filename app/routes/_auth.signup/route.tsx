@@ -1,0 +1,157 @@
+import { getFormProps, getInputProps, useForm } from '@conform-to/react'
+import { parseWithZod } from '@conform-to/zod/v4'
+import { eq } from 'drizzle-orm'
+import { Form, Link, redirect } from 'react-router'
+import { z } from 'zod'
+import type { Route } from './+types/route'
+import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
+import { getDb } from '~/db/client.server'
+import { passwordCredentials, users } from '~/db/schema'
+import { getCloudflare } from '~/utils/cloudflare-context'
+import { hashPassword } from '~/utils/password.server'
+import { createSession } from '~/utils/session.server'
+import { setToast } from '~/utils/toast.server'
+
+const schema = z
+	.object({
+		email: z.string().email('Please enter a valid email address'),
+		password: z.string().min(8, 'Password must be at least 8 characters'),
+		confirmPassword: z.string(),
+	})
+	.refine((d) => d.password === d.confirmPassword, {
+		message: 'Passwords do not match',
+		path: ['confirmPassword'],
+	})
+
+export async function action({ request, context }: Route.ActionArgs) {
+	const { env } = getCloudflare(context)
+	const formData = await request.formData()
+	const submission = parseWithZod(formData, { schema })
+	if (submission.status !== 'success') return submission.reply()
+
+	const db = getDb(env)
+	const { email, password } = submission.value
+
+	const existing = await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.email, email.toLowerCase()))
+		.limit(1)
+		.then((r) => r[0])
+
+	if (existing) {
+		return submission.reply({
+			fieldErrors: { email: ['An account with that email already exists'] },
+		})
+	}
+
+	const userId = crypto.randomUUID()
+	const hash = await hashPassword(password)
+
+	// Use batch() so both inserts are atomic — a partial failure won't leave
+	// an orphaned user row with no credential.
+	await db.batch([
+		db.insert(users).values({ id: userId, email: email.toLowerCase() }),
+		db
+			.insert(passwordCredentials)
+			.values({ userId, hash, updatedAt: new Date() }),
+	])
+
+	const { cookie } = await createSession(env, userId, request)
+	return redirect('/', {
+		headers: [
+			['set-cookie', setToast({ type: 'success', title: 'Account created' })],
+			['set-cookie', cookie],
+		],
+	})
+}
+
+export function meta() {
+	return [{ title: 'Create account' }]
+}
+
+export default function SignupPage({ actionData }: Route.ComponentProps) {
+	const [form, fields] = useForm({
+		lastResult: actionData,
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema })
+		},
+		shouldValidate: 'onBlur',
+		shouldRevalidate: 'onInput',
+	})
+
+	return (
+		<div className="space-y-6">
+			<div className="space-y-1 text-center">
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Create an account
+				</h1>
+				<p className="text-muted-foreground text-sm">
+					Enter your details below to get started.
+				</p>
+			</div>
+
+			<Form method="POST" {...getFormProps(form)} className="space-y-4">
+				{form.errors && (
+					<p className="text-destructive text-sm">{form.errors[0]}</p>
+				)}
+
+				<div className="space-y-2">
+					<Label htmlFor={fields.email.id}>Email</Label>
+					<Input
+						{...getInputProps(fields.email, { type: 'email' })}
+						autoComplete="email"
+						aria-invalid={!!fields.email.errors}
+					/>
+					{fields.email.errors && (
+						<p className="text-destructive text-sm">{fields.email.errors[0]}</p>
+					)}
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor={fields.password.id}>Password</Label>
+					<Input
+						{...getInputProps(fields.password, { type: 'password' })}
+						autoComplete="new-password"
+						aria-invalid={!!fields.password.errors}
+					/>
+					{fields.password.errors && (
+						<p className="text-destructive text-sm">
+							{fields.password.errors[0]}
+						</p>
+					)}
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor={fields.confirmPassword.id}>Confirm password</Label>
+					<Input
+						{...getInputProps(fields.confirmPassword, { type: 'password' })}
+						autoComplete="new-password"
+						aria-invalid={!!fields.confirmPassword.errors}
+					/>
+					{fields.confirmPassword.errors && (
+						<p className="text-destructive text-sm">
+							{fields.confirmPassword.errors[0]}
+						</p>
+					)}
+				</div>
+
+				<Button type="submit" className="w-full">
+					Create account
+				</Button>
+			</Form>
+
+			<p className="text-muted-foreground text-center text-sm">
+				Already have an account?{' '}
+				<Link
+					to="/login"
+					className="text-foreground underline underline-offset-4"
+				>
+					Sign in
+				</Link>
+			</p>
+		</div>
+	)
+}

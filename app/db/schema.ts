@@ -23,3 +23,59 @@ export const auditLog = sqliteTable(
 		index('audit_log_team_created_idx').on(table.teamId, table.createdAt),
 	],
 )
+
+export const users = sqliteTable('users', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	email: text('email').notNull().unique(),
+	displayName: text('display_name'),
+	emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp_ms' }),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
+
+export const sessions = sqliteTable(
+	'sessions',
+	{
+		// Raw (unsigned) token — the HMAC-signed form lives only in the cookie
+		id: text('id').primaryKey(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+		ipAddress: text('ip_address'),
+		userAgent: text('user_agent'),
+	},
+	(table) => [index('sessions_user_id_idx').on(table.userId)],
+)
+
+export const passwordCredentials = sqliteTable('password_credentials', {
+	userId: text('user_id')
+		.primaryKey()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	hash: text('hash').notNull(),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
+
+export const passwordResetTokens = sqliteTable('password_reset_tokens', {
+	// SHA-256 hash of the raw token (raw token travels only in the reset URL)
+	tokenHash: text('token_hash').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+	usedAt: integer('used_at', { mode: 'timestamp_ms' }),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})

@@ -81,6 +81,21 @@
 
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook
   implementation patterns
+- [auth-patterns.md](auth-patterns.md) -- auth session/password review findings
+
+## Auth Architecture
+
+- `app/utils/session.server.ts` -- HMAC-signed cookies, session CRUD,
+  `createPasswordResetToken`
+- `app/utils/session-context.ts` -- `sessionContext` key +
+  `getOptionalUser`/`requireUser` helpers
+- Root middleware (2nd middleware in `app/root.tsx`) runs `getSessionUser` and
+  slides cookie
+- `_auth/` pathless layout redirects authed users away; `_authenticated/`
+  pathless layout redirects unauthed to `/login?redirectTo=...`
+- Form validation uses Conform + Zod in all auth routes
+- Auth routes use `setToast` + array headers pattern (not `showToast`) to set
+  both session and toast cookies
 
 ## Facets System
 
