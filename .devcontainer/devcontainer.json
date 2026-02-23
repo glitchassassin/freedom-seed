@@ -1,0 +1,28 @@
+{
+	"$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+	"name": "Freedom Seed",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+	// TUN device must be passed explicitly for Tailscale kernel-mode networking;
+	// the feature's mknod fallback fails on most container runtimes.
+	"runArgs": ["--device=/dev/net/tun"],
+
+	"features": {
+		"ghcr.io/tailscale/codespace/tailscale:1": {}
+	},
+
+	"postCreateCommand": "npm install",
+
+	"forwardPorts": [5173, 4173],
+	"portsAttributes": {
+		"5173": {
+			"label": "Dev Server",
+			"onAutoForward": "notify"
+		},
+		"4173": {
+			"label": "Preview Server",
+			"onAutoForward": "notify"
+		}
+	},
+
+	"remoteUser": "node"
+}

@@ -21,3 +21,6 @@ node_modules/
 
 # Reference repos
 /references/
+
+# Claude local settings
+/.claude/settings.local.json
