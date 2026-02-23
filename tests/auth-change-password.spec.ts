@@ -23,8 +23,8 @@ test.describe('Change password', () => {
 		await page.getByLabel('Confirm new password').fill(TEST_NEW_PASSWORD)
 		await page.getByRole('button', { name: 'Change password' }).click()
 
-		// Should stay on change-password page after success
-		await page.waitForURL('/settings/change-password')
+		// Wait for success toast to confirm the password was changed
+		await expect(page.getByText('Password changed')).toBeVisible()
 
 		// Log out (clear cookies) and log in with the new password
 		await page.context().clearCookies()

@@ -25,8 +25,10 @@
 - Auth-required routes nest under `_authenticated/` (pathless layout)
 - `_authenticated` appends `?redirectTo=` -- login action must honor it
 - Logout is POST-only at `/resources/logout` with GET redirecting to `/`
-- `route.tsx` naming convention used (note: MEMORY says `index.tsx` preferred --
-  may be a migration in progress)
+- Layout files: `_auth/_layout.tsx` and `_authenticated/_layout.tsx` (migrated
+  from `route.tsx` -- 2026-02-23)
+- Other auth route files still use `route.tsx` (migration to `index.tsx`
+  ongoing)
 
 ## Implemented Security Fixes (2026-02-21 review)
 

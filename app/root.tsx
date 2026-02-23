@@ -34,9 +34,16 @@ export const middleware: Route.MiddlewareFunction[] = [
 		const { user, signedToken } = await getSessionUser(request, env)
 		context.set(sessionContext, user)
 		const response = await next()
-		// Re-issue the cookie on every valid request to slide the idle window
+		// Re-issue the cookie on every valid request to slide the idle window,
+		// but skip if the action already set/cleared the session cookie
+		// (e.g. logout clears it, change-password issues a new one).
 		if (user && signedToken) {
-			response.headers.append('set-cookie', makeSessionCookie(signedToken))
+			const alreadySet = response.headers
+				.getSetCookie()
+				.some((c) => c.startsWith('en_session='))
+			if (!alreadySet) {
+				response.headers.append('set-cookie', makeSessionCookie(signedToken))
+			}
 		}
 		return response
 	},

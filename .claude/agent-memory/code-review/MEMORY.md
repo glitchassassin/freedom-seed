@@ -72,6 +72,8 @@
 - Uses `react-router-auto-routes` (NOT `@react-router/fs-routes`)
 - `app/routes.ts` calls `autoRoutes()` -- no manual route registration
 - Route files should be named `index.tsx` (not `route.tsx` -- deprecated)
+- Layout files migrated from `route.tsx` to `_layout.tsx` for `_auth/` and
+  `_authenticated/`; some other routes still use `route.tsx` (migration ongoing)
 - Colocated non-route files use `+` prefix (e.g., `+welcome.tsx`, `+helpers/`)
 - `_layout.tsx` creates nesting; folders without it are purely organizational
 - Recognized extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.md`, `.mdx`
@@ -90,7 +92,8 @@
 - `app/utils/session-context.ts` -- `sessionContext` key +
   `getOptionalUser`/`requireUser` helpers
 - Root middleware (2nd middleware in `app/root.tsx`) runs `getSessionUser` and
-  slides cookie
+  slides cookie; uses `getSetCookie()` + `startsWith('en_session=')` guard to
+  avoid overwriting action-set cookies (logout clear, change-password re-issue)
 - `_auth/` pathless layout redirects authed users away; `_authenticated/`
   pathless layout redirects unauthed to `/login?redirectTo=...`
 - Form validation uses Conform + Zod in all auth routes
