@@ -7,8 +7,18 @@ test.describe('Logout', () => {
 	}) => {
 		await signUp(page)
 
-		// POST to the logout resource route
-		await page.request.post('/resources/logout')
+		// Submit a logout form via the browser (not page.request) so
+		// Set-Cookie headers from the redirect response are applied.
+		// Use a string expression to avoid DOM type errors in the Node.js context.
+		await page.evaluate(`(() => {
+			const f = document.createElement('form');
+			f.method = 'POST';
+			f.action = '/resources/logout';
+			document.body.append(f);
+			f.submit();
+		})()`)
+		// Wait for the "Signed out" toast to confirm the round-trip completed
+		await expect(page.getByText('Signed out')).toBeVisible()
 
 		// Session cookie should be cleared
 		const cookies = await page.context().cookies()

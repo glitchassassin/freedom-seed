@@ -1,5 +1,5 @@
 import { Outlet, redirect } from 'react-router'
-import type { Route } from './+types/route'
+import type { Route } from './+types/_layout'
 import { getOptionalUser } from '~/utils/session-context'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
