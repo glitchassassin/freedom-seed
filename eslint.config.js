@@ -68,6 +68,7 @@ export default [
 			'test-results/**',
 			'worker-configuration.d.ts',
 			'node_modules/**',
+			'app/**/*.test.ts',
 		],
 	},
 	// Facet docs: enforce 100-line limit so files stay context-window friendly

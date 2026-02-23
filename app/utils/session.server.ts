@@ -3,79 +3,29 @@ import type { ValidatedEnv } from '../../workers/env'
 import type { SessionUser } from './session-context'
 import { getDb } from '~/db/client.server'
 import { passwordResetTokens, sessions, users } from '~/db/schema'
+import {
+	sha256Base64url,
+	signToken,
+	toBase64url,
+	verifySignedToken,
+} from '~/utils/crypto.server'
 
 const SESSION_COOKIE = 'en_session'
 const ABSOLUTE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 const IDLE_MAX_AGE = 7 * 24 * 60 * 60 // 7-day sliding window (seconds)
 
-// ── HMAC / crypto helpers ────────────────────────────────────────────────────
-
-function toBase64url(bytes: Uint8Array): string {
-	let binary = ''
-	for (let i = 0; i < bytes.byteLength; i++) {
-		binary += String.fromCharCode(bytes[i])
-	}
-	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
-
-async function sha256Base64url(data: string): Promise<string> {
-	const hash = await crypto.subtle.digest(
-		'SHA-256',
-		new TextEncoder().encode(data),
-	)
-	return toBase64url(new Uint8Array(hash))
-}
-
-async function hmacSha256(data: string, secret: string): Promise<string> {
-	const key = await crypto.subtle.importKey(
-		'raw',
-		new TextEncoder().encode(secret),
-		{ name: 'HMAC', hash: 'SHA-256' },
-		false,
-		['sign'],
-	)
-	const sigBuffer = await crypto.subtle.sign(
-		'HMAC',
-		key,
-		new TextEncoder().encode(data),
-	)
-	return toBase64url(new Uint8Array(sigBuffer))
-}
-
-async function signToken(token: string, secret: string): Promise<string> {
-	const sig = await hmacSha256(token, secret)
-	return `${token}.${sig}`
-}
+// ── Cookie helpers ───────────────────────────────────────────────────────────
 
 /**
- * Verifies the HMAC signature of a signed token.
- * Uses a constant-time comparison to prevent timing attacks.
- * Returns the raw token on success, null on failure.
+ * Reads a raw (not URL-decoded) cookie value from a request.
+ * Suitable for base64url-encoded tokens; does NOT percent-decode values.
  */
-async function verifySignedToken(
-	signedToken: string,
-	secret: string,
-): Promise<string | null> {
-	const dotIdx = signedToken.lastIndexOf('.')
-	if (dotIdx === -1) return null
-	const token = signedToken.slice(0, dotIdx)
-	const sig = signedToken.slice(dotIdx + 1)
-	const expectedSig = await hmacSha256(token, secret)
-	if (sig.length !== expectedSig.length) return null
-	let diff = 0
-	for (let i = 0; i < sig.length; i++) {
-		diff |= sig.charCodeAt(i) ^ expectedSig.charCodeAt(i)
-	}
-	return diff === 0 ? token : null
-}
-
 function readCookie(request: Request, name: string): string | null {
 	const cookieHeader = request.headers.get('cookie')
 	if (!cookieHeader) return null
 	for (const part of cookieHeader.split(';')) {
 		const eqIdx = part.indexOf('=')
 		if (eqIdx === -1) continue
-		// base64url tokens never need URL-decoding, but be explicit for clarity
 		if (part.slice(0, eqIdx).trim() === name) {
 			return part.slice(eqIdx + 1).trim()
 		}

@@ -28,10 +28,12 @@ npm run lint             # Run ESLint
 npm run lint:fix         # Auto-fix lint issues
 npm run format           # Format with Prettier
 npm run cf-typegen       # Regenerate Cloudflare Worker types
+npm run test             # Run unit tests (vitest)
+npm run test:watch       # Run unit tests in watch mode
 ```
 
 See `docs/facets/database.md` for database commands and schema workflow. See
-`docs/facets/e2e-testing.md` for test commands.
+`docs/facets/e2e-testing.md` for E2E test commands.
 
 ## Architecture
 
