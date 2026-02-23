@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by 003-password-hashing-scrypt
 
 ## Context
 
