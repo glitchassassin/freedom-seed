@@ -9,7 +9,7 @@
 - `redirectTo` query params MUST be validated as relative paths (no `//` prefix)
   to prevent open redirects
 - All reset tokens for a user should be invalidated when password is changed
-- Argon2id memorySize (19456 KiB / ~19 MB) needs empirical testing on Workers
+- scrypt N=2^14, r=8, p=5 (~16 MiB) via node:crypto; fits Workers 128 MiB limit
 
 ## Session Cookie Design
 

@@ -16,7 +16,7 @@ import { setToast } from '~/utils/toast.server'
 
 // Pre-computed dummy hash used to normalize response time when the email does
 // not exist. Without this, missing users return ~instantly while valid users
-// wait for Argon2id, leaking email existence via timing.
+// wait for scrypt, leaking email existence via timing.
 let DUMMY_HASH: string | null = null
 async function getDummyHash() {
 	if (!DUMMY_HASH) DUMMY_HASH = await hashPassword('dummy-timing-normalizer')
