@@ -86,7 +86,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const { cookie } = await createSession(env, userId, request)
 	return redirect('/', {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Account created' }, isSecure)],
+			[
+				'set-cookie',
+				setToast({ type: 'success', title: 'Account created' }, isSecure),
+			],
 			['set-cookie', cookie],
 		],
 	})

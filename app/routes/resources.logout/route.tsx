@@ -17,7 +17,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 	return redirect('/', {
 		headers: [
 			['set-cookie', clearSessionCookie(isSecure)],
-			['set-cookie', setToast({ type: 'success', title: 'Signed out' }, isSecure)],
+			[
+				'set-cookie',
+				setToast({ type: 'success', title: 'Signed out' }, isSecure),
+			],
 		],
 	})
 }

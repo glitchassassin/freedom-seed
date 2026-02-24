@@ -44,7 +44,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		headers: [
 			[
 				'set-cookie',
-				setToast({ type: 'success', title: 'Signed in successfully' }, isSecure),
+				setToast(
+					{ type: 'success', title: 'Signed in successfully' },
+					isSecure,
+				),
 			],
 			['set-cookie', cookie],
 		],

@@ -42,7 +42,10 @@ export const middleware: Route.MiddlewareFunction[] = [
 		const { token, signedCookie } = await generateCsrfToken(env.SESSION_SECRET)
 		context.set(csrfContext, token)
 		const response = await next()
-		response.headers.append('set-cookie', makeCsrfCookie(signedCookie, isSecure))
+		response.headers.append(
+			'set-cookie',
+			makeCsrfCookie(signedCookie, isSecure),
+		)
 		return response
 	},
 	async ({ request, context }, next) => {
@@ -68,7 +71,10 @@ export const middleware: Route.MiddlewareFunction[] = [
 				.getSetCookie()
 				.some((c) => c.startsWith('en_session='))
 			if (!alreadySet) {
-				response.headers.append('set-cookie', makeSessionCookie(signedToken, isSecure))
+				response.headers.append(
+					'set-cookie',
+					makeSessionCookie(signedToken, isSecure),
+				)
 			}
 		}
 		return response

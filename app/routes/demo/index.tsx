@@ -57,7 +57,11 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const formData = await request.formData()
 	const type = formData.get('type')
 	if (!toastTypes.includes(type as (typeof toastTypes)[number])) {
-		return showToast({ type: 'error', title: 'Invalid toast type' }, '/demo', isSecure)
+		return showToast(
+			{ type: 'error', title: 'Invalid toast type' },
+			'/demo',
+			isSecure,
+		)
 	}
 	const labels: Record<string, string> = {
 		success: 'Changes saved successfully',

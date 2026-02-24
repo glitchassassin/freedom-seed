@@ -108,7 +108,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect(safeRedirect, {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Welcome back' }, isSecure)],
+			[
+				'set-cookie',
+				setToast({ type: 'success', title: 'Welcome back' }, isSecure),
+			],
 			['set-cookie', cookie],
 		],
 	})

@@ -22,7 +22,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 	if (!isThemeMode(theme)) {
 		return data({ error: 'Invalid theme' }, { status: 400 })
 	}
-	return data({ ok: true }, { headers: { 'set-cookie': setTheme(theme, isSecure) } })
+	return data(
+		{ ok: true },
+		{ headers: { 'set-cookie': setTheme(theme, isSecure) } },
+	)
 }
 
 /**

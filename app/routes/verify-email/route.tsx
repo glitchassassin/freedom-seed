@@ -38,20 +38,26 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	if (user) {
 		throw redirect('/', {
 			headers: {
-				'set-cookie': setToast({
-					type: 'success',
-					title: 'Email verified',
-				}, isSecure),
+				'set-cookie': setToast(
+					{
+						type: 'success',
+						title: 'Email verified',
+					},
+					isSecure,
+				),
 			},
 		})
 	}
 
 	throw redirect('/login', {
 		headers: {
-			'set-cookie': setToast({
-				type: 'success',
-				title: 'Email verified. Please sign in.',
-			}, isSecure),
+			'set-cookie': setToast(
+				{
+					type: 'success',
+					title: 'Email verified. Please sign in.',
+				},
+				isSecure,
+			),
 		},
 	})
 }

@@ -23,10 +23,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 	if (user.emailVerifiedAt) {
 		return redirect('/', {
 			headers: {
-				'set-cookie': setToast({
-					type: 'info',
-					title: 'Email already verified',
-				}, isSecure),
+				'set-cookie': setToast(
+					{
+						type: 'info',
+						title: 'Email already verified',
+					},
+					isSecure,
+				),
 			},
 		})
 	}
@@ -53,10 +56,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect(redirectTo, {
 		headers: {
-			'set-cookie': setToast({
-				type: 'success',
-				title: 'Verification email sent',
-			}, isSecure),
+			'set-cookie': setToast(
+				{
+					type: 'success',
+					title: 'Verification email sent',
+				},
+				isSecure,
+			),
 		},
 	})
 }
