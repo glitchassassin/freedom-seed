@@ -15,6 +15,11 @@ export const envSchema = z.object({
 
 	// Auth sessions — set in .dev.vars (local) and wrangler secret (production)
 	SESSION_SECRET: z.string().min(32),
+
+	// Email — set RESEND_API_KEY via `wrangler secret put RESEND_API_KEY`
+	// Omit or leave empty in development to log emails to console instead.
+	RESEND_API_KEY: z.string().default(''),
+	FROM_EMAIL: z.string().default('Seed Vault <onboarding@resend.dev>'),
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>
