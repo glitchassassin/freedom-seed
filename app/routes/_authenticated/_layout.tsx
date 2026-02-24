@@ -21,7 +21,10 @@ export default function AuthenticatedLayout({
 	return (
 		<>
 			{!emailVerified && (
-				<div className="border-b border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
+				<section
+					aria-label="Email verification notice"
+					className="border-b border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30"
+				>
 					<div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
 						<p className="text-sm text-amber-800 dark:text-amber-200">
 							Please verify your email address to access all features.
@@ -33,7 +36,7 @@ export default function AuthenticatedLayout({
 							</Button>
 						</Form>
 					</div>
-				</div>
+				</section>
 			)}
 			<Outlet />
 		</>
