@@ -13,6 +13,8 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
 	testDir: './tests',
+	globalSetup: './tests/global-setup.ts',
+	globalTeardown: './tests/global-teardown.ts',
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -72,7 +74,8 @@ export default defineConfig({
 
 	/* Run your local dev server before starting the tests */
 	webServer: {
-		command: 'CLOUDFLARE_ENV=test npm run preview',
+		command:
+			'RESEND_BASE_URL=http://localhost:3001 CLOUDFLARE_ENV=test npm run preview',
 		url: 'http://localhost:4173',
 		reuseExistingServer: !process.env.CI,
 	},
