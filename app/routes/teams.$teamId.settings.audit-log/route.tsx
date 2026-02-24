@@ -19,7 +19,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
-	 
+
 	const teamId = params.teamId!
 	const { timeZone } = getHints(request)
 

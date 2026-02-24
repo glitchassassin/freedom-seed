@@ -14,6 +14,7 @@ export const envSchema = z.object({
 		(val) => val != null,
 		'RATE_LIMIT_KV binding is required',
 	),
+	DISABLE_RATE_LIMITING: z.string().default(''),
 
 	// Analytics — omit or set to empty string to disable tracking
 	PLAUSIBLE_DOMAIN: z.string().default(''),

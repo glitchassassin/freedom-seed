@@ -42,7 +42,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
-	await requireRateLimit(env.RATE_LIMIT_KV, request, {
+	await requireRateLimit(env, request, {
 		prefix: 'reset-pw',
 		limit: 5,
 		windowSeconds: 300,

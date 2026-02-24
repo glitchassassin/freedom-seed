@@ -83,3 +83,64 @@ export function seedPasswordResetToken(userId: string): string {
 		db.close()
 	}
 }
+
+/**
+ * Creates a magic-link token in the local D1 database and returns
+ * the raw token (suitable for `/magic-link/verify?token=<raw>`).
+ *
+ * This mirrors the logic in the magic link creation flow but runs in
+ * the test process so we can obtain the raw token directly.
+ */
+export function seedMagicLinkToken(userId: string): string {
+	const rawToken = randomBytes(32).toString('base64url')
+	const tokenHash = createHash('sha256').update(rawToken).digest('base64url')
+	const expiresAt = Date.now() + 15 * 60 * 1000 // 15 minutes
+
+	const db = openD1()
+	try {
+		db.prepare(
+			`INSERT INTO magic_link_tokens (token_hash, user_id, expires_at, created_at)
+			 VALUES (?, ?, ?, ?)`,
+		).run(tokenHash, userId, expiresAt, Date.now())
+		return rawToken
+	} finally {
+		db.close()
+	}
+}
+
+/**
+ * Creates an already-expired magic-link token in the local D1 database
+ * and returns the raw token (for testing expiry handling).
+ */
+export function seedExpiredMagicLinkToken(userId: string): string {
+	const rawToken = randomBytes(32).toString('base64url')
+	const tokenHash = createHash('sha256').update(rawToken).digest('base64url')
+	const expiresAt = Date.now() - 60 * 1000 // expired 1 minute ago
+
+	const db = openD1()
+	try {
+		db.prepare(
+			`INSERT INTO magic_link_tokens (token_hash, user_id, expires_at, created_at)
+			 VALUES (?, ?, ?, ?)`,
+		).run(tokenHash, userId, expiresAt, Date.now() - 16 * 60 * 1000)
+		return rawToken
+	} finally {
+		db.close()
+	}
+}
+
+/**
+ * Marks a magic-link token as used by setting its `used_at` timestamp.
+ * Accepts the raw token (not the hash).
+ */
+export function markMagicLinkTokenUsed(rawToken: string): void {
+	const tokenHash = createHash('sha256').update(rawToken).digest('base64url')
+	const db = openD1()
+	try {
+		db.prepare(
+			'UPDATE magic_link_tokens SET used_at = ? WHERE token_hash = ?',
+		).run(Date.now(), tokenHash)
+	} finally {
+		db.close()
+	}
+}

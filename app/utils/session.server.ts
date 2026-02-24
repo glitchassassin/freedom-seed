@@ -67,6 +67,7 @@ export async function getSessionUser(
 			id: users.id,
 			email: users.email,
 			displayName: users.displayName,
+			emailVerifiedAt: users.emailVerifiedAt,
 			expiresAt: sessions.expiresAt,
 		})
 		.from(sessions)
@@ -80,7 +81,12 @@ export async function getSessionUser(
 		return { user: null, token: null, signedToken: null }
 
 	return {
-		user: { id: row.id, email: row.email, displayName: row.displayName },
+		user: {
+			id: row.id,
+			email: row.email,
+			displayName: row.displayName,
+			emailVerifiedAt: row.emailVerifiedAt,
+		},
 		token,
 		signedToken,
 	}

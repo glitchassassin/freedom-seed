@@ -5,6 +5,7 @@ export type SessionUser = {
 	id: string
 	email: string
 	displayName: string | null
+	emailVerifiedAt: Date | null
 }
 
 /**

@@ -10,7 +10,10 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { getDb } from '~/db/client.server'
 import { passwordCredentials, users } from '~/db/schema'
+import { VerifyEmail } from '~/emails/verify-email'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { createEmailVerificationToken } from '~/utils/email-verification.server'
+import { sendEmail } from '~/utils/email.server'
 import { hashPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
@@ -29,7 +32,7 @@ const schema = z
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
-	await requireRateLimit(env.RATE_LIMIT_KV, request, {
+	await requireRateLimit(env, request, {
 		prefix: 'signup',
 		limit: 3,
 		windowSeconds: 300,
@@ -65,6 +68,19 @@ export async function action({ request, context }: Route.ActionArgs) {
 			.insert(passwordCredentials)
 			.values({ userId, hash, updatedAt: new Date() }),
 	])
+
+	// Send email verification link — non-blocking; don't fail signup if email fails
+	try {
+		const token = await createEmailVerificationToken(env, userId)
+		const verifyUrl = `${new URL(request.url).origin}/verify-email?token=${token}`
+		await sendEmail(env, {
+			to: email.toLowerCase(),
+			subject: 'Verify your email — Seed Vault',
+			react: VerifyEmail({ verifyUrl }),
+		})
+	} catch (err) {
+		console.error('[signup] Failed to send verification email:', err)
+	}
 
 	const { cookie } = await createSession(env, userId, request)
 	return redirect('/', {

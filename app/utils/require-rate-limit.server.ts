@@ -5,10 +5,11 @@ import { checkRateLimit } from './rate-limit.server'
  * Call this at the top of sensitive action functions.
  */
 export async function requireRateLimit(
-	kv: KVNamespace,
+	env: { RATE_LIMIT_KV: KVNamespace; DISABLE_RATE_LIMITING?: string },
 	request: Request,
 	options: { prefix: string; limit: number; windowSeconds: number },
 ): Promise<void> {
+	if (env.DISABLE_RATE_LIMITING === 'true') return
 	const ip =
 		request.headers.get('CF-Connecting-IP') ??
 		// Fallback for local development only; CF-Connecting-IP is always set in production.
@@ -19,7 +20,7 @@ export async function requireRateLimit(
 
 	const result = await checkRateLimit(
 		{
-			kv,
+			kv: env.RATE_LIMIT_KV,
 			prefix: options.prefix,
 			limit: options.limit,
 			windowSeconds: options.windowSeconds,

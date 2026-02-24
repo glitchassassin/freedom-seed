@@ -72,7 +72,7 @@ export default defineConfig({
 
 	/* Run your local dev server before starting the tests */
 	webServer: {
-		command: 'CLOUDFLARE_ENV=development npm run preview',
+		command: 'CLOUDFLARE_ENV=test npm run preview',
 		url: 'http://localhost:4173',
 		reuseExistingServer: !process.env.CI,
 	},

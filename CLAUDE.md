@@ -17,6 +17,14 @@ relevant facet documentation and load the applicable facet files into context.
 Facets describe what each feature area is, which files implement it, and how it
 fits into the stack.
 
+## Delegation
+
+Your role is the planner and manager. Your context is too valuable to spend on
+implementing code. Instead, spin up Sonnet subagents to handle the actual
+implementation; use the merge-worktrees agent, if necessary, to merge changes
+from multiple parallel subagents; and then use the code-review agent to check if
+the changes meet the requirements.
+
 ## Commands
 
 ```bash
