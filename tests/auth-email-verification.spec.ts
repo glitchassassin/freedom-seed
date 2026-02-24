@@ -21,8 +21,8 @@ test.describe('Email Verification', () => {
 
 		// Extract the verification URL from the HTML
 		const match = captured.html.match(/href="([^"]*verify-email\?token=[^"]*)"/)
-		expect(match).toBeTruthy()
-		const verifyUrl = match![1]
+		if (!match?.[1]) throw new Error('Verification URL not found in email HTML')
+		const verifyUrl = match[1]
 
 		// Navigate to the verification URL
 		// The URL from the email is absolute (http://localhost:4173/verify-email?token=...)

@@ -21,6 +21,24 @@ Wrangler secret.
 - `resend` — Resend SDK (edge-compatible).
 - `@react-email/render` — Renders React Email components to HTML and plain text.
 
+## E2E Email Testing
+
+During E2E tests the Resend SDK is redirected to a local mock server so no real
+emails are sent. This works via two mechanisms:
+
+1. **Build-time redirect** — Vite's `define` replaces
+   `process.env.RESEND_BASE_URL` with the mock server URL
+   (`http://localhost:3001`) when the E2E `preview` build runs with
+   `RESEND_BASE_URL` set.
+2. **Dummy API key** — `.dev.vars.test` sets `RESEND_API_KEY` to `re_test_mock`,
+   so `sendEmail()` enters the Resend SDK path (not the dev-mode console.log
+   branch). This overrides the empty value from `.dev.vars`.
+
+The mock server captures every email to a temp NDJSON file. Test helpers in
+`tests/email-helpers.ts` provide `waitForEmail(recipient)` to poll for captured
+emails and extract tokens/URLs. See `docs/facets/e2e-testing.md` for helper API
+details.
+
 ## Removal
 
 1. Delete `app/utils/email.server.ts`.

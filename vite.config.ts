@@ -21,8 +21,12 @@ export default defineConfig({
 		tsconfigPaths(),
 	],
 	define: {
-		'process.env.RESEND_BASE_URL': JSON.stringify(
-			process.env.RESEND_BASE_URL ?? '',
-		),
+		...(process.env.RESEND_BASE_URL
+			? {
+					'process.env.RESEND_BASE_URL': JSON.stringify(
+						process.env.RESEND_BASE_URL,
+					),
+				}
+			: {}),
 	},
 })

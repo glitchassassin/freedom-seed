@@ -1,0 +1,4 @@
+ENVIRONMENT = "development"
+SESSION_SECRET = "dev-only-secret-replace-before-deploying-to-prod!!"
+RESEND_API_KEY = "re_test_mock"
+FROM_EMAIL = "Seed Vault <onboarding@resend.dev>"

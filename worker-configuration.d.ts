@@ -8,7 +8,6 @@ declare namespace Cloudflare {
 	interface DevelopmentEnv {
 		RATE_LIMIT_KV: KVNamespace;
 		DB: D1Database;
-		ENVIRONMENT: "development";
 		PLAUSIBLE_DOMAIN: "";
 		PLAUSIBLE_HOST: "";
 		ENVIRONMENT: string;

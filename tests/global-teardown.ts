@@ -1,5 +1,5 @@
 import { unlinkSync } from 'node:fs'
-import { stop, CAPTURED_EMAILS_PATH  } from './mocks/resend-server'
+import { stop, CAPTURED_EMAILS_PATH } from './mocks/resend-server'
 
 export default async function globalTeardown() {
 	await stop()
