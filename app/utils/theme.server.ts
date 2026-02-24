@@ -1,3 +1,5 @@
+import { secureSuffix } from '~/utils/cookie-flags.server'
+
 const cookieName = 'en_theme'
 
 export type Theme = 'light' | 'dark'
@@ -29,9 +31,9 @@ export function getTheme(request: Request): Theme | null {
  * Returns a Set-Cookie header value for the given theme preference.
  * Pass 'system' to clear the explicit preference and fall back to the OS.
  */
-export function setTheme(theme: Theme | 'system'): string {
+export function setTheme(theme: Theme | 'system', isSecure: boolean): string {
 	if (theme === 'system') {
-		return `${cookieName}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Secure`
+		return `${cookieName}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`
 	}
-	return `${cookieName}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly; Secure`
+	return `${cookieName}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`
 }

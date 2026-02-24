@@ -42,6 +42,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	await requireRateLimit(env, request, {
 		prefix: 'reset-pw',
 		limit: 5,
@@ -83,7 +84,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect('/', {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Password updated' })],
+			['set-cookie', setToast({ type: 'success', title: 'Password updated' }, isSecure)],
 			['set-cookie', cookie],
 		],
 	})

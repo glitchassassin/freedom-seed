@@ -3,6 +3,7 @@ import type { ValidatedEnv } from '../../workers/env'
 import type { SessionUser } from './session-context'
 import { getDb } from '~/db/client.server'
 import { passwordResetTokens, sessions, users } from '~/db/schema'
+import { secureSuffix } from '~/utils/cookie-flags.server'
 import { readCookie } from '~/utils/cookie.server'
 import {
 	sha256Base64url,
@@ -39,7 +40,8 @@ export async function createSession(
 		.values({ id: token, userId, expiresAt, ipAddress, userAgent })
 
 	const signedToken = await signToken(token, env.SESSION_SECRET)
-	return { token, cookie: makeSessionCookie(signedToken) }
+	const isSecure = env.ENVIRONMENT === 'production'
+	return { token, cookie: makeSessionCookie(signedToken, isSecure) }
 }
 
 /**
@@ -170,11 +172,14 @@ export async function invalidatePasswordResetTokens(
  * Builds a Set-Cookie header value for the session cookie.
  * Max-Age slides the 7-day idle window on every request.
  */
-export function makeSessionCookie(signedToken: string): string {
-	return `${SESSION_COOKIE}=${signedToken}; Path=/; Max-Age=${IDLE_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`
+export function makeSessionCookie(
+	signedToken: string,
+	isSecure: boolean,
+): string {
+	return `${SESSION_COOKIE}=${signedToken}; Path=/; Max-Age=${IDLE_MAX_AGE}; HttpOnly${secureSuffix(isSecure)}; SameSite=Lax`
 }
 
 /** Returns a Set-Cookie header value that immediately expires the session cookie. */
-export function clearSessionCookie(): string {
-	return `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`
+export function clearSessionCookie(isSecure: boolean): string {
+	return `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly${secureSuffix(isSecure)}; SameSite=Lax`
 }

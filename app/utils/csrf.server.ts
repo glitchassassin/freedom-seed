@@ -1,12 +1,13 @@
+import { csrfCookieName, secureSuffix } from '~/utils/cookie-flags.server'
 import { readCookie } from '~/utils/cookie.server'
 import {
 	signToken,
 	toBase64url,
 	verifySignedToken,
 } from '~/utils/crypto.server'
-import { CSRF_COOKIE_NAME, CSRF_FIELD_NAME } from '~/utils/csrf-constants'
+import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 
-export { CSRF_COOKIE_NAME, CSRF_FIELD_NAME } from '~/utils/csrf-constants'
+export { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 
 /**
  * Generates a random 32-byte CSRF token, signs it with HMAC-SHA256,
@@ -24,11 +25,14 @@ export async function generateCsrfToken(
 
 /**
  * Builds a Set-Cookie header value for the CSRF cookie.
- * Uses __Host- prefix to prevent subdomain cookie injection.
+ * Uses __Host- prefix in production to prevent subdomain cookie injection.
  * Session cookie (no Max-Age) — dies when the browser closes.
  */
-export function makeCsrfCookie(signedToken: string): string {
-	return `${CSRF_COOKIE_NAME}=${signedToken}; Path=/; SameSite=Lax; HttpOnly; Secure`
+export function makeCsrfCookie(
+	signedToken: string,
+	isSecure: boolean,
+): string {
+	return `${csrfCookieName(isSecure)}=${signedToken}; Path=/; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`
 }
 
 /**
@@ -41,8 +45,9 @@ export function makeCsrfCookie(signedToken: string): string {
 export async function validateCsrfToken(
 	request: Request,
 	secret: string,
+	isSecure: boolean,
 ): Promise<void> {
-	const cookieValue = readCookie(request, CSRF_COOKIE_NAME)
+	const cookieValue = readCookie(request, csrfCookieName(isSecure))
 	if (!cookieValue) {
 		throw new Response('Missing CSRF cookie', { status: 403 })
 	}

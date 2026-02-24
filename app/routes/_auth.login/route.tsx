@@ -33,6 +33,7 @@ const schema = z.object({
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	await requireRateLimit(env, request, {
 		prefix: 'login',
 		limit: 5,
@@ -107,7 +108,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect(safeRedirect, {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Welcome back' })],
+			['set-cookie', setToast({ type: 'success', title: 'Welcome back' }, isSecure)],
 			['set-cookie', cookie],
 		],
 	})
