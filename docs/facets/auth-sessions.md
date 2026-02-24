@@ -29,7 +29,7 @@ without waiting for expiry.
   sets the context, and re-issues the cookie to slide the idle window.
 - `app/routes/_auth/route.tsx` — pathless guest layout; redirects to `/` when
   already authenticated.
-- `app/routes/_authenticated/route.tsx` — pathless auth-required layout;
+- `app/routes/_authenticated/_layout.tsx` — pathless auth-required layout;
   redirects to `/login?redirectTo=…` when unauthenticated.
 - `app/routes/resources.logout/route.tsx` — POST action that deletes the session
   and clears the cookie.

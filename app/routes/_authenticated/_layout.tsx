@@ -20,6 +20,16 @@ export default function AuthenticatedLayout({
 
 	return (
 		<>
+			<header className="border-b px-4 py-2">
+				<div className="mx-auto flex max-w-4xl justify-end">
+					<Form method="POST" action="/resources/logout">
+						<CsrfInput />
+						<Button variant="ghost" size="sm">
+							Sign out
+						</Button>
+					</Form>
+				</div>
+			</header>
 			{!emailVerified && (
 				<section
 					aria-label="Email verification notice"
