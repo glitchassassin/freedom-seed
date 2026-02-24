@@ -80,6 +80,12 @@ def main():
 
         # Track real user messages (not tool results, which also appear as role=user)
         if entry_type == "user" and entry.get("userType") == "external":
+            # /clear resets the conversation context — discard prior history
+            msg_content = entry.get("message", {}).get("content", "")
+            if isinstance(msg_content, str) and "<command-name>/clear</command-name>" in msg_content:
+                events = []
+                last_user_line_idx = -1
+                continue
             events.append("user_message")
             last_user_line_idx = line_idx
             continue
