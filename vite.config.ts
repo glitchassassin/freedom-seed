@@ -20,4 +20,9 @@ export default defineConfig({
 		reactRouter(),
 		tsconfigPaths(),
 	],
+	define: {
+		'process.env.RESEND_BASE_URL': JSON.stringify(
+			process.env.RESEND_BASE_URL ?? '',
+		),
+	},
 })

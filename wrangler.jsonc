@@ -73,6 +73,22 @@
 				},
 			],
 		},
+		"test": {
+			"vars": {
+				"ENVIRONMENT": "test",
+				"PLAUSIBLE_DOMAIN": "",
+				"PLAUSIBLE_HOST": "",
+				"RESEND_API_KEY": "re_test_mock",
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "freedom-seed",
+					"database_id": "00000000-0000-0000-0000-000000000000",
+					"migrations_dir": "./migrations",
+				},
+			],
+		},
 	},
 	"observability": {
 		"enabled": true,
