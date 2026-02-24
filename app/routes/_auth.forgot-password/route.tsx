@@ -4,12 +4,14 @@ import { eq } from 'drizzle-orm'
 import { Form } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
+import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { getDb } from '~/db/client.server'
 import { users } from '~/db/schema'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createPasswordResetToken } from '~/utils/session.server'
 
 const schema = z.object({
@@ -18,6 +20,11 @@ const schema = z.object({
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	await requireRateLimit(env.RATE_LIMIT_KV, request, {
+		prefix: 'forgot-pw',
+		limit: 3,
+		windowSeconds: 300,
+	})
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema })
 	if (submission.status !== 'success') return submission.reply()
@@ -83,6 +90,7 @@ export default function ForgotPasswordPage({
 			</div>
 
 			<Form method="POST" {...getFormProps(form)} className="space-y-4">
+				<CsrfInput />
 				<div className="space-y-2">
 					<Label htmlFor={fields.email.id}>Email</Label>
 					<Input

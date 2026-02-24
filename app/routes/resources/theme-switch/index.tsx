@@ -1,5 +1,6 @@
 import { data, useFetcher, useFetchers, useRouteLoaderData } from 'react-router'
 import type { Route } from './+types/index'
+import { CsrfInput } from '~/components/csrf-input'
 import type { loader as rootLoader } from '~/root'
 import { useOptionalHints } from '~/utils/client-hints'
 import { setTheme } from '~/utils/theme.server'
@@ -142,6 +143,7 @@ export function ThemeSwitch({
 
 	return (
 		<fetcher.Form method="POST" action="/resources/theme-switch">
+			<CsrfInput />
 			<input type="hidden" name="theme" value={nextMode} />
 			<button
 				type="submit"

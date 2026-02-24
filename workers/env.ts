@@ -9,6 +9,12 @@ export const envSchema = z.object({
 	ENVIRONMENT: z.enum(['development', 'production']),
 	DB: z.custom<D1Database>((val) => val != null, 'DB binding is required'),
 
+	// Rate limiting — KV namespace for sliding window counters
+	RATE_LIMIT_KV: z.custom<KVNamespace>(
+		(val) => val != null,
+		'RATE_LIMIT_KV binding is required',
+	),
+
 	// Analytics — omit or set to empty string to disable tracking
 	PLAUSIBLE_DOMAIN: z.string().default(''),
 	PLAUSIBLE_HOST: z.string().default(''),

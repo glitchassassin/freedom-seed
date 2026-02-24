@@ -41,6 +41,12 @@
 					"migrations_dir": "./migrations",
 				},
 			],
+			"kv_namespaces": [
+				{
+					"binding": "RATE_LIMIT_KV",
+					"id": "00000000-0000-0000-0000-000000000000",
+				},
+			],
 		},
 	},
 	"observability": {
@@ -53,6 +59,13 @@
 			// Run `wrangler d1 create freedom-seed` and paste the database_id here
 			"database_id": "TODO",
 			"migrations_dir": "./migrations",
+		},
+	],
+	// Run `wrangler kv namespace create RATE_LIMIT_KV` and paste the id here
+	"kv_namespaces": [
+		{
+			"binding": "RATE_LIMIT_KV",
+			"id": "TODO",
 		},
 	],
 	/**

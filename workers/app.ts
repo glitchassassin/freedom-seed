@@ -30,14 +30,62 @@ export default {
 
 		const response = await requestHandler(request, context)
 
-		// Add HSTS header for HTTPS-only enforcement (except in development)
 		const headers = new Headers(response.headers)
+
+		// --- Production-only headers ---
+
+		// HSTS: enforce HTTPS for all future visits
 		if (!isDevelopment) {
 			headers.set(
 				'Strict-Transport-Security',
 				'max-age=31536000; includeSubDomains; preload',
 			)
 		}
+
+		// --- Security headers (all environments) ---
+
+		// Build Content-Security-Policy
+		// TODO: Switch from 'unsafe-inline' in script-src to nonce-based CSP
+		// once the app's inline client-hint scripts are refactored.
+		const plausibleDomain = validatedEnv.PLAUSIBLE_DOMAIN || ''
+		let plausibleOrigin = ''
+		if (plausibleDomain) {
+			const rawHost = validatedEnv.PLAUSIBLE_HOST || 'https://plausible.io'
+			try {
+				const hostUrl = new URL(rawHost)
+				if (hostUrl.protocol === 'https:') {
+					plausibleOrigin = hostUrl.origin
+				}
+			} catch {
+				plausibleOrigin = 'https://plausible.io'
+			}
+		}
+
+		const scriptSrc = plausibleOrigin
+			? `'self' 'unsafe-inline' ${plausibleOrigin}`
+			: `'self' 'unsafe-inline'`
+		const connectSrc = plausibleOrigin ? `'self' ${plausibleOrigin}` : `'self'`
+
+		const csp = [
+			`default-src 'self'`,
+			`script-src ${scriptSrc}`,
+			`style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+			`font-src 'self' https://fonts.gstatic.com`,
+			`img-src 'self' data:`,
+			`connect-src ${connectSrc}`,
+			`frame-ancestors 'none'`,
+			`form-action 'self'`,
+			`base-uri 'self'`,
+		].join('; ')
+
+		headers.set('Content-Security-Policy', csp)
+		headers.set('X-Frame-Options', 'DENY')
+		headers.set('X-Content-Type-Options', 'nosniff')
+		headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+		headers.set(
+			'Permissions-Policy',
+			'camera=(), microphone=(), geolocation=(), payment=()',
+		)
 
 		return new Response(response.body, {
 			status: response.status,

@@ -3,6 +3,7 @@ import type { ValidatedEnv } from '../../workers/env'
 import type { SessionUser } from './session-context'
 import { getDb } from '~/db/client.server'
 import { passwordResetTokens, sessions, users } from '~/db/schema'
+import { readCookie } from '~/utils/cookie.server'
 import {
 	sha256Base64url,
 	signToken,
@@ -13,25 +14,6 @@ import {
 const SESSION_COOKIE = 'en_session'
 const ABSOLUTE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 const IDLE_MAX_AGE = 7 * 24 * 60 * 60 // 7-day sliding window (seconds)
-
-// ── Cookie helpers ───────────────────────────────────────────────────────────
-
-/**
- * Reads a raw (not URL-decoded) cookie value from a request.
- * Suitable for base64url-encoded tokens; does NOT percent-decode values.
- */
-function readCookie(request: Request, name: string): string | null {
-	const cookieHeader = request.headers.get('cookie')
-	if (!cookieHeader) return null
-	for (const part of cookieHeader.split(';')) {
-		const eqIdx = part.indexOf('=')
-		if (eqIdx === -1) continue
-		if (part.slice(0, eqIdx).trim() === name) {
-			return part.slice(eqIdx + 1).trim()
-		}
-	}
-	return null
-}
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
