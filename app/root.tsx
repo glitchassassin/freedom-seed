@@ -15,6 +15,12 @@ import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getCloudflare } from './utils/cloudflare-context'
+import { csrfContext } from './utils/csrf-context'
+import {
+	generateCsrfToken,
+	makeCsrfCookie,
+	validateCsrfToken,
+} from './utils/csrf.server'
 import { sessionContext } from './utils/session-context'
 import { getSessionUser, makeSessionCookie } from './utils/session.server'
 import { getTheme } from './utils/theme.server'
@@ -22,6 +28,22 @@ import { toastContext } from './utils/toast-context'
 import { getToast } from './utils/toast.server'
 
 export const middleware: Route.MiddlewareFunction[] = [
+	// CSRF: generate token on GET/HEAD, validate on mutating methods
+	async ({ request, context }, next) => {
+		const { env } = getCloudflare(context)
+		const method = request.method.toUpperCase()
+
+		if (method !== 'GET' && method !== 'HEAD') {
+			await validateCsrfToken(request, env.SESSION_SECRET)
+		}
+
+		// Generate a fresh CSRF token for every response
+		const { token, signedCookie } = await generateCsrfToken(env.SESSION_SECRET)
+		context.set(csrfContext, token)
+		const response = await next()
+		response.headers.append('set-cookie', makeCsrfCookie(signedCookie))
+		return response
+	},
 	async ({ request, context }, next) => {
 		const { toast: toastData, setCookieHeader } = getToast(request)
 		context.set(toastContext, toastData)
@@ -62,6 +84,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	}
 
 	const toastData = context.get(toastContext)
+	const csrfToken = context.get(csrfContext)
 	return {
 		hints: getHints(request),
 		userPrefs: { theme: getTheme(request) },
@@ -69,6 +92,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		plausibleHost,
 		toast: toastData,
 		toastKey: toastData ? crypto.randomUUID() : null,
+		csrfToken,
 	}
 }
 
@@ -92,7 +116,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				{/* TODO: pass nonce={nonce} once the security-headers facet adds CSP */}
+				{/* TODO: pass nonce={nonce} once CSP migrates from 'unsafe-inline' to nonce-based policy */}
 				<ClientHintCheck />
 				<Meta />
 				<Links />

@@ -3,6 +3,7 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
+import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -10,6 +11,7 @@ import { getDb } from '~/db/client.server'
 import { passwordCredentials } from '~/db/schema'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { hashPassword } from '~/utils/password.server'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import {
 	createSession,
 	deleteAllSessions,
@@ -40,6 +42,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	await requireRateLimit(env.RATE_LIMIT_KV, request, {
+		prefix: 'reset-pw',
+		limit: 5,
+		windowSeconds: 300,
+	})
 	const url = new URL(request.url)
 	const tokenParam = url.searchParams.get('token')
 
@@ -125,6 +132,7 @@ export default function ResetPasswordPage({
 			</div>
 
 			<Form method="POST" {...getFormProps(form)} className="space-y-4">
+				<CsrfInput />
 				{form.errors && (
 					<p className="text-destructive text-sm">{form.errors[0]}</p>
 				)}
