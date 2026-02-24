@@ -3,6 +3,7 @@ import type { Route } from './+types/index'
 import { CsrfInput } from '~/components/csrf-input'
 import type { loader as rootLoader } from '~/root'
 import { useOptionalHints } from '~/utils/client-hints'
+import { getCloudflare } from '~/utils/cloudflare-context'
 import { setTheme } from '~/utils/theme.server'
 import type { Theme } from '~/utils/theme.server'
 
@@ -13,13 +14,15 @@ function isThemeMode(value: unknown): value is ThemeMode {
 	return typeof value === 'string' && (validThemes as string[]).includes(value)
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const formData = await request.formData()
 	const theme = formData.get('theme')
 	if (!isThemeMode(theme)) {
 		return data({ error: 'Invalid theme' }, { status: 400 })
 	}
-	return data({ ok: true }, { headers: { 'set-cookie': setTheme(theme) } })
+	return data({ ok: true }, { headers: { 'set-cookie': setTheme(theme, isSecure) } })
 }
 
 /**

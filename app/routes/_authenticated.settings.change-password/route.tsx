@@ -29,6 +29,7 @@ const schema = z
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const user = requireUser(context)
 
 	const formData = await request.formData()
@@ -64,7 +65,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect('/settings/change-password', {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Password changed' })],
+			['set-cookie', setToast({ type: 'success', title: 'Password changed' }, isSecure)],
 			['set-cookie', cookie],
 		],
 	})

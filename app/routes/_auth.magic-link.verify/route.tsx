@@ -14,6 +14,7 @@ import { setToast } from '~/utils/toast.server'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const url = new URL(request.url)
 	const token = url.searchParams.get('token')
 
@@ -43,7 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		headers: [
 			[
 				'set-cookie',
-				setToast({ type: 'success', title: 'Signed in successfully' }),
+				setToast({ type: 'success', title: 'Signed in successfully' }, isSecure),
 			],
 			['set-cookie', cookie],
 		],

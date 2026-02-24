@@ -31,21 +31,24 @@ export const middleware: Route.MiddlewareFunction[] = [
 	// CSRF: generate token on GET/HEAD, validate on mutating methods
 	async ({ request, context }, next) => {
 		const { env } = getCloudflare(context)
+		const isSecure = env.ENVIRONMENT === 'production'
 		const method = request.method.toUpperCase()
 
 		if (method !== 'GET' && method !== 'HEAD') {
-			await validateCsrfToken(request, env.SESSION_SECRET)
+			await validateCsrfToken(request, env.SESSION_SECRET, isSecure)
 		}
 
 		// Generate a fresh CSRF token for every response
 		const { token, signedCookie } = await generateCsrfToken(env.SESSION_SECRET)
 		context.set(csrfContext, token)
 		const response = await next()
-		response.headers.append('set-cookie', makeCsrfCookie(signedCookie))
+		response.headers.append('set-cookie', makeCsrfCookie(signedCookie, isSecure))
 		return response
 	},
 	async ({ request, context }, next) => {
-		const { toast: toastData, setCookieHeader } = getToast(request)
+		const { env } = getCloudflare(context)
+		const isSecure = env.ENVIRONMENT === 'production'
+		const { toast: toastData, setCookieHeader } = getToast(request, isSecure)
 		context.set(toastContext, toastData)
 		const response = await next()
 		if (setCookieHeader) response.headers.append('set-cookie', setCookieHeader)
@@ -53,6 +56,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	},
 	async ({ request, context }, next) => {
 		const { env } = getCloudflare(context)
+		const isSecure = env.ENVIRONMENT === 'production'
 		const { user, signedToken } = await getSessionUser(request, env)
 		context.set(sessionContext, user)
 		const response = await next()
@@ -64,7 +68,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 				.getSetCookie()
 				.some((c) => c.startsWith('en_session='))
 			if (!alreadySet) {
-				response.headers.append('set-cookie', makeSessionCookie(signedToken))
+				response.headers.append('set-cookie', makeSessionCookie(signedToken, isSecure))
 			}
 		}
 		return response

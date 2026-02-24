@@ -1,4 +1,5 @@
 import { redirect } from 'react-router'
+import { secureSuffix } from '~/utils/cookie-flags.server'
 
 const cookieName = 'en_toast'
 
@@ -13,7 +14,10 @@ export type Toast = {
  * any) along with a Set-Cookie header to clear it so it doesn't re-appear on
  * subsequent navigations.
  */
-export function getToast(request: Request): {
+export function getToast(
+	request: Request,
+	isSecure: boolean,
+): {
 	toast: Toast | null
 	setCookieHeader: string | null
 } {
@@ -38,7 +42,7 @@ export function getToast(request: Request): {
 			) {
 				return {
 					toast: parsed as Toast,
-					setCookieHeader: `${cookieName}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Secure`,
+					setCookieHeader: `${cookieName}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`,
 				}
 			}
 		} catch {
@@ -55,9 +59,9 @@ export function getToast(request: Request): {
  * The cookie expires in 60 seconds to ensure it's cleared even if the
  * redirect page never loads.
  */
-export function setToast(toast: Toast): string {
+export function setToast(toast: Toast, isSecure: boolean): string {
 	const value = encodeURIComponent(JSON.stringify(toast))
-	return `${cookieName}=${value}; Path=/; Max-Age=60; SameSite=Lax; HttpOnly; Secure`
+	return `${cookieName}=${value}; Path=/; Max-Age=60; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`
 }
 
 /**
@@ -65,10 +69,14 @@ export function setToast(toast: Toast): string {
  * Use this in Route actions to surface feedback after form submissions.
  *
  * @example
- * return showToast({ type: 'success', title: 'Profile updated' }, '/settings')
+ * return showToast({ type: 'success', title: 'Profile updated' }, '/settings', isSecure)
  */
-export function showToast(toast: Toast, redirectTo: string): Response {
+export function showToast(
+	toast: Toast,
+	redirectTo: string,
+	isSecure: boolean,
+): Response {
 	return redirect(redirectTo, {
-		headers: { 'set-cookie': setToast(toast) },
+		headers: { 'set-cookie': setToast(toast, isSecure) },
 	})
 }

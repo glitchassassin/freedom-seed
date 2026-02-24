@@ -3,6 +3,7 @@ import * as OTPAuth from 'otpauth'
 import type { ValidatedEnv } from '../../workers/env'
 import { getDb } from '~/db/client.server'
 import { mfaBackupCodes } from '~/db/schema'
+import { secureSuffix } from '~/utils/cookie-flags.server'
 import { readCookie } from '~/utils/cookie.server'
 import {
 	sha256Base64url,
@@ -124,7 +125,8 @@ export async function createMfaPendingCookie(
 ): Promise<string> {
 	const payload = `${userId}.${Date.now()}`
 	const signed = await signToken(payload, env.SESSION_SECRET)
-	return `${MFA_PENDING_COOKIE}=${signed}; Path=/; Max-Age=${MFA_PENDING_TTL_SECONDS}; HttpOnly; Secure; SameSite=Lax`
+	const isSecure = env.ENVIRONMENT === 'production'
+	return `${MFA_PENDING_COOKIE}=${signed}; Path=/; Max-Age=${MFA_PENDING_TTL_SECONDS}; HttpOnly${secureSuffix(isSecure)}; SameSite=Lax`
 }
 
 /**
@@ -158,6 +160,6 @@ export async function verifyMfaPendingCookie(
 /**
  * Returns a Set-Cookie header value that clears the MFA pending cookie.
  */
-export function clearMfaPendingCookie(): string {
-	return `${MFA_PENDING_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`
+export function clearMfaPendingCookie(isSecure: boolean): string {
+	return `${MFA_PENDING_COOKIE}=; Path=/; Max-Age=0; HttpOnly${secureSuffix(isSecure)}; SameSite=Lax`
 }

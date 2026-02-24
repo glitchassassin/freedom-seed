@@ -32,6 +32,7 @@ const schema = z
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	await requireRateLimit(env, request, {
 		prefix: 'signup',
 		limit: 3,
@@ -85,7 +86,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const { cookie } = await createSession(env, userId, request)
 	return redirect('/', {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Account created' })],
+			['set-cookie', setToast({ type: 'success', title: 'Account created' }, isSecure)],
 			['set-cookie', cookie],
 		],
 	})

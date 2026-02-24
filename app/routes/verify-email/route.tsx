@@ -19,6 +19,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	}
 
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const row = await findEmailVerificationToken(env, token)
 
 	if (!row) {
@@ -40,7 +41,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 				'set-cookie': setToast({
 					type: 'success',
 					title: 'Email verified',
-				}),
+				}, isSecure),
 			},
 		})
 	}
@@ -50,7 +51,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 			'set-cookie': setToast({
 				type: 'success',
 				title: 'Email verified. Please sign in.',
-			}),
+			}, isSecure),
 		},
 	})
 }

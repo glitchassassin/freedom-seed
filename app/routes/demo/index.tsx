@@ -46,15 +46,18 @@ import {
 	TableRow,
 } from '~/components/ui/table'
 import { Textarea } from '~/components/ui/textarea'
+import { getCloudflare } from '~/utils/cloudflare-context'
 import { showToast } from '~/utils/toast.server'
 
 const toastTypes = ['success', 'error', 'warning', 'info'] as const
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const formData = await request.formData()
 	const type = formData.get('type')
 	if (!toastTypes.includes(type as (typeof toastTypes)[number])) {
-		return showToast({ type: 'error', title: 'Invalid toast type' }, '/demo')
+		return showToast({ type: 'error', title: 'Invalid toast type' }, '/demo', isSecure)
 	}
 	const labels: Record<string, string> = {
 		success: 'Changes saved successfully',
@@ -75,6 +78,7 @@ export async function action({ request }: Route.ActionArgs) {
 			description: descriptions[type as string],
 		},
 		'/demo#toasts',
+		isSecure,
 	)
 }
 

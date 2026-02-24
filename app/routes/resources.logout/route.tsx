@@ -10,13 +10,14 @@ import { setToast } from '~/utils/toast.server'
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const { token } = await getSessionUser(request, env)
 	if (token) await deleteSession(env, token)
 
 	return redirect('/', {
 		headers: [
-			['set-cookie', clearSessionCookie()],
-			['set-cookie', setToast({ type: 'success', title: 'Signed out' })],
+			['set-cookie', clearSessionCookie(isSecure)],
+			['set-cookie', setToast({ type: 'success', title: 'Signed out' }, isSecure)],
 		],
 	})
 }

@@ -75,6 +75,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 	const user = requireUser(context)
 	const db = getDb(env)
 
@@ -176,7 +177,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 				'set-cookie': setToast({
 					type: 'success',
 					title: 'Two-factor authentication disabled',
-				}),
+				}, isSecure),
 			},
 		})
 	}

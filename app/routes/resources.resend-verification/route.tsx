@@ -11,6 +11,7 @@ import { setToast } from '~/utils/toast.server'
 export async function action({ request, context }: Route.ActionArgs) {
 	const user = requireUser(context)
 	const { env } = getCloudflare(context)
+	const isSecure = env.ENVIRONMENT === 'production'
 
 	await requireRateLimit(env, request, {
 		prefix: 'resend-verify',
@@ -25,7 +26,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 				'set-cookie': setToast({
 					type: 'info',
 					title: 'Email already verified',
-				}),
+				}, isSecure),
 			},
 		})
 	}
@@ -55,7 +56,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 			'set-cookie': setToast({
 				type: 'success',
 				title: 'Verification email sent',
-			}),
+			}, isSecure),
 		},
 	})
 }
