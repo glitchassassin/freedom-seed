@@ -18,6 +18,10 @@
 		"PLAUSIBLE_HOST": "",
 		// Auth session signing key — set the real value via `wrangler secret put SESSION_SECRET`
 		"SESSION_SECRET": "",
+		// Resend API key — set the real value via `wrangler secret put RESEND_API_KEY`
+		"RESEND_API_KEY": "",
+		// Default sender address for transactional emails
+		"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
 	},
 	"env": {
 		"development": {
@@ -26,6 +30,8 @@
 				"PLAUSIBLE_DOMAIN": "",
 				"PLAUSIBLE_HOST": "",
 				"SESSION_SECRET": "",
+				"RESEND_API_KEY": "",
+				"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
 			},
 			"d1_databases": [
 				{
