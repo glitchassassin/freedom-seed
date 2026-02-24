@@ -24,9 +24,14 @@ export function readEmail(recipient: string): CapturedEmail | null {
 	const lines = content.trim().split('\n').filter(Boolean)
 	// Search from most recent
 	for (let i = lines.length - 1; i >= 0; i--) {
-		const email: CapturedEmail = JSON.parse(lines[i])
-		if (email.to.includes(recipient)) {
-			return email
+		try {
+			const email: CapturedEmail = JSON.parse(lines[i])
+			if (email.to.includes(recipient)) {
+				return email
+			}
+		} catch {
+			// Skip malformed lines
+			continue
 		}
 	}
 	return null
