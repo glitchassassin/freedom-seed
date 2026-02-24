@@ -40,6 +40,13 @@ through during propagation.
 - `app/routes/_auth.forgot-password/route.tsx` — forgot-password rate limit
 - `app/routes/_auth.reset-password/route.tsx` — reset-password rate limit
 
+## Testing
+
+Set `DISABLE_RATE_LIMITING=true` in the Worker environment to bypass all rate
+limit checks. The `test` wrangler environment has this enabled so E2E tests are
+not throttled. Unit-test the rate-limiting logic directly via
+`checkRateLimit()`.
+
 ## Removal
 
 1. Remove `requireRateLimit` calls from the four auth route action functions.

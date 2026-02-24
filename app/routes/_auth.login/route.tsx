@@ -9,8 +9,9 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { getDb } from '~/db/client.server'
-import { passwordCredentials, users } from '~/db/schema'
+import { mfaCredentials, passwordCredentials, users } from '~/db/schema'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
@@ -32,7 +33,7 @@ const schema = z.object({
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
-	await requireRateLimit(env.RATE_LIMIT_KV, request, {
+	await requireRateLimit(env, request, {
 		prefix: 'login',
 		limit: 5,
 		windowSeconds: 300,
@@ -70,6 +71,27 @@ export async function action({ request, context }: Route.ActionArgs) {
 	if (!user || !cred || !valid) {
 		return submission.reply({
 			formErrors: ['Invalid email or password'],
+		})
+	}
+
+	// Check if user has MFA enabled
+	const mfaCred = await db
+		.select()
+		.from(mfaCredentials)
+		.where(eq(mfaCredentials.userId, user.id))
+		.limit(1)
+		.then((r) => r[0])
+
+	if (mfaCred?.verifiedAt) {
+		// MFA is enabled — redirect to challenge instead of creating a session
+		const mfaCookie = await createMfaPendingCookie(env, user.id)
+		const url = new URL(request.url)
+		const redirectTo = url.searchParams.get('redirectTo')
+		const mfaUrl = redirectTo
+			? `/login/mfa?redirectTo=${encodeURIComponent(redirectTo)}`
+			: '/login/mfa'
+		return redirect(mfaUrl, {
+			headers: { 'set-cookie': mfaCookie },
 		})
 	}
 
@@ -158,6 +180,22 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 					Sign in
 				</Button>
 			</Form>
+
+			<div className="relative">
+				<div className="absolute inset-0 flex items-center">
+					<span className="w-full border-t" />
+				</div>
+				<div className="relative flex justify-center text-xs uppercase">
+					<span className="bg-background text-muted-foreground px-2">Or</span>
+				</div>
+			</div>
+
+			<Link
+				to="/magic-link"
+				className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+			>
+				Sign in with email link
+			</Link>
 
 			<p className="text-muted-foreground text-center text-sm">
 				Don&apos;t have an account?{' '}

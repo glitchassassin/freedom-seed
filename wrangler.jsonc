@@ -48,6 +48,31 @@
 				},
 			],
 		},
+		"test": {
+			"vars": {
+				"ENVIRONMENT": "development",
+				"PLAUSIBLE_DOMAIN": "",
+				"PLAUSIBLE_HOST": "",
+				"SESSION_SECRET": "",
+				"RESEND_API_KEY": "",
+				"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
+				"DISABLE_RATE_LIMITING": "true",
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "freedom-seed",
+					"database_id": "00000000-0000-0000-0000-000000000000",
+					"migrations_dir": "./migrations",
+				},
+			],
+			"kv_namespaces": [
+				{
+					"binding": "RATE_LIMIT_KV",
+					"id": "00000000-0000-0000-0000-000000000000",
+				},
+			],
+		},
 	},
 	"observability": {
 		"enabled": true,
