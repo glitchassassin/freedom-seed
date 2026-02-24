@@ -28,10 +28,7 @@ export async function generateCsrfToken(
  * Uses __Host- prefix in production to prevent subdomain cookie injection.
  * Session cookie (no Max-Age) — dies when the browser closes.
  */
-export function makeCsrfCookie(
-	signedToken: string,
-	isSecure: boolean,
-): string {
+export function makeCsrfCookie(signedToken: string, isSecure: boolean): string {
 	return `${csrfCookieName(isSecure)}=${signedToken}; Path=/; SameSite=Lax; HttpOnly${secureSuffix(isSecure)}`
 }
 

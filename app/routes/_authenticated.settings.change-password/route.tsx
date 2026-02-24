@@ -65,7 +65,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	return redirect('/settings/change-password', {
 		headers: [
-			['set-cookie', setToast({ type: 'success', title: 'Password changed' }, isSecure)],
+			[
+				'set-cookie',
+				setToast({ type: 'success', title: 'Password changed' }, isSecure),
+			],
 			['set-cookie', cookie],
 		],
 	})

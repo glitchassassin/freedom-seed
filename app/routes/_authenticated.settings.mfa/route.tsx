@@ -174,10 +174,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 		return redirect('/settings/mfa', {
 			headers: {
-				'set-cookie': setToast({
-					type: 'success',
-					title: 'Two-factor authentication disabled',
-				}, isSecure),
+				'set-cookie': setToast(
+					{
+						type: 'success',
+						title: 'Two-factor authentication disabled',
+					},
+					isSecure,
+				),
 			},
 		})
 	}
