@@ -2,9 +2,14 @@
 
 export const iconNames = [
 	'lucide--x',
+	'lucide--users',
+	'lucide--sprout',
+	'lucide--shield-check',
+	'lucide--lock-keyhole',
 	'lucide--circle',
 	'lucide--chevron-right',
 	'lucide--check',
+	'lucide--camera',
 ] as const
 
 export type IconName = (typeof iconNames)[number]
