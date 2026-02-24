@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 import { signUp } from './auth-helpers'
 
@@ -7,16 +8,13 @@ test.describe('Logout', () => {
 	}) => {
 		await signUp(page)
 
-		// Submit a logout form via the browser (not page.request) so
-		// Set-Cookie headers from the redirect response are applied.
-		// Use a string expression to avoid DOM type errors in the Node.js context.
-		await page.evaluate(`(() => {
-			const f = document.createElement('form');
-			f.method = 'POST';
-			f.action = '/resources/logout';
-			document.body.append(f);
-			f.submit();
-		})()`)
+		// Navigate to an authenticated page so the _authenticated layout renders
+		// with the sign-out button
+		await page.goto('/settings/change-password')
+
+		// Click the sign-out button rendered by the _authenticated layout
+		await page.getByRole('button', { name: 'Sign out' }).click()
+
 		// Wait for the "Signed out" toast to confirm the round-trip completed
 		await expect(page.getByText('Signed out')).toBeVisible()
 
@@ -27,5 +25,12 @@ test.describe('Logout', () => {
 		// Visiting a protected page should redirect to login
 		await page.goto('/settings/change-password')
 		await expect(page).toHaveURL(/\/login/)
+	})
+
+	test('authenticated layout passes accessibility scan', async ({ page }) => {
+		await signUp(page)
+		await page.goto('/settings/change-password')
+		const results = await new AxeBuilder({ page }).analyze()
+		expect(results.violations).toEqual([])
 	})
 })

@@ -44,6 +44,7 @@ authenticated API routes are exempt.
 - `app/routes/_auth.forgot-password/route.tsx`
 - `app/routes/_auth.reset-password/route.tsx`
 - `app/routes/_authenticated.settings.change-password/route.tsx`
+- `app/routes/_authenticated/_layout.tsx`
 - `app/routes/resources/theme-switch/index.tsx`
 - `app/routes/demo/index.tsx`
 
