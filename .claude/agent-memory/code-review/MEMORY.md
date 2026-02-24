@@ -49,7 +49,7 @@
 - Cloudflare D1 (SQLite) + Drizzle ORM
 - Vite 7 + Tailwind CSS v4
 - Playwright for E2E tests (port 4173, preview build)
-- Node >= 22 required
+- Node >= 24 required (engines.node bumped from >=22 to >=24 in Feb 2026)
 
 ## Context API (v8_middleware)
 

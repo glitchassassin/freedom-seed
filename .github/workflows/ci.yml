@@ -20,8 +20,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
 
-      - name: Install Node.js and dependencies
-        uses: bahmutov/npm-install@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Check formatting
         run: npx prettier --check .
@@ -43,8 +49,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
 
-      - name: Install Node.js and dependencies
-        uses: bahmutov/npm-install@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -72,8 +84,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
 
-      - name: Install Node.js and dependencies
-        uses: bahmutov/npm-install@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build application
         run: npm run build
@@ -127,8 +145,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
 
-      - name: Install Node.js and dependencies
-        uses: bahmutov/npm-install@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build application
         run: npm run build
