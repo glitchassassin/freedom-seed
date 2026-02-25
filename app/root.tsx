@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import {
 	isRouteErrorResponse,
+	Link,
 	Links,
 	Meta,
 	Outlet,
@@ -11,6 +12,7 @@ import { toast } from 'sonner'
 
 import type { Route } from './+types/root'
 import './app.css'
+import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
@@ -177,30 +179,64 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-	let message = 'Oops!'
-	let details = 'An unexpected error occurred.'
-	let stack: string | undefined
+	if (isRouteErrorResponse(error) && error.status === 403) {
+		return (
+			<main className="mx-auto max-w-4xl p-6 pt-16">
+				<h1 className="text-2xl font-semibold">Access Denied</h1>
+				<p className="text-muted-foreground mt-2">
+					You don&apos;t have permission to view this page.
+				</p>
+				<Button asChild className="mt-4" variant="outline">
+					<Link to="/">Back to home</Link>
+				</Button>
+			</main>
+		)
+	}
+
+	if (isRouteErrorResponse(error) && error.status === 404) {
+		return (
+			<main className="mx-auto max-w-4xl p-6 pt-16">
+				<h1 className="text-2xl font-semibold">404</h1>
+				<p className="text-muted-foreground mt-2">
+					The requested page could not be found.
+				</p>
+				<Button asChild className="mt-4" variant="outline">
+					<Link to="/">Back to home</Link>
+				</Button>
+			</main>
+		)
+	}
 
 	if (isRouteErrorResponse(error)) {
-		message = error.status === 404 ? '404' : 'Error'
-		details =
-			error.status === 404
-				? 'The requested page could not be found.'
-				: error.statusText || details
-	} else if (import.meta.env.DEV && error && error instanceof Error) {
-		details = error.message
-		stack = error.stack
+		return (
+			<main className="mx-auto max-w-4xl p-6 pt-16">
+				<h1 className="text-2xl font-semibold">Error</h1>
+				<p className="text-muted-foreground mt-2">
+					{error.statusText || 'An unexpected error occurred.'}
+				</p>
+				<Button asChild className="mt-4" variant="outline">
+					<Link to="/">Back to home</Link>
+				</Button>
+			</main>
+		)
 	}
 
 	return (
-		<main className="container mx-auto p-4 pt-16">
-			<h1>{message}</h1>
-			<p>{details}</p>
-			{stack && (
-				<pre className="w-full overflow-x-auto p-4">
-					<code>{stack}</code>
+		<main className="mx-auto max-w-4xl p-6 pt-16">
+			<h1 className="text-2xl font-semibold">Something went wrong</h1>
+			<p className="text-muted-foreground mt-2">
+				{import.meta.env.DEV && error instanceof Error
+					? error.message
+					: 'An unexpected error occurred.'}
+			</p>
+			{import.meta.env.DEV && error instanceof Error && error.stack && (
+				<pre className="mt-4 w-full overflow-x-auto p-4">
+					<code>{error.stack}</code>
 				</pre>
 			)}
+			<Button asChild className="mt-4" variant="outline">
+				<Link to="/">Back to home</Link>
+			</Button>
 		</main>
 	)
 }
