@@ -1,6 +1,7 @@
-import { data, Form, isRouteErrorResponse, Link, Outlet } from 'react-router'
+import { data, Form, Link, Outlet } from 'react-router'
 import type { Route } from './+types/_layout'
 import { CsrfInput } from '~/components/csrf-input'
+import { GeneralErrorBoundary } from '~/components/error-boundary'
 import { Button } from '~/components/ui/button'
 import {
 	DropdownMenu,
@@ -151,48 +152,5 @@ export default function TeamLayout({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-	if (isRouteErrorResponse(error) && error.status === 403) {
-		return (
-			<main className="mx-auto max-w-4xl p-6">
-				<h1 className="text-2xl font-semibold">Access Denied</h1>
-				<p className="text-muted-foreground mt-2">
-					You don&apos;t have permission to view this page.
-				</p>
-				<Button asChild className="mt-4" variant="outline">
-					<Link to="/">Back to home</Link>
-				</Button>
-			</main>
-		)
-	}
-
-	if (isRouteErrorResponse(error)) {
-		return (
-			<main className="mx-auto max-w-4xl p-6">
-				<h1 className="text-2xl font-semibold">
-					{error.status === 404 ? '404' : 'Error'}
-				</h1>
-				<p className="text-muted-foreground mt-2">
-					{error.status === 404
-						? 'The requested page could not be found.'
-						: error.statusText || 'An unexpected error occurred.'}
-				</p>
-			</main>
-		)
-	}
-
-	return (
-		<main className="mx-auto max-w-4xl p-6">
-			<h1 className="text-2xl font-semibold">Error</h1>
-			<p className="text-muted-foreground mt-2">
-				{import.meta.env.DEV && error instanceof Error
-					? error.message
-					: 'An unexpected error occurred.'}
-			</p>
-			{import.meta.env.DEV && error instanceof Error && error.stack && (
-				<pre className="mt-4 w-full overflow-x-auto p-4">
-					<code>{error.stack}</code>
-				</pre>
-			)}
-		</main>
-	)
+	return <GeneralErrorBoundary error={error} />
 }
