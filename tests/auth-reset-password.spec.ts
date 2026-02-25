@@ -42,12 +42,12 @@ test.describe('Reset password', () => {
 		await page.getByRole('button', { name: 'Reset password' }).click()
 
 		// Should redirect to home with a new session
-		await page.waitForURL('/')
+		await page.waitForURL(/\/teams\//)
 
 		// Verify we can log in with the new password
 		await page.context().clearCookies()
 		await logIn(page, { email, password: NEW_PASSWORD })
-		await expect(page).toHaveURL('/')
+		await expect(page).toHaveURL(/\/teams\//)
 	})
 
 	test('passes accessibility scan (invalid state)', async ({ page }) => {

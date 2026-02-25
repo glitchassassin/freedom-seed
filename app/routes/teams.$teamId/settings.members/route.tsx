@@ -1,5 +1,5 @@
 import { parseWithZod } from '@conform-to/zod/v4'
-import { Form, useLoaderData } from 'react-router'
+import { Form } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
 import { CsrfInput } from '~/components/csrf-input'
@@ -211,15 +211,7 @@ export function meta() {
 }
 
 export default function TeamMembersPage({ loaderData }: Route.ComponentProps) {
-	const {
-		members,
-		invitations,
-		currentUserId,
-		currentRole,
-		isAdmin,
-		teamId,
-		teamName,
-	} = loaderData
+	const { members, invitations, currentUserId, isAdmin, teamName } = loaderData
 
 	return (
 		<main className="mx-auto max-w-4xl p-6">
