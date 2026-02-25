@@ -1,4 +1,4 @@
-import { Form, isRouteErrorResponse, Link, Outlet } from 'react-router'
+import { data, Form, isRouteErrorResponse, Link, Outlet } from 'react-router'
 import type { Route } from './+types/_layout'
 import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
@@ -12,6 +12,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { setLastTeamCookie } from '~/utils/last-team-cookie.server'
 import { hasRole } from '~/utils/rbac.server'
 import { requireUser } from '~/utils/session-context'
 import { requireTeamMember, teamMemberContext } from '~/utils/team-context'
@@ -46,13 +47,21 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 	const member = requireTeamMember(context)
 	const userTeams = await getUserTeams(db, user.id)
 	const currentTeam = userTeams.find((t) => t.id === teamId)
-	return {
-		team: currentTeam!,
-		userTeams,
-		user: { email: user.email, displayName: user.displayName },
-		emailVerified: !!user.emailVerifiedAt,
-		isAdminOrOwner: hasRole(member.role, 'admin'),
-	}
+	const isSecure = env.ENVIRONMENT === 'production'
+	return data(
+		{
+			team: currentTeam!,
+			userTeams,
+			user: { email: user.email, displayName: user.displayName },
+			emailVerified: !!user.emailVerifiedAt,
+			isAdminOrOwner: hasRole(member.role, 'admin'),
+		},
+		{
+			headers: {
+				'set-cookie': setLastTeamCookie(teamId, isSecure),
+			},
+		},
+	)
 }
 
 export default function TeamLayout({ loaderData }: Route.ComponentProps) {
