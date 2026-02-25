@@ -12,7 +12,10 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
-import { setLastTeamCookie } from '~/utils/last-team-cookie.server'
+import {
+	getLastTeamId,
+	setLastTeamCookie,
+} from '~/utils/last-team-cookie.server'
 import { hasRole } from '~/utils/rbac.server'
 import { requireUser } from '~/utils/session-context'
 import { requireTeamMember, teamMemberContext } from '~/utils/team-context'
@@ -39,7 +42,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	},
 ]
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
 	const user = requireUser(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
@@ -47,21 +50,24 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 	const member = requireTeamMember(context)
 	const userTeams = await getUserTeams(db, user.id)
 	const currentTeam = userTeams.find((t) => t.id === teamId)
+
+	const responseData = {
+		team: currentTeam!,
+		userTeams,
+		user: { email: user.email, displayName: user.displayName },
+		emailVerified: !!user.emailVerifiedAt,
+		isAdminOrOwner: hasRole(member.role, 'admin'),
+	}
+
+	const lastTeamId = getLastTeamId(request)
+	if (lastTeamId === teamId) {
+		return responseData
+	}
+
 	const isSecure = env.ENVIRONMENT === 'production'
-	return data(
-		{
-			team: currentTeam!,
-			userTeams,
-			user: { email: user.email, displayName: user.displayName },
-			emailVerified: !!user.emailVerifiedAt,
-			isAdminOrOwner: hasRole(member.role, 'admin'),
-		},
-		{
-			headers: {
-				'set-cookie': setLastTeamCookie(teamId, isSecure),
-			},
-		},
-	)
+	return data(responseData, {
+		headers: { 'set-cookie': setLastTeamCookie(teamId, isSecure) },
+	})
 }
 
 export default function TeamLayout({ loaderData }: Route.ComponentProps) {

@@ -1,7 +1,7 @@
 import { secureSuffix } from '~/utils/cookie-flags.server'
 import { readCookie } from '~/utils/cookie.server'
 
-const cookieName = 'last_team'
+const cookieName = 'en_last_team'
 
 /**
  * Reads the last-visited team ID from the cookie.
