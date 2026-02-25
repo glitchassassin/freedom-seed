@@ -1,10 +1,13 @@
-import { Link } from 'react-router'
+import { Link, redirect } from 'react-router'
 
 import type { Route } from './+types/index'
 import { Button } from '~/components/ui/button'
 import { Icon } from '~/components/ui/icon'
 import type { IconName } from '~/components/ui/icon'
+import { getDb } from '~/db/client.server'
+import { getCloudflare } from '~/utils/cloudflare-context'
 import { getOptionalUser } from '~/utils/session-context'
+import { getUserTeams } from '~/utils/teams.server'
 
 export function meta() {
 	return [
@@ -17,9 +20,17 @@ export function meta() {
 	]
 }
 
-export function loader({ context }: Route.LoaderArgs) {
+export async function loader({ context }: Route.LoaderArgs) {
 	const user = getOptionalUser(context)
-	return { user: user ? { displayName: user.displayName } : null }
+	if (user) {
+		const { env } = getCloudflare(context)
+		const db = getDb(env)
+		const userTeams = await getUserTeams(db, user.id)
+		if (userTeams.length > 0) {
+			throw redirect(`/teams/${userTeams[0].id}`)
+		}
+	}
+	return { user: null }
 }
 
 const features: { icon: IconName; title: string; description: string }[] = [
@@ -86,12 +97,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 						</>
 					)}
 				</div>
-
-				{user?.displayName && (
-					<p className="text-muted-foreground text-body-sm">
-						Welcome back, {user.displayName}.
-					</p>
-				)}
 			</section>
 
 			{/* Features */}
