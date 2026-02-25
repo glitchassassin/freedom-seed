@@ -6,6 +6,7 @@ import { Icon } from '~/components/ui/icon'
 import type { IconName } from '~/components/ui/icon'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { getLastTeamId } from '~/utils/last-team-cookie.server'
 import { getOptionalUser } from '~/utils/session-context'
 import { getUserTeams } from '~/utils/teams.server'
 
@@ -20,14 +21,17 @@ export function meta() {
 	]
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
 	const user = getOptionalUser(context)
 	if (user) {
 		const { env } = getCloudflare(context)
 		const db = getDb(env)
 		const userTeams = await getUserTeams(db, user.id)
 		if (userTeams.length > 0) {
-			throw redirect(`/teams/${userTeams[0].id}`)
+			const lastTeamId = getLastTeamId(request)
+			const targetTeam =
+				userTeams.find((t) => t.id === lastTeamId) ?? userTeams[0]
+			throw redirect(`/teams/${targetTeam.id}`)
 		}
 	}
 	return { user: null }
