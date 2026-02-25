@@ -15,6 +15,7 @@ import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
+import { getUserTeams } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
 
 // Pre-computed dummy hash used to normalize response time when the email does
@@ -98,9 +99,18 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	const { cookie } = await createSession(env, user.id, request)
 
-	// Honor redirectTo if it's a safe relative path
+	// Default to user's first team if no explicit redirectTo
 	const url = new URL(request.url)
-	const redirectTo = url.searchParams.get('redirectTo') ?? '/'
+	let defaultRedirect = '/'
+	if (!url.searchParams.get('redirectTo')) {
+		const userTeams = await getUserTeams(db, user.id)
+		if (userTeams.length > 0) {
+			defaultRedirect = `/teams/${userTeams[0].id}`
+		}
+	}
+
+	// Honor redirectTo if it's a safe relative path
+	const redirectTo = url.searchParams.get('redirectTo') ?? defaultRedirect
 	const safeRedirect =
 		redirectTo.startsWith('/') && !redirectTo.startsWith('//')
 			? redirectTo
