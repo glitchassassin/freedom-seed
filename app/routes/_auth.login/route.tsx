@@ -161,7 +161,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 					<Input
 						{...getInputProps(fields.email, { type: 'email' })}
 						autoComplete="email"
-						aria-invalid={!!fields.email.errors}
 					/>
 					{fields.email.errors && (
 						<p className="text-destructive text-sm">{fields.email.errors[0]}</p>
@@ -181,7 +180,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 					<Input
 						{...getInputProps(fields.password, { type: 'password' })}
 						autoComplete="current-password"
-						aria-invalid={!!fields.password.errors}
 					/>
 					{fields.password.errors && (
 						<p className="text-destructive text-sm">
