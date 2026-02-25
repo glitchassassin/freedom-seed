@@ -84,6 +84,7 @@
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook
   implementation patterns
 - [auth-patterns.md](auth-patterns.md) -- auth session/password review findings
+- [teams-patterns.md](teams-patterns.md) -- teams feature review findings
 
 ## Auth Architecture
 
@@ -100,6 +101,19 @@
 - Auth routes use `setToast` + array headers pattern (not `showToast`) to set
   both session and toast cookies
 
+## Teams Architecture
+
+- `app/utils/team-context.ts` -- `teamMemberContext` key +
+  `getOptionalTeamMember`/`requireTeamMember` helpers
+- `app/utils/teams.server.ts` -- Team CRUD (createTeam, renameTeam, deleteTeam)
+- `app/utils/rbac.server.ts` -- `hasRole`/`requireRole` with numeric rank
+  (owner=3, admin=2, member=1)
+- `app/utils/invitations.server.ts` -- Invitation CRUD with SHA-256 hashed
+  tokens
+- Team layout middleware at `app/routes/teams.$teamId/_layout.tsx` gates all
+  team routes
+- Personal team created on signup in `_auth.signup/route.tsx` batch
+
 ## Facets System
 
 - `docs/facets/README.md` is the index of all facets
@@ -111,3 +125,13 @@
 - Implemented facets list actual files and removal steps
 - CLAUDE.md should cross-reference facets but retain cross-cutting safety rules
   (e.g., `.server.ts` import constraint, `cf-typegen` trigger conditions)
+
+## DB Patterns
+
+- All queries use `db.select().from()` builder API -- avoid `db.query.*`
+  relational API for consistency
+- `db.batch()` for atomic multi-statement operations (D1-specific)
+- Schema uses `$defaultFn(() => crypto.randomUUID())` for text PKs
+- Timestamps: `integer('...', { mode: 'timestamp_ms' })` with
+  `unixepoch('now') * 1000` default
+- `{ schema }` passed to `drizzle()` in client.server.ts

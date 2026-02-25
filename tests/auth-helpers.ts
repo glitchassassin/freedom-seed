@@ -10,7 +10,7 @@ export function uniqueEmail(): string {
 	return `test+${ts}-${rand}@example.com`
 }
 
-/** Fills the signup form and waits for redirect to home. */
+/** Fills the signup form and waits for redirect to team dashboard. */
 export async function signUp(
 	page: Page,
 	options?: { email?: string; password?: string },
@@ -23,12 +23,12 @@ export async function signUp(
 	await page.getByLabel('Password', { exact: true }).fill(password)
 	await page.getByLabel('Confirm password').fill(password)
 	await page.getByRole('button', { name: 'Create account' }).click()
-	await page.waitForURL('/')
+	await page.waitForURL(/\/teams\//)
 
 	return { email, password }
 }
 
-/** Fills the login form and waits for redirect (default: /). */
+/** Fills the login form and waits for redirect (default: team dashboard). */
 export async function logIn(
 	page: Page,
 	options: { email: string; password?: string; redirectTo?: string },
@@ -43,6 +43,9 @@ export async function logIn(
 	await page.getByLabel('Password').fill(password)
 	await page.getByRole('button', { name: 'Sign in' }).click()
 
-	const expectedUrl = options.redirectTo ?? '/'
-	await page.waitForURL(expectedUrl)
+	if (options.redirectTo) {
+		await page.waitForURL(options.redirectTo)
+	} else {
+		await page.waitForURL(/\/teams\//)
+	}
 }

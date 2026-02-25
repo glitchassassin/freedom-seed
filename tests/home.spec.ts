@@ -72,21 +72,14 @@ test.describe('Home Page', () => {
 		await expect(page.getByText('Built with Freedom Seed')).toBeVisible()
 	})
 
-	test('shows authenticated state for logged-in user', async ({ page }) => {
+	test('redirects authenticated user to team dashboard', async ({ page }) => {
 		await signUp(page)
-		await page.goto('/')
+		// After signup, user is on team page
+		await expect(page).toHaveURL(/\/teams\//)
 
-		// Authenticated user sees vault links instead of sign-up/sign-in
-		const vaultLinks = page.getByRole('link', { name: 'Go to your vaults' })
-		await expect(vaultLinks).toHaveCount(2)
-		await expect(vaultLinks.first()).toBeVisible()
-		await expect(
-			page.getByRole('link', { name: 'Get started' }),
-		).not.toBeVisible()
-		await expect(page.getByRole('link', { name: 'Sign in' })).not.toBeVisible()
-		await expect(
-			page.getByRole('link', { name: 'Create your account' }),
-		).not.toBeVisible()
+		// Navigating to / should redirect to team dashboard
+		await page.goto('/')
+		await expect(page).toHaveURL(/\/teams\//)
 	})
 
 	test('passes accessibility scan', async ({ page }) => {

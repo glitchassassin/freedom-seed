@@ -54,7 +54,12 @@ export const middleware: Route.MiddlewareFunction[] = [
 		const { toast: toastData, setCookieHeader } = getToast(request, isSecure)
 		context.set(toastContext, toastData)
 		const response = await next()
-		if (setCookieHeader) response.headers.append('set-cookie', setCookieHeader)
+		// Only clear the toast cookie on non-redirect responses so the
+		// flash message survives redirect chains (e.g. /verify-email → / → /teams/:id)
+		const isRedirect = response.status >= 300 && response.status < 400
+		if (setCookieHeader && !isRedirect) {
+			response.headers.append('set-cookie', setCookieHeader)
+		}
 		return response
 	},
 	async ({ request, context }, next) => {

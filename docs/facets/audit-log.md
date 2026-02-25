@@ -13,19 +13,19 @@ optionally inside `ctx.waitUntil()` to avoid blocking the response. The
 `AuditAction` string union in `app/db/audit-log.server.ts` is the authoritative
 list of loggable event types; extend it as new features are added.
 
-RBAC enforcement (owner/admin only) is stubbed in the loader and will be wired
-up when the `rbac` facet is implemented.
+RBAC enforcement (admin-only) is handled by `requireRole(context, 'admin')` in
+the loader, enforced via the team layout middleware.
 
 ## Related Files
 
 - `app/db/schema.ts` — `auditLog` table definition (`audit_log` in SQL)
 - `app/db/audit-log.server.ts` — `AuditAction` type and `logAuditEvent` utility
-- `app/routes/teams.$teamId.settings.audit-log/route.tsx` — paginated admin view
+- `app/routes/teams.$teamId/settings.audit-log/route.tsx` — paginated admin view
 
 ## Removal
 
 1. Delete `app/db/audit-log.server.ts`
-2. Delete `app/routes/teams.$teamId.settings.audit-log/`
+2. Delete `app/routes/teams.$teamId/settings.audit-log/`
 3. Remove the `auditLog` export from `app/db/schema.ts`
 4. `npm run db:generate` — emits DROP TABLE migration
 5. `npm run db:migrate` then `npm run db:migrate:remote`

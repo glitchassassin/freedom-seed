@@ -1,4 +1,4 @@
-import { Form, Link, Outlet, redirect } from 'react-router'
+import { Form, Link, Outlet } from 'react-router'
 import type { Route } from './+types/_layout'
 import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
@@ -14,7 +14,7 @@ import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { requireUser } from '~/utils/session-context'
 import { teamMemberContext } from '~/utils/team-context'
-import { getTeamMember, getUserTeams } from '~/utils/teams.server'
+import { getTeamById, getTeamMember, getUserTeams } from '~/utils/teams.server'
 
 export const middleware: Route.MiddlewareFunction[] = [
 	async ({ params, context }, next) => {
@@ -24,9 +24,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 		const teamId = params.teamId!
 		const member = await getTeamMember(db, teamId, user.id)
 		if (!member) throw new Response('Forbidden', { status: 403 })
-		const team = await db.query.teams.findFirst({
-			where: (t, { eq }) => eq(t.id, teamId),
-		})
+		const team = await getTeamById(db, teamId)
 		if (!team) throw new Response('Not Found', { status: 404 })
 		context.set(teamMemberContext, {
 			teamId: team.id,
@@ -55,7 +53,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function TeamLayout({ loaderData }: Route.ComponentProps) {
-	const { team, userTeams, user, emailVerified } = loaderData
+	const { team, userTeams, emailVerified } = loaderData
 
 	return (
 		<>
@@ -66,7 +64,7 @@ export default function TeamLayout({ loaderData }: Route.ComponentProps) {
 							<DropdownMenuTrigger asChild>
 								<Button variant="ghost" size="sm">
 									{team.name}
-									<span className="ml-1 text-xs opacity-50">▼</span>
+									<span className="text-muted-foreground ml-1 text-xs">▼</span>
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="start">

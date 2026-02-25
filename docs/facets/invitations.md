@@ -10,8 +10,16 @@ Pending invitations are visible and manageable from team settings.
 
 ## Related Files
 
-_Not yet implemented._
+- `app/db/schema.ts` — `teamInvitations` table
+- `app/utils/invitations.server.ts` — Token generation, lookup, accept, revoke
+- `app/emails/team-invitation.tsx` — Invitation email template
+- `app/routes/invitations.$token/route.tsx` — Accept invitation page
+- `app/routes/teams.$teamId/settings.members/route.tsx` — Invite & revoke UI
 
 ## Removal
 
-_Not yet implemented._
+1. Delete `app/utils/invitations.server.ts`
+2. Delete `app/routes/invitations.$token/`
+3. Remove invitation-related actions from settings.members route
+4. Remove `teamInvitations` from `app/db/schema.ts`
+5. `npm run db:generate && npm run db:migrate`

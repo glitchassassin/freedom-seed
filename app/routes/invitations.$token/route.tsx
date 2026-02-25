@@ -52,7 +52,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 	}
 }
 
-export async function action({ request, params, context }: Route.ActionArgs) {
+export async function action({ params, context }: Route.ActionArgs) {
 	const user = getOptionalUser(context)
 	if (!user) throw redirect('/login')
 
