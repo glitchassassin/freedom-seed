@@ -113,7 +113,6 @@ export default function ChangePasswordPage({
 						<Input
 							{...getInputProps(fields.currentPassword, { type: 'password' })}
 							autoComplete="current-password"
-							aria-invalid={!!fields.currentPassword.errors}
 						/>
 						{fields.currentPassword.errors && (
 							<p className="text-destructive text-sm">
@@ -127,7 +126,6 @@ export default function ChangePasswordPage({
 						<Input
 							{...getInputProps(fields.newPassword, { type: 'password' })}
 							autoComplete="new-password"
-							aria-invalid={!!fields.newPassword.errors}
 						/>
 						{fields.newPassword.errors && (
 							<p className="text-destructive text-sm">
@@ -143,7 +141,6 @@ export default function ChangePasswordPage({
 						<Input
 							{...getInputProps(fields.confirmPassword, { type: 'password' })}
 							autoComplete="new-password"
-							aria-invalid={!!fields.confirmPassword.errors}
 						/>
 						{fields.confirmPassword.errors && (
 							<p className="text-destructive text-sm">

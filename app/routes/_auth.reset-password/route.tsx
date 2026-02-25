@@ -146,7 +146,6 @@ export default function ResetPasswordPage({
 					<Input
 						{...getInputProps(fields.password, { type: 'password' })}
 						autoComplete="new-password"
-						aria-invalid={!!fields.password.errors}
 					/>
 					{fields.password.errors && (
 						<p className="text-destructive text-sm">
@@ -162,7 +161,6 @@ export default function ResetPasswordPage({
 					<Input
 						{...getInputProps(fields.confirmPassword, { type: 'password' })}
 						autoComplete="new-password"
-						aria-invalid={!!fields.confirmPassword.errors}
 					/>
 					{fields.confirmPassword.errors && (
 						<p className="text-destructive text-sm">

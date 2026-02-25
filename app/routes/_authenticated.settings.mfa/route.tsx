@@ -343,7 +343,6 @@ function SetupView({
 							inputMode="numeric"
 							maxLength={6}
 							placeholder="000000"
-							aria-invalid={!!fields.code.errors}
 						/>
 						{fields.code.errors && (
 							<p className="text-destructive text-sm">
@@ -482,7 +481,6 @@ function ActiveView({ actionData }: { actionData: unknown }) {
 								<Input
 									{...getInputProps(fields.password, { type: 'password' })}
 									autoComplete="current-password"
-									aria-invalid={!!fields.password.errors}
 								/>
 								{fields.password.errors && (
 									<p className="text-destructive text-sm">

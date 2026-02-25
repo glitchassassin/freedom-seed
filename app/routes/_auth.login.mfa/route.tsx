@@ -199,7 +199,6 @@ function TotpForm({
 					maxLength={6}
 					placeholder="000000"
 					autoFocus
-					aria-invalid={!!fields.code.errors}
 				/>
 				{fields.code.errors && (
 					<p className="text-destructive text-sm">{fields.code.errors[0]}</p>
@@ -243,7 +242,6 @@ function BackupForm({
 					autoComplete="off"
 					placeholder="Enter backup code"
 					autoFocus
-					aria-invalid={!!fields.code.errors}
 				/>
 				{fields.code.errors && (
 					<p className="text-destructive text-sm">{fields.code.errors[0]}</p>
