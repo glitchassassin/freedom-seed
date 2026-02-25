@@ -1,12 +1,100 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+	index,
+	integer,
+	sqliteTable,
+	text,
+	uniqueIndex,
+} from 'drizzle-orm/sqlite-core'
+
+export const users = sqliteTable('users', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	email: text('email').notNull().unique(),
+	displayName: text('display_name'),
+	emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp_ms' }),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
+
+export const teams = sqliteTable('teams', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	name: text('name').notNull(),
+	slug: text('slug').notNull().unique(),
+	isPersonal: integer('is_personal', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
+
+export const teamMemberRoleEnum = ['owner', 'admin', 'member'] as const
+export type TeamMemberRole = (typeof teamMemberRoleEnum)[number]
+
+export const teamMembers = sqliteTable(
+	'team_members',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		teamId: text('team_id')
+			.notNull()
+			.references(() => teams.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		role: text('role').$type<TeamMemberRole>().notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('team_members_team_user_idx').on(table.teamId, table.userId),
+	],
+)
+
+export const teamInvitations = sqliteTable('team_invitations', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	teamId: text('team_id')
+		.notNull()
+		.references(() => teams.id, { onDelete: 'cascade' }),
+	invitedByUserId: text('invited_by_user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	email: text('email').notNull(),
+	role: text('role').$type<TeamMemberRole>().notNull(),
+	tokenHash: text('token_hash').notNull().unique(),
+	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+	acceptedAt: integer('accepted_at', { mode: 'timestamp_ms' }),
+	revokedAt: integer('revoked_at', { mode: 'timestamp_ms' }),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
 
 export const auditLog = sqliteTable(
 	'audit_log',
 	{
 		id: integer('id').primaryKey({ autoIncrement: true }),
-		teamId: text('team_id').notNull(), // plain text; FK added when teams table lands
-		actorId: text('actor_id').notNull(), // plain text; FK added when users table lands
+		teamId: text('team_id')
+			.notNull()
+			.references(() => teams.id, { onDelete: 'cascade' }),
+		actorId: text('actor_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
 		actorEmail: text('actor_email').notNull(), // snapshot at write time
 		action: text('action').notNull(), // AuditAction string
 		targetType: text('target_type'), // e.g. "member", "subscription"
@@ -23,21 +111,6 @@ export const auditLog = sqliteTable(
 		index('audit_log_team_created_idx').on(table.teamId, table.createdAt),
 	],
 )
-
-export const users = sqliteTable('users', {
-	id: text('id')
-		.primaryKey()
-		.$defaultFn(() => crypto.randomUUID()),
-	email: text('email').notNull().unique(),
-	displayName: text('display_name'),
-	emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp_ms' }),
-	createdAt: integer('created_at', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(unixepoch('now') * 1000)`),
-	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(unixepoch('now') * 1000)`),
-})
 
 export const sessions = sqliteTable(
 	'sessions',
