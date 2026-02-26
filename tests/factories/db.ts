@@ -90,7 +90,8 @@ export async function hashPassword(plain: string): Promise<string> {
 }
 
 /**
- * Signs a session token with HMAC-SHA256 using SESSION_SECRET from `.dev.vars`.
+ * Signs a session token with HMAC-SHA256 using SESSION_SECRET from `.dev.vars`
+ * (falls back to `.dev.vars.test` in CI).
  * Returns `rawToken.signature` — the format stored in the `en_session` cookie.
  */
 export function signSessionToken(rawToken: string): string {
@@ -102,9 +103,16 @@ export function signSessionToken(rawToken: string): string {
 let cachedSecret: string | undefined
 function readSessionSecret(): string {
 	if (cachedSecret) return cachedSecret
-	const content = readFileSync(join(process.cwd(), '.dev.vars'), 'utf-8')
+	const cwd = process.cwd()
+	let content: string
+	try {
+		content = readFileSync(join(cwd, '.dev.vars'), 'utf-8')
+	} catch {
+		content = readFileSync(join(cwd, '.dev.vars.test'), 'utf-8')
+	}
 	const match = content.match(/^SESSION_SECRET\s*=\s*"?(.+?)"?\s*$/m)
-	if (!match) throw new Error('SESSION_SECRET not found in .dev.vars')
+	if (!match)
+		throw new Error('SESSION_SECRET not found in .dev.vars or .dev.vars.test')
 	cachedSecret = match[1]
 	return cachedSecret
 }
