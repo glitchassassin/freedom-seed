@@ -21,7 +21,7 @@ fits into the stack.
 
 Your role is the planner and manager. Your context is too valuable to spend on
 implementing code. Instead, spin up Sonnet subagents to handle the actual
-implementation; use the merge-worktrees agent, if necessary, to merge changes
+implementation; use the worktree-merger agent, if necessary, to rebase changes
 from multiple parallel subagents; and then use the code-review agent to check if
 the changes meet the requirements.
 
