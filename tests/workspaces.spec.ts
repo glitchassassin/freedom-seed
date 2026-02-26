@@ -1,6 +1,7 @@
-import { test, expect } from '@playwright/test'
 import { signUp, uniqueEmail } from './auth-helpers'
 import { clearCapturedEmails, waitForEmail } from './email-helpers'
+import { createUser, createWorkspace } from './factories'
+import { authenticatedContext, test, expect } from './playwright-utils'
 
 test.describe('Workspaces', () => {
 	test.beforeEach(() => {
@@ -24,27 +25,26 @@ test.describe('Workspaces', () => {
 		).toBeVisible()
 	})
 
-	test('members page shows current user as owner', async ({ page }) => {
-		const { email } = await signUp(page)
+	test('members page shows current user as owner', async ({ page, login }) => {
+		const { user } = await login()
 
-		// Navigate to members via the settings link
+		// Navigate to personal workspace (redirects automatically)
+		await page.goto('/')
+		await expect(page).toHaveURL(/\/workspaces\//)
+
+		// Navigate to settings, then members
 		await page.getByRole('link', { name: 'Workspace settings' }).click()
-
-		// Personal workspaces don't show Members link in header, go directly
-		// Get current URL to extract workspace ID
 		const url = page.url()
 		const workspaceId = url.match(/\/workspaces\/([^/]+)/)?.[1]
 		await page.goto(`/workspaces/${workspaceId}/settings/members`)
 
-		await expect(page.getByText(email)).toBeVisible()
+		await expect(page.getByText(user.email)).toBeVisible()
 		await expect(page.getByText('owner')).toBeVisible()
 	})
 
 	test('can create a new shared workspace', async ({ page }) => {
 		await signUp(page)
 
-		// Navigate to create workspace
-		// Open workspace switcher dropdown
 		await page.getByRole('button', { name: /Personal/ }).click()
 		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
 
@@ -62,14 +62,12 @@ test.describe('Workspaces', () => {
 	test('workspace switcher shows all workspaces', async ({ page }) => {
 		await signUp(page)
 
-		// Create a second workspace
 		await page.getByRole('button', { name: /Personal/ }).click()
 		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
 		await page.getByLabel('Workspace name').fill('Second Team')
 		await page.getByRole('button', { name: 'Create workspace' }).click()
 		await expect(page).toHaveURL(/\/workspaces\//)
 
-		// Open workspace switcher — should show both workspaces
 		await page.getByRole('button', { name: /Second Team/ }).click()
 		await expect(page.getByRole('menuitem', { name: /Personal/ })).toBeVisible()
 		await expect(
@@ -79,51 +77,41 @@ test.describe('Workspaces', () => {
 
 	test('admin can invite a member and invitation email is sent', async ({
 		page,
+		login,
 	}) => {
-		await signUp(page)
+		const { user } = await login()
+		const ws = createWorkspace({ ownerId: user.id, name: 'Invite Test Team' })
 
-		// Create a shared workspace
-		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
-		await page.getByLabel('Workspace name').fill('Invite Test Team')
-		await page.getByRole('button', { name: 'Create workspace' }).click()
-		await expect(page).toHaveURL(/\/workspaces\//)
+		await page.goto(`/workspaces/${ws.workspace.id}/settings/members`)
 
-		// Go to members page
-		await page.getByRole('link', { name: 'Members', exact: true }).click()
-
-		// Invite a member
 		const inviteeEmail = uniqueEmail()
 		await page.getByRole('textbox', { name: 'Email' }).fill(inviteeEmail)
 		await page.getByRole('button', { name: 'Send invite' }).click()
 
-		// Verify invitation appears in pending list
 		await expect(page.getByText(inviteeEmail)).toBeVisible()
 
-		// Verify email was sent
 		const captured = await waitForEmail(inviteeEmail)
 		expect(captured.subject).toContain('invited')
 	})
 
 	test('invited user can accept invitation and access workspace', async ({
-		page,
+		page: pageA,
+		login,
+		browser,
 	}) => {
-		// User A creates a workspace and invites User B
-		await signUp(page)
+		// User A creates workspace and invites User B via UI (need the email)
+		const { user: userA } = await login()
+		const ws = createWorkspace({
+			ownerId: userA.id,
+			name: 'Accept Test Team',
+		})
 
-		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
-		await page.getByLabel('Workspace name').fill('Accept Test Team')
-		await page.getByRole('button', { name: 'Create workspace' }).click()
-		await expect(page).toHaveURL(/\/workspaces\//)
-
-		await page.getByRole('link', { name: 'Members', exact: true }).click()
+		await pageA.goto(`/workspaces/${ws.workspace.id}/settings/members`)
 
 		const inviteeEmail = uniqueEmail()
-		await page.getByRole('textbox', { name: 'Email' }).fill(inviteeEmail)
-		await page.getByRole('button', { name: 'Send invite' }).click()
+		await pageA.getByRole('textbox', { name: 'Email' }).fill(inviteeEmail)
+		await pageA.getByRole('button', { name: 'Send invite' }).click()
 
-		// Get the invitation link from the email
 		const captured = await waitForEmail(inviteeEmail)
 		const acceptUrlMatch = captured.html.match(
 			/href="([^"]*\/invitations\/[^"]*)"/,
@@ -131,17 +119,15 @@ test.describe('Workspaces', () => {
 		expect(acceptUrlMatch).toBeTruthy()
 		const acceptUrl = acceptUrlMatch![1]
 
-		// User B signs up with the invited email in a new page with isolated context
-		const context2 = await page.context().browser()!.newContext()
+		// User B signs up with the invited email in a fresh context
+		const context2 = await browser.newContext()
 		const page2 = await context2.newPage()
 		await signUp(page2, { email: inviteeEmail })
 
-		// User B navigates to the invitation link
 		await page2.goto(acceptUrl)
 		await expect(page2.getByText('Accept Test Team')).toBeVisible()
 		await page2.getByRole('button', { name: 'Accept invitation' }).click()
 
-		// User B should be on the workspace page now
 		await expect(page2).toHaveURL(/\/workspaces\//)
 		await expect(
 			page2.getByRole('heading', { name: 'Accept Test Team' }),
@@ -149,40 +135,27 @@ test.describe('Workspaces', () => {
 		await context2.close()
 	})
 
-	test('admin can revoke pending invitation', async ({ page }) => {
-		await signUp(page)
+	test('admin can revoke pending invitation', async ({ page, login }) => {
+		const { user } = await login()
+		const ws = createWorkspace({ ownerId: user.id, name: 'Revoke Test Team' })
 
-		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
-		await page.getByLabel('Workspace name').fill('Revoke Test Team')
-		await page.getByRole('button', { name: 'Create workspace' }).click()
-
-		await page.getByRole('link', { name: 'Members', exact: true }).click()
+		await page.goto(`/workspaces/${ws.workspace.id}/settings/members`)
 
 		const inviteeEmail = uniqueEmail()
 		await page.getByRole('textbox', { name: 'Email' }).fill(inviteeEmail)
 		await page.getByRole('button', { name: 'Send invite' }).click()
 		await expect(page.getByText(inviteeEmail)).toBeVisible()
 
-		// Revoke the invitation
 		await page.getByRole('button', { name: 'Revoke', exact: true }).click()
-
-		// The invitation email should no longer be in the pending list
-		// (page reloads after form submission)
 		await expect(page.getByText(inviteeEmail)).not.toBeVisible()
 	})
 
-	test('owner can rename workspace', async ({ page }) => {
-		await signUp(page)
+	test('owner can rename workspace', async ({ page, login }) => {
+		const { user } = await login()
+		const ws = createWorkspace({ ownerId: user.id, name: 'Old Name' })
 
-		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
-		await page.getByLabel('Workspace name').fill('Old Name')
-		await page.getByRole('button', { name: 'Create workspace' }).click()
+		await page.goto(`/workspaces/${ws.workspace.id}/settings`)
 
-		await page.getByRole('link', { name: 'Settings', exact: true }).click()
-
-		// Rename the workspace
 		await page.getByRole('textbox', { name: 'Name', exact: true }).clear()
 		await page
 			.getByRole('textbox', { name: 'Name', exact: true })
@@ -192,41 +165,32 @@ test.describe('Workspaces', () => {
 		await expect(page.getByText('Workspace renamed')).toBeVisible()
 	})
 
-	test('owner can delete non-personal workspace', async ({ page }) => {
-		await signUp(page)
+	test('owner can delete non-personal workspace', async ({ page, login }) => {
+		const { user } = await login()
+		const ws = createWorkspace({ ownerId: user.id, name: 'Delete Me' })
 
-		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
-		await page.getByLabel('Workspace name').fill('Delete Me')
-		await page.getByRole('button', { name: 'Create workspace' }).click()
+		await page.goto(`/workspaces/${ws.workspace.id}/settings`)
 
-		await page.getByRole('link', { name: 'Settings', exact: true }).click()
-
-		// Type confirmation name
 		await page.getByPlaceholder('Delete Me').fill('Delete Me')
 		await page
 			.getByRole('button', { name: 'Delete workspace permanently' })
 			.click()
 
-		// Should redirect to personal workspace
 		await expect(page.getByText('Workspace deleted')).toBeVisible()
 		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
-	test('non-member gets 403', async ({ page }) => {
-		// User A creates a workspace
-		await signUp(page)
-		const workspaceUrl = page.url()
-		const workspaceId = workspaceUrl.match(/\/workspaces\/([^/]+)/)?.[1]
+	test('non-member gets 403', async ({ browser }) => {
+		// User A creates a workspace via factory
+		const userA = await createUser()
+		const ws = createWorkspace({ ownerId: userA.user.id })
 
-		// User B signs up in a new page with isolated context
-		const context2 = await page.context().browser()!.newContext()
-		const page2 = await context2.newPage()
-		await signUp(page2)
+		// User B gets authenticated via factory
+		const userB = await createUser()
+		const { context, page } = await authenticatedContext(browser, userB.user.id)
 
-		// User B tries to access User A's workspace
-		const response = await page2.goto(`/workspaces/${workspaceId}`)
+		const response = await page.goto(`/workspaces/${ws.workspace.id}`)
 		expect(response?.status()).toBe(403)
-		await context2.close()
+		await context.close()
 	})
 })

@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply freedom-seed --local",
     "db:migrate:remote": "wrangler d1 migrations apply freedom-seed --remote",
+    "db:seed": "node --no-warnings=ExperimentalWarning --experimental-strip-types scripts/db-seed.ts",
     "deploy": "npm run build && wrangler deploy",
     "dev": "react-router dev",
     "format": "prettier --write .",
