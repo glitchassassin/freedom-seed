@@ -338,7 +338,7 @@ export default function DemoRoute() {
 			{/* Table */}
 			<Section title="Table">
 				<Table>
-					<TableCaption>A list of team members.</TableCaption>
+					<TableCaption>A list of workspace members.</TableCaption>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Name</TableHead>

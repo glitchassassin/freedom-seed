@@ -11,19 +11,19 @@ test.describe('Auth guards', () => {
 		)
 	})
 
-	test('authenticated user visiting /login redirects to team dashboard', async ({
+	test('authenticated user visiting /login redirects to workspace dashboard', async ({
 		page,
 	}) => {
 		await signUp(page)
 		await page.goto('/login')
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
-	test('authenticated user visiting /signup redirects to team dashboard', async ({
+	test('authenticated user visiting /signup redirects to workspace dashboard', async ({
 		page,
 	}) => {
 		await signUp(page)
 		await page.goto('/signup')
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 })

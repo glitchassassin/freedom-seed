@@ -15,8 +15,8 @@ import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
-import { getUserTeams } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
+import { getUserWorkspaces } from '~/utils/workspaces.server'
 
 // Pre-computed dummy hash used to normalize response time when the email does
 // not exist. Without this, missing users return ~instantly while valid users
@@ -99,13 +99,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	const { cookie } = await createSession(env, user.id, request)
 
-	// Default to user's first team if no explicit redirectTo
+	// Default to user's first workspace if no explicit redirectTo
 	const url = new URL(request.url)
 	let defaultRedirect = '/'
 	if (!url.searchParams.get('redirectTo')) {
-		const userTeams = await getUserTeams(db, user.id)
-		if (userTeams.length > 0) {
-			defaultRedirect = `/teams/${userTeams[0].id}`
+		const userWorkspaces = await getUserWorkspaces(db, user.id)
+		if (userWorkspaces.length > 0) {
+			defaultRedirect = `/workspaces/${userWorkspaces[0].id}`
 		}
 	}
 

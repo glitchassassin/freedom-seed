@@ -26,14 +26,14 @@ your app doesn't need it.
 
 ## Authorization
 
-- [rbac](./rbac.md) — Role-based access control scoped to team membership.
+- [rbac](./rbac.md) — Role-based access control scoped to workspace membership.
 
-## Teams & Multi-tenancy
+## Workspaces & Multi-tenancy
 
-- [teams](./teams.md) — Account/team abstraction allowing users to belong to
-  multiple workspaces.
+- [workspaces](./workspaces.md) — Account/workspace abstraction allowing users
+  to belong to multiple workspaces.
 - [invitations](./invitations.md) — Email-based invitation flow for adding
-  members to a team.
+  members to a workspace.
 - [audit-log](./audit-log.md) — Append-only log of significant actions taken
   within an account.
 

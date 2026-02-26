@@ -10,8 +10,8 @@ import {
 	findValidInvitation,
 } from '~/utils/invitations.server'
 import { getOptionalUser } from '~/utils/session-context'
-import { getTeamById } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
+import { getWorkspaceById } from '~/utils/workspaces.server'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
@@ -22,7 +22,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 	if (!invitation) {
 		return {
 			valid: false as const,
-			teamName: null,
+			workspaceName: null,
 			email: null,
 			role: null,
 			state: 'invalid' as const,
@@ -30,7 +30,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 		}
 	}
 
-	const team = await getTeamById(db, invitation.teamId)
+	const workspace = await getWorkspaceById(db, invitation.workspaceId)
 	const user = getOptionalUser(context)
 
 	let state: 'accept' | 'wrong-email' | 'unauthenticated'
@@ -44,7 +44,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
 	return {
 		valid: true as const,
-		teamName: team?.name ?? 'Unknown Team',
+		workspaceName: workspace?.name ?? 'Unknown Workspace',
 		email: invitation.email,
 		role: invitation.role,
 		state,
@@ -73,24 +73,24 @@ export async function action({ params, context }: Route.ActionArgs) {
 	await acceptInvitation(db, {
 		invitationId: invitation.id,
 		userId: user.id,
-		teamId: invitation.teamId,
+		workspaceId: invitation.workspaceId,
 		role: invitation.role,
 	})
 
 	await logAuditEvent({
 		db,
-		teamId: invitation.teamId,
+		workspaceId: invitation.workspaceId,
 		actorId: user.id,
 		actorEmail: user.email,
 		action: 'member.invitation_accepted',
-		targetType: 'team',
-		targetId: invitation.teamId,
+		targetType: 'workspace',
+		targetId: invitation.workspaceId,
 	})
 
-	return redirect(`/teams/${invitation.teamId}`, {
+	return redirect(`/workspaces/${invitation.workspaceId}`, {
 		headers: {
 			'set-cookie': setToast(
-				{ type: 'success', title: 'Welcome to the team!' },
+				{ type: 'success', title: 'Welcome to the workspace!' },
 				isSecure,
 			),
 		},
@@ -99,12 +99,16 @@ export async function action({ params, context }: Route.ActionArgs) {
 
 export function meta({ data }: Route.MetaArgs) {
 	return [
-		{ title: data?.teamName ? `Join ${data.teamName}` : 'Team Invitation' },
+		{
+			title: data?.workspaceName
+				? `Join ${data.workspaceName}`
+				: 'Workspace Invitation',
+		},
 	]
 }
 
 export default function InvitationPage({ loaderData }: Route.ComponentProps) {
-	const { valid, teamName, email, role, state } = loaderData
+	const { valid, workspaceName, email, role, state } = loaderData
 
 	if (!valid) {
 		return (
@@ -126,7 +130,7 @@ export default function InvitationPage({ loaderData }: Route.ComponentProps) {
 			<main className="mx-auto max-w-md p-6 text-center">
 				<h1 className="text-2xl font-semibold">You&apos;re invited!</h1>
 				<p className="text-muted-foreground mt-2">
-					You&apos;ve been invited to join <strong>{teamName}</strong> as a{' '}
+					You&apos;ve been invited to join <strong>{workspaceName}</strong> as a{' '}
 					{role}.
 				</p>
 				<p className="text-muted-foreground mt-1 text-sm">
@@ -166,7 +170,7 @@ export default function InvitationPage({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<main className="mx-auto max-w-md p-6 text-center">
-			<h1 className="text-2xl font-semibold">Join {teamName}</h1>
+			<h1 className="text-2xl font-semibold">Join {workspaceName}</h1>
 			<p className="text-muted-foreground mt-2">
 				You&apos;ve been invited to join as a {role}.
 			</p>

@@ -14,29 +14,36 @@ import {
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
-	getLastTeamId,
-	setLastTeamCookie,
-} from '~/utils/last-team-cookie.server'
+	getLastWorkspaceId,
+	setLastWorkspaceCookie,
+} from '~/utils/last-workspace-cookie.server'
 import { hasRole } from '~/utils/rbac.server'
 import { requireUser } from '~/utils/session-context'
-import { requireTeamMember, teamMemberContext } from '~/utils/team-context'
-import { getTeamById, getTeamMember, getUserTeams } from '~/utils/teams.server'
+import {
+	requireWorkspaceMember,
+	workspaceMemberContext,
+} from '~/utils/workspace-context'
+import {
+	getWorkspaceById,
+	getWorkspaceMember,
+	getUserWorkspaces,
+} from '~/utils/workspaces.server'
 
 export const middleware: Route.MiddlewareFunction[] = [
 	async ({ params, context }, next) => {
 		const user = requireUser(context)
 		const { env } = getCloudflare(context)
 		const db = getDb(env)
-		const teamId = params.teamId!
-		const member = await getTeamMember(db, teamId, user.id)
+		const workspaceId = params.workspaceId!
+		const member = await getWorkspaceMember(db, workspaceId, user.id)
 		if (!member) throw new Response('Forbidden', { status: 403 })
-		const team = await getTeamById(db, teamId)
-		if (!team) throw new Response('Not Found', { status: 404 })
-		context.set(teamMemberContext, {
-			teamId: team.id,
-			teamName: team.name,
-			teamSlug: team.slug,
-			isPersonal: !!team.isPersonal,
+		const workspace = await getWorkspaceById(db, workspaceId)
+		if (!workspace) throw new Response('Not Found', { status: 404 })
+		context.set(workspaceMemberContext, {
+			workspaceId: workspace.id,
+			workspaceName: workspace.name,
+			workspaceSlug: workspace.slug,
+			isPersonal: !!workspace.isPersonal,
 			role: member.role,
 		})
 		return next()
@@ -47,32 +54,33 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 	const user = requireUser(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
-	const teamId = params.teamId!
-	const member = requireTeamMember(context)
-	const userTeams = await getUserTeams(db, user.id)
-	const currentTeam = userTeams.find((t) => t.id === teamId)
+	const workspaceId = params.workspaceId!
+	const member = requireWorkspaceMember(context)
+	const userWorkspaces = await getUserWorkspaces(db, user.id)
+	const currentWorkspace = userWorkspaces.find((t) => t.id === workspaceId)
 
 	const responseData = {
-		team: currentTeam!,
-		userTeams,
+		workspace: currentWorkspace!,
+		userWorkspaces,
 		user: { email: user.email, displayName: user.displayName },
 		emailVerified: !!user.emailVerifiedAt,
 		isAdminOrOwner: hasRole(member.role, 'admin'),
 	}
 
-	const lastTeamId = getLastTeamId(request)
-	if (lastTeamId === teamId) {
+	const lastWorkspaceId = getLastWorkspaceId(request)
+	if (lastWorkspaceId === workspaceId) {
 		return responseData
 	}
 
 	const isSecure = env.ENVIRONMENT === 'production'
 	return data(responseData, {
-		headers: { 'set-cookie': setLastTeamCookie(teamId, isSecure) },
+		headers: { 'set-cookie': setLastWorkspaceCookie(workspaceId, isSecure) },
 	})
 }
 
-export default function TeamLayout({ loaderData }: Route.ComponentProps) {
-	const { team, userTeams, emailVerified, isAdminOrOwner } = loaderData
+export default function WorkspaceLayout({ loaderData }: Route.ComponentProps) {
+	const { workspace, userWorkspaces, emailVerified, isAdminOrOwner } =
+		loaderData
 
 	return (
 		<>
@@ -82,16 +90,16 @@ export default function TeamLayout({ loaderData }: Route.ComponentProps) {
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant="ghost" size="sm">
-									{team.name}
+									{workspace.name}
 									<span className="text-muted-foreground ml-1 text-xs">▼</span>
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="start">
-								<DropdownMenuLabel>Teams</DropdownMenuLabel>
+								<DropdownMenuLabel>Workspaces</DropdownMenuLabel>
 								<DropdownMenuSeparator />
-								{userTeams.map((t) => (
+								{userWorkspaces.map((t) => (
 									<DropdownMenuItem key={t.id} asChild>
-										<Link to={`/teams/${t.id}`}>
+										<Link to={`/workspaces/${t.id}`}>
 											{t.name}
 											{t.isPersonal && (
 												<span className="text-muted-foreground ml-2 text-xs">
@@ -103,20 +111,24 @@ export default function TeamLayout({ loaderData }: Route.ComponentProps) {
 								))}
 								<DropdownMenuSeparator />
 								<DropdownMenuItem asChild>
-									<Link to="/teams/new">Create team</Link>
+									<Link to="/workspaces/new">Create workspace</Link>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
 					<div className="flex items-center gap-2">
-						{!team.isPersonal && (
+						{!workspace.isPersonal && (
 							<Button variant="ghost" size="sm" asChild>
-								<Link to={`/teams/${team.id}/settings/members`}>Members</Link>
+								<Link to={`/workspaces/${workspace.id}/settings/members`}>
+									Members
+								</Link>
 							</Button>
 						)}
 						{isAdminOrOwner && (
 							<Button variant="ghost" size="sm" asChild>
-								<Link to={`/teams/${team.id}/settings/general`}>Settings</Link>
+								<Link to={`/workspaces/${workspace.id}/settings/general`}>
+									Settings
+								</Link>
 							</Button>
 						)}
 						<Form method="POST" action="/resources/logout">

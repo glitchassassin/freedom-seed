@@ -12,14 +12,14 @@ import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { requireUser } from '~/utils/session-context'
-import { createTeam, generateSlug } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
+import { createWorkspace, generateSlug } from '~/utils/workspaces.server'
 
 const schema = z.object({
 	name: z
 		.string()
-		.min(1, 'Team name is required')
-		.max(50, 'Team name is too long'),
+		.min(1, 'Workspace name is required')
+		.max(50, 'Workspace name is too long'),
 })
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -32,7 +32,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
 	const isSecure = env.ENVIRONMENT === 'production'
 	await requireRateLimit(env, request, {
-		prefix: 'create-team',
+		prefix: 'create-workspace',
 		limit: 5,
 		windowSeconds: 300,
 	})
@@ -44,7 +44,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const db = getDb(env)
 	const { name } = submission.value
 	const slug = generateSlug(name)
-	const { teamId } = await createTeam(db, {
+	const { workspaceId } = await createWorkspace(db, {
 		name,
 		slug,
 		ownerId: user.id,
@@ -52,19 +52,19 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	await logAuditEvent({
 		db,
-		teamId,
+		workspaceId,
 		actorId: user.id,
 		actorEmail: user.email,
-		action: 'team.created',
-		targetType: 'team',
-		targetId: teamId,
+		action: 'workspace.created',
+		targetType: 'workspace',
+		targetId: workspaceId,
 		targetLabel: name,
 	})
 
-	return redirect(`/teams/${teamId}`, {
+	return redirect(`/workspaces/${workspaceId}`, {
 		headers: {
 			'set-cookie': setToast(
-				{ type: 'success', title: 'Team created' },
+				{ type: 'success', title: 'Workspace created' },
 				isSecure,
 			),
 		},
@@ -72,10 +72,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export function meta() {
-	return [{ title: 'Create a Team' }]
+	return [{ title: 'Create a Workspace' }]
 }
 
-export default function CreateTeamPage({ actionData }: Route.ComponentProps) {
+export default function CreateWorkspacePage({
+	actionData,
+}: Route.ComponentProps) {
 	const [form, fields] = useForm({
 		lastResult: actionData,
 		onValidate({ formData }) {
@@ -86,9 +88,9 @@ export default function CreateTeamPage({ actionData }: Route.ComponentProps) {
 
 	return (
 		<main className="mx-auto max-w-md p-6">
-			<h1 className="text-2xl font-semibold">Create a Team</h1>
+			<h1 className="text-2xl font-semibold">Create a Workspace</h1>
 			<p className="text-muted-foreground mt-2">
-				Teams let you collaborate with others on shared projects.
+				Workspaces let you collaborate with others on shared projects.
 			</p>
 
 			<Form method="POST" {...getFormProps(form)} className="mt-6 space-y-4">
@@ -97,10 +99,10 @@ export default function CreateTeamPage({ actionData }: Route.ComponentProps) {
 					<p className="text-destructive text-sm">{form.errors[0]}</p>
 				)}
 				<div className="space-y-2">
-					<Label htmlFor={fields.name.id}>Team name</Label>
+					<Label htmlFor={fields.name.id}>Workspace name</Label>
 					<Input
 						{...getInputProps(fields.name, { type: 'text' })}
-						placeholder="My Awesome Team"
+						placeholder="My Awesome Workspace"
 						autoFocus
 					/>
 					{fields.name.errors && (
@@ -108,7 +110,7 @@ export default function CreateTeamPage({ actionData }: Route.ComponentProps) {
 					)}
 				</div>
 				<Button type="submit" className="w-full">
-					Create team
+					Create workspace
 				</Button>
 			</Form>
 		</main>

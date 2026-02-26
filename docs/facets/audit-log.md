@@ -5,7 +5,7 @@
 Append-only record of significant actions taken within an account (member added,
 role changed, subscription updated, resource deleted, etc.). Each entry stores
 the actor, action type, target resource, timestamp, and request metadata. The
-log is exposed in team settings for admins and owners. Entries are never
+log is exposed in workspace settings for admins and owners. Entries are never
 modified or deleted, only appended.
 
 `logAuditEvent` is the single write path — call it from any action handler,
@@ -14,18 +14,19 @@ optionally inside `ctx.waitUntil()` to avoid blocking the response. The
 list of loggable event types; extend it as new features are added.
 
 RBAC enforcement (admin-only) is handled by `requireRole(context, 'admin')` in
-the loader, enforced via the team layout middleware.
+the loader, enforced via the workspace layout middleware.
 
 ## Related Files
 
 - `app/db/schema.ts` — `auditLog` table definition (`audit_log` in SQL)
 - `app/db/audit-log.server.ts` — `AuditAction` type and `logAuditEvent` utility
-- `app/routes/teams.$teamId/settings.audit-log/route.tsx` — paginated admin view
+- `app/routes/workspaces.$workspaceId/settings.audit-log/route.tsx` — paginated
+  admin view
 
 ## Removal
 
 1. Delete `app/db/audit-log.server.ts`
-2. Delete `app/routes/teams.$teamId/settings.audit-log/`
+2. Delete `app/routes/workspaces.$workspaceId/settings.audit-log/`
 3. Remove the `auditLog` export from `app/db/schema.ts`
 4. `npm run db:generate` — emits DROP TABLE migration
 5. `npm run db:migrate` then `npm run db:migrate:remote`

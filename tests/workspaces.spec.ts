@@ -2,20 +2,22 @@ import { test, expect } from '@playwright/test'
 import { signUp, uniqueEmail } from './auth-helpers'
 import { clearCapturedEmails, waitForEmail } from './email-helpers'
 
-test.describe('Teams', () => {
+test.describe('Workspaces', () => {
 	test.beforeEach(() => {
 		clearCapturedEmails()
 	})
 
-	test('signup creates personal team and redirects to team dashboard', async ({
+	test('signup creates personal workspace and redirects to workspace dashboard', async ({
 		page,
 	}) => {
 		await signUp(page)
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 		await expect(page.getByRole('heading', { name: 'Personal' })).toBeVisible()
 	})
 
-	test('team dashboard shows team name and description', async ({ page }) => {
+	test('workspace dashboard shows workspace name and description', async ({
+		page,
+	}) => {
 		await signUp(page)
 		await expect(
 			page.getByText('This is your personal workspace'),
@@ -26,48 +28,48 @@ test.describe('Teams', () => {
 		const { email } = await signUp(page)
 
 		// Navigate to members via the settings link
-		await page.getByRole('link', { name: 'Team settings' }).click()
+		await page.getByRole('link', { name: 'Workspace settings' }).click()
 
-		// Personal teams don't show Members link in header, go directly
-		// Get current URL to extract team ID
+		// Personal workspaces don't show Members link in header, go directly
+		// Get current URL to extract workspace ID
 		const url = page.url()
-		const teamId = url.match(/\/teams\/([^/]+)/)?.[1]
-		await page.goto(`/teams/${teamId}/settings/members`)
+		const workspaceId = url.match(/\/workspaces\/([^/]+)/)?.[1]
+		await page.goto(`/workspaces/${workspaceId}/settings/members`)
 
 		await expect(page.getByText(email)).toBeVisible()
 		await expect(page.getByText('owner')).toBeVisible()
 	})
 
-	test('can create a new shared team', async ({ page }) => {
+	test('can create a new shared workspace', async ({ page }) => {
 		await signUp(page)
 
-		// Navigate to create team
-		// Open team switcher dropdown
+		// Navigate to create workspace
+		// Open workspace switcher dropdown
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
 
-		await expect(page).toHaveURL('/teams/new')
+		await expect(page).toHaveURL('/workspaces/new')
 
-		await page.getByLabel('Team name').fill('My Test Team')
-		await page.getByRole('button', { name: 'Create team' }).click()
+		await page.getByLabel('Workspace name').fill('My Test Team')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
 
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 		await expect(
 			page.getByRole('heading', { name: 'My Test Team' }),
 		).toBeVisible()
 	})
 
-	test('team switcher shows all teams', async ({ page }) => {
+	test('workspace switcher shows all workspaces', async ({ page }) => {
 		await signUp(page)
 
-		// Create a second team
+		// Create a second workspace
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Second Team')
-		await page.getByRole('button', { name: 'Create team' }).click()
-		await expect(page).toHaveURL(/\/teams\//)
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Second Team')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
+		await expect(page).toHaveURL(/\/workspaces\//)
 
-		// Open team switcher — should show both teams
+		// Open workspace switcher — should show both workspaces
 		await page.getByRole('button', { name: /Second Team/ }).click()
 		await expect(page.getByRole('menuitem', { name: /Personal/ })).toBeVisible()
 		await expect(
@@ -80,12 +82,12 @@ test.describe('Teams', () => {
 	}) => {
 		await signUp(page)
 
-		// Create a shared team
+		// Create a shared workspace
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Invite Test Team')
-		await page.getByRole('button', { name: 'Create team' }).click()
-		await expect(page).toHaveURL(/\/teams\//)
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Invite Test Team')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
+		await expect(page).toHaveURL(/\/workspaces\//)
 
 		// Go to members page
 		await page.getByRole('link', { name: 'Members', exact: true }).click()
@@ -103,17 +105,17 @@ test.describe('Teams', () => {
 		expect(captured.subject).toContain('invited')
 	})
 
-	test('invited user can accept invitation and access team', async ({
+	test('invited user can accept invitation and access workspace', async ({
 		page,
 	}) => {
-		// User A creates a team and invites User B
+		// User A creates a workspace and invites User B
 		await signUp(page)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Accept Test Team')
-		await page.getByRole('button', { name: 'Create team' }).click()
-		await expect(page).toHaveURL(/\/teams\//)
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Accept Test Team')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
+		await expect(page).toHaveURL(/\/workspaces\//)
 
 		await page.getByRole('link', { name: 'Members', exact: true }).click()
 
@@ -139,8 +141,8 @@ test.describe('Teams', () => {
 		await expect(page2.getByText('Accept Test Team')).toBeVisible()
 		await page2.getByRole('button', { name: 'Accept invitation' }).click()
 
-		// User B should be on the team page now
-		await expect(page2).toHaveURL(/\/teams\//)
+		// User B should be on the workspace page now
+		await expect(page2).toHaveURL(/\/workspaces\//)
 		await expect(
 			page2.getByRole('heading', { name: 'Accept Test Team' }),
 		).toBeVisible()
@@ -151,9 +153,9 @@ test.describe('Teams', () => {
 		await signUp(page)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Revoke Test Team')
-		await page.getByRole('button', { name: 'Create team' }).click()
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Revoke Test Team')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
 
 		await page.getByRole('link', { name: 'Members', exact: true }).click()
 
@@ -170,58 +172,60 @@ test.describe('Teams', () => {
 		await expect(page.getByText(inviteeEmail)).not.toBeVisible()
 	})
 
-	test('owner can rename team', async ({ page }) => {
+	test('owner can rename workspace', async ({ page }) => {
 		await signUp(page)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Old Name')
-		await page.getByRole('button', { name: 'Create team' }).click()
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Old Name')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
 
 		await page.getByRole('link', { name: 'Settings', exact: true }).click()
 
-		// Rename the team
+		// Rename the workspace
 		await page.getByRole('textbox', { name: 'Name', exact: true }).clear()
 		await page
 			.getByRole('textbox', { name: 'Name', exact: true })
 			.fill('New Name')
 		await page.getByRole('button', { name: 'Rename' }).click()
 
-		await expect(page.getByText('Team renamed')).toBeVisible()
+		await expect(page.getByText('Workspace renamed')).toBeVisible()
 	})
 
-	test('owner can delete non-personal team', async ({ page }) => {
+	test('owner can delete non-personal workspace', async ({ page }) => {
 		await signUp(page)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
-		await page.getByRole('menuitem', { name: 'Create team' }).click()
-		await page.getByLabel('Team name').fill('Delete Me')
-		await page.getByRole('button', { name: 'Create team' }).click()
+		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
+		await page.getByLabel('Workspace name').fill('Delete Me')
+		await page.getByRole('button', { name: 'Create workspace' }).click()
 
 		await page.getByRole('link', { name: 'Settings', exact: true }).click()
 
 		// Type confirmation name
 		await page.getByPlaceholder('Delete Me').fill('Delete Me')
-		await page.getByRole('button', { name: 'Delete team permanently' }).click()
+		await page
+			.getByRole('button', { name: 'Delete workspace permanently' })
+			.click()
 
-		// Should redirect to personal team
-		await expect(page.getByText('Team deleted')).toBeVisible()
-		await expect(page).toHaveURL(/\/teams\//)
+		// Should redirect to personal workspace
+		await expect(page.getByText('Workspace deleted')).toBeVisible()
+		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
 	test('non-member gets 403', async ({ page }) => {
-		// User A creates a team
+		// User A creates a workspace
 		await signUp(page)
-		const teamUrl = page.url()
-		const teamId = teamUrl.match(/\/teams\/([^/]+)/)?.[1]
+		const workspaceUrl = page.url()
+		const workspaceId = workspaceUrl.match(/\/workspaces\/([^/]+)/)?.[1]
 
 		// User B signs up in a new page with isolated context
 		const context2 = await page.context().browser()!.newContext()
 		const page2 = await context2.newPage()
 		await signUp(page2)
 
-		// User B tries to access User A's team
-		const response = await page2.goto(`/teams/${teamId}`)
+		// User B tries to access User A's workspace
+		const response = await page2.goto(`/workspaces/${workspaceId}`)
 		expect(response?.status()).toBe(403)
 		await context2.close()
 	})

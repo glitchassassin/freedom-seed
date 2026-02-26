@@ -3,14 +3,14 @@ import { test, expect } from '@playwright/test'
 import { logIn, signUp, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
 
 test.describe('Login', () => {
-	test('logs in with valid credentials and redirects to team', async ({
+	test('logs in with valid credentials and redirects to workspace', async ({
 		page,
 	}) => {
 		const { email } = await signUp(page)
 		await page.context().clearCookies()
 
 		await logIn(page, { email })
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 		const cookies = await page.context().cookies()
 		expect(cookies.some((c) => c.name === 'en_session')).toBe(true)
 	})

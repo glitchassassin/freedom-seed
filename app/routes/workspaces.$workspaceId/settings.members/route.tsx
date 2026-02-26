@@ -17,37 +17,39 @@ import {
 } from '~/components/ui/table'
 import { logAuditEvent } from '~/db/audit-log.server'
 import { getDb } from '~/db/client.server'
-import { teamMemberRoleEnum } from '~/db/schema'
-import { TeamInvitationEmail } from '~/emails/team-invitation'
+import { workspaceMemberRoleEnum } from '~/db/schema'
+import { WorkspaceInvitationEmail } from '~/emails/workspace-invitation'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { sendEmail } from '~/utils/email.server'
 import {
-	createTeamInvitation,
+	createWorkspaceInvitation,
 	getPendingInvitations,
 	revokeInvitation,
 } from '~/utils/invitations.server'
 import { hasRole, requireRole } from '~/utils/rbac.server'
 import { requireUser } from '~/utils/session-context'
-import { requireTeamMember } from '~/utils/team-context'
+import { requireWorkspaceMember } from '~/utils/workspace-context'
 import {
-	changeTeamMemberRole,
-	getTeamMembers,
-	removeTeamMember,
-} from '~/utils/teams.server'
+	changeWorkspaceMemberRole,
+	getWorkspaceMembers,
+	removeWorkspaceMember,
+} from '~/utils/workspaces.server'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
 	requireRole(context, 'member')
-	const member = requireTeamMember(context)
+	const member = requireWorkspaceMember(context)
 	const user = requireUser(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
-	const teamId = params.teamId!
+	const workspaceId = params.workspaceId!
 
-	const members = await getTeamMembers(db, teamId)
+	const members = await getWorkspaceMembers(db, workspaceId)
 
 	// Only admin+ can see pending invitations
 	const isAdmin = hasRole(member.role, 'admin')
-	const invitations = isAdmin ? await getPendingInvitations(db, teamId) : []
+	const invitations = isAdmin
+		? await getPendingInvitations(db, workspaceId)
+		: []
 
 	return {
 		members,
@@ -55,8 +57,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 		currentUserId: user.id,
 		currentRole: member.role,
 		isAdmin,
-		teamId,
-		teamName: member.teamName,
+		workspaceId,
+		workspaceName: member.workspaceName,
 	}
 }
 
@@ -67,10 +69,10 @@ const inviteSchema = z.object({
 
 export async function action({ request, params, context }: Route.ActionArgs) {
 	const user = requireUser(context)
-	const member = requireTeamMember(context)
+	const member = requireWorkspaceMember(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
-	const teamId = params.teamId!
+	const workspaceId = params.workspaceId!
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
@@ -82,15 +84,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		const { email, role } = submission.value
 
 		// Check if already a member
-		const members = await getTeamMembers(db, teamId)
+		const members = await getWorkspaceMembers(db, workspaceId)
 		if (members.some((m) => m.email === email.toLowerCase())) {
 			return submission.reply({
-				fieldErrors: { email: ['This user is already a team member'] },
+				fieldErrors: { email: ['This user is already a workspace member'] },
 			})
 		}
 
-		const { rawToken } = await createTeamInvitation(db, {
-			teamId,
+		const { rawToken } = await createWorkspaceInvitation(db, {
+			workspaceId,
 			invitedByUserId: user.id,
 			email,
 			role,
@@ -100,9 +102,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		try {
 			await sendEmail(env, {
 				to: email.toLowerCase(),
-				subject: `You're invited to ${member.teamName}`,
-				react: TeamInvitationEmail({
-					teamName: member.teamName,
+				subject: `You're invited to ${member.workspaceName}`,
+				react: WorkspaceInvitationEmail({
+					workspaceName: member.workspaceName,
 					inviterName: user.displayName || user.email,
 					acceptUrl,
 				}),
@@ -113,7 +115,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'member.invited',
@@ -131,7 +133,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		await revokeInvitation(db, invitationId)
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'member.invitation_revoked',
@@ -146,7 +148,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		const targetUserId = formData.get('userId') as string
 
 		// Guard: cannot remove the last owner
-		const members = await getTeamMembers(db, teamId)
+		const members = await getWorkspaceMembers(db, workspaceId)
 		const target = members.find((m) => m.userId === targetUserId)
 		if (target?.role === 'owner') {
 			const ownerCount = members.filter((m) => m.role === 'owner').length
@@ -155,10 +157,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 			}
 		}
 
-		await removeTeamMember(db, teamId, targetUserId)
+		await removeWorkspaceMember(db, workspaceId, targetUserId)
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'member.removed',
@@ -174,12 +176,12 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		const targetUserId = formData.get('userId') as string
 		const newRole = formData.get('role') as string
 
-		if (!teamMemberRoleEnum.includes(newRole as any)) {
+		if (!workspaceMemberRoleEnum.includes(newRole as any)) {
 			throw new Response('Invalid role', { status: 400 })
 		}
 
 		// Guard: cannot demote the last owner
-		const members = await getTeamMembers(db, teamId)
+		const members = await getWorkspaceMembers(db, workspaceId)
 		const target = members.find((m) => m.userId === targetUserId)
 		if (target?.role === 'owner' && newRole !== 'owner') {
 			const ownerCount = members.filter((m) => m.role === 'owner').length
@@ -188,10 +190,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 			}
 		}
 
-		await changeTeamMemberRole(db, teamId, targetUserId, newRole as any)
+		await changeWorkspaceMemberRole(
+			db,
+			workspaceId,
+			targetUserId,
+			newRole as any,
+		)
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'member.role_changed',
@@ -207,17 +214,20 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 }
 
 export function meta() {
-	return [{ title: 'Team Members' }]
+	return [{ title: 'Workspace Members' }]
 }
 
-export default function TeamMembersPage({ loaderData }: Route.ComponentProps) {
-	const { members, invitations, currentUserId, isAdmin, teamName } = loaderData
+export default function WorkspaceMembersPage({
+	loaderData,
+}: Route.ComponentProps) {
+	const { members, invitations, currentUserId, isAdmin, workspaceName } =
+		loaderData
 
 	return (
 		<main className="mx-auto max-w-4xl p-6">
 			<h1 className="text-2xl font-semibold">Members</h1>
 			<p className="text-muted-foreground mt-1">
-				Manage who has access to {teamName}.
+				Manage who has access to {workspaceName}.
 			</p>
 
 			<div className="mt-6">

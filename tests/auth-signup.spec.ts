@@ -3,12 +3,12 @@ import { test, expect } from '@playwright/test'
 import { signUp, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
 
 test.describe('Signup', () => {
-	test('creates an account and redirects to team dashboard', async ({
+	test('creates an account and redirects to workspace dashboard', async ({
 		page,
 	}) => {
 		await signUp(page)
-		// Verify we're on a team page after signup
-		await expect(page).toHaveURL(/\/teams\//)
+		// Verify we're on a workspace page after signup
+		await expect(page).toHaveURL(/\/workspaces\//)
 		// Session cookie should be set
 		const cookies = await page.context().cookies()
 		expect(cookies.some((c) => c.name === 'en_session')).toBe(true)

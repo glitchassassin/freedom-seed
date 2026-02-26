@@ -7,10 +7,10 @@ export type AuditAction =
 	| 'member.invitation_revoked'
 	| 'member.removed'
 	| 'member.role_changed'
-	| 'team.created'
-	| 'team.renamed'
-	| 'team.deleted'
-	| 'team.settings_updated'
+	| 'workspace.created'
+	| 'workspace.renamed'
+	| 'workspace.deleted'
+	| 'workspace.settings_updated'
 	| 'subscription.created'
 	| 'subscription.upgraded'
 	| 'subscription.downgraded'
@@ -23,7 +23,7 @@ export type AuditAction =
 
 export interface LogAuditEventArgs {
 	db: Db
-	teamId: string
+	workspaceId: string
 	actorId: string
 	actorEmail: string
 	action: AuditAction
@@ -41,7 +41,7 @@ export interface LogAuditEventArgs {
  */
 export async function logAuditEvent({
 	db,
-	teamId,
+	workspaceId,
 	actorId,
 	actorEmail,
 	action,
@@ -51,7 +51,7 @@ export async function logAuditEvent({
 	metadata = {},
 }: LogAuditEventArgs): Promise<void> {
 	await db.insert(auditLog).values({
-		teamId,
+		workspaceId,
 		actorId,
 		actorEmail,
 		action,
