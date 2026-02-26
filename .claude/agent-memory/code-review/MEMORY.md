@@ -84,7 +84,8 @@
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook
   implementation patterns
 - [auth-patterns.md](auth-patterns.md) -- auth session/password review findings
-- [teams-patterns.md](teams-patterns.md) -- teams feature review findings
+- [workspaces-patterns.md](workspaces-patterns.md) -- workspaces feature review
+  findings (renamed from teams Feb 2026)
 
 ## Auth Architecture
 
@@ -101,18 +102,21 @@
 - Auth routes use `setToast` + array headers pattern (not `showToast`) to set
   both session and toast cookies
 
-## Teams Architecture
+## Workspaces Architecture
 
-- `app/utils/team-context.ts` -- `teamMemberContext` key +
-  `getOptionalTeamMember`/`requireTeamMember` helpers
-- `app/utils/teams.server.ts` -- Team CRUD (createTeam, renameTeam, deleteTeam)
+- `app/utils/workspace-context.ts` -- `workspaceMemberContext` key +
+  `getOptionalWorkspaceMember`/`requireWorkspaceMember` helpers
+- `app/utils/workspaces.server.ts` -- Workspace CRUD (createWorkspace,
+  renameWorkspace, deleteWorkspace)
 - `app/utils/rbac.server.ts` -- `hasRole`/`requireRole` with numeric rank
   (owner=3, admin=2, member=1)
 - `app/utils/invitations.server.ts` -- Invitation CRUD with SHA-256 hashed
   tokens
-- Team layout middleware at `app/routes/teams.$teamId/_layout.tsx` gates all
-  team routes
-- Personal team created on signup in `_auth.signup/route.tsx` batch
+- Workspace layout middleware at
+  `app/routes/workspaces.$workspaceId/_layout.tsx` gates all workspace routes
+- Personal workspace created on signup in `_auth.signup/route.tsx` batch
+- Cookie: `en_last_workspace` for last-visited workspace redirect
+- Audit actions: `workspace.created`, `workspace.renamed`, `workspace.deleted`
 
 ## Facets System
 

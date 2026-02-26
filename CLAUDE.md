@@ -68,6 +68,11 @@ HTTP Request → workers/app.ts (Cloudflare Worker)
 - `migrations/` — Auto-generated SQL migration files (do not hand-edit)
 - `docs/` — Operations guides and architecture decision records
 
+## Agent Memory
+
+Files in `.claude/agent-memory/` should be committed alongside the work that
+prompted them, not left as unstaged stragglers.
+
 ## Ops Documentation
 
 Manual operations (CI/CD setup, database backup/restore, production queries) are
