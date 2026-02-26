@@ -10,17 +10,17 @@ Users sign up, create a personal vault, and start adding seeds. Each seed entry
 holds basic growing data (plant name, variety, planting season, days to
 germination, sun/water needs, notes) and one or more uploaded photos.
 
-Users can also create **teams** to share vaults collaboratively. Team members
-are invited by email and assigned a role:
+Users can also create **workspaces** to share vaults collaboratively. Workspace
+members are invited by email and assigned a role:
 
-| Role       | Browse seeds | Add / edit seeds | Manage members | Delete team |
-| ---------- | ------------ | ---------------- | -------------- | ----------- |
-| **Viewer** | Yes          | No               | No             | No          |
-| **Editor** | Yes          | Yes              | No             | No          |
-| **Owner**  | Yes          | Yes              | Yes            | Yes         |
+| Role       | Browse seeds | Add / edit seeds | Manage members | Delete workspace |
+| ---------- | ------------ | ---------------- | -------------- | ---------------- |
+| **Viewer** | Yes          | No               | No             | No               |
+| **Editor** | Yes          | Yes              | No             | No               |
+| **Owner**  | Yes          | Yes              | Yes            | Yes              |
 
-A user can belong to multiple teams and always has a personal vault that is not
-shared.
+A user can belong to multiple workspaces and always has a personal vault that is
+not shared.
 
 ## Data Model
 
@@ -52,29 +52,29 @@ seedPhotos
 
 vaults
   ├─ id: UUID (PK)
-  ├─ teamId: UUID (FK → teams.id, nullable) — null = personal vault
+  ├─ workspaceId: UUID (FK → workspaces.id, nullable) — null = personal vault
   ├─ ownerId: UUID (FK → users.id)          — creator
   ├─ name: string
   ├─ createdAt: timestamp
   └─ updatedAt: timestamp
 
-teams
+workspaces
   ├─ id: UUID (PK)
   ├─ name: string
   ├─ createdBy: UUID (FK → users.id)
   ├─ createdAt: timestamp
   └─ updatedAt: timestamp
 
-teamMembers
-  ├─ teamId: UUID (FK → teams.id)
+workspaceMembers
+  ├─ workspaceId: UUID (FK → workspaces.id)
   ├─ userId: UUID (FK → users.id)
   ├─ role: string              — "owner" | "editor" | "viewer"
   ├─ joinedAt: timestamp
-  └─ PRIMARY KEY (teamId, userId)
+  └─ PRIMARY KEY (workspaceId, userId)
 
-teamInvitations
+workspaceInvitations
   ├─ id: UUID (PK)
-  ├─ teamId: UUID (FK → teams.id)
+  ├─ workspaceId: UUID (FK → workspaces.id)
   ├─ email: string
   ├─ role: string              — "editor" | "viewer"
   ├─ invitedBy: UUID (FK → users.id)
@@ -93,19 +93,19 @@ teamInvitations
 /forgot-password               Password reset   (existing)
 /reset-password                Reset form       (existing)
 
-/vaults                        List personal + team vaults
+/vaults                        List personal + workspace vaults
 /vaults/new                    Create a vault
 /vaults/:vaultId               Seed list for a vault
 /vaults/:vaultId/seeds/new     Add a seed
 /vaults/:vaultId/seeds/:seedId View / edit a seed
 
-/teams                         List teams
-/teams/new                     Create a team
-/teams/:teamId/settings        Team settings (name, danger zone)
-/teams/:teamId/members         Manage members + invitations
-/teams/:teamId/audit-log       Audit log       (existing route, scoped)
+/workspaces                    List workspaces
+/workspaces/new                Create a workspace
+/workspaces/:workspaceId/settings        Workspace settings (name, danger zone)
+/workspaces/:workspaceId/members         Manage members + invitations
+/workspaces/:workspaceId/audit-log       Audit log       (existing route, scoped)
 
-/invitations/accept?token=...  Accept a team invitation
+/invitations/accept?token=...  Accept a workspace invitation
 
 /settings/change-password      Change password  (existing)
 /settings/profile              Edit display name
@@ -115,26 +115,26 @@ teamInvitations
 
 The demo intentionally exercises as many Freedom Seed facets as practical:
 
-| Facet          | How the demo uses it                               |
-| -------------- | -------------------------------------------------- |
-| auth-sessions  | Login / signup / logout                            |
-| auth-password  | Email + password registration and login            |
-| database       | All CRUD through Drizzle ORM on D1                 |
-| routing        | Filesystem routes with nested layouts              |
-| middleware     | Session + toast + RBAC checks                      |
-| ui-components  | Forms, tables, dialogs, dropdowns across all pages |
-| ui-icons       | Icons for seeds, teams, roles, actions             |
-| dark-mode      | Full app theming                                   |
-| notifications  | Toast feedback on every mutation                   |
-| audit-log      | Log team-scoped events (invite, role change, etc.) |
-| env-validation | R2 bucket binding + any new secrets                |
-| teams          | Team creation, settings, deletion                  |
-| invitations    | Email-based team invitations with token flow       |
-| rbac           | Viewer / Editor / Owner role enforcement           |
-| file-storage   | Seed photo upload to Cloudflare R2                 |
-| email          | Invitation emails via Resend                       |
-| timezones      | Date display in user's local timezone              |
-| analytics      | Plausible page tracking                            |
+| Facet          | How the demo uses it                                    |
+| -------------- | ------------------------------------------------------- |
+| auth-sessions  | Login / signup / logout                                 |
+| auth-password  | Email + password registration and login                 |
+| database       | All CRUD through Drizzle ORM on D1                      |
+| routing        | Filesystem routes with nested layouts                   |
+| middleware     | Session + toast + RBAC checks                           |
+| ui-components  | Forms, tables, dialogs, dropdowns across all pages      |
+| ui-icons       | Icons for seeds, workspaces, roles, actions             |
+| dark-mode      | Full app theming                                        |
+| notifications  | Toast feedback on every mutation                        |
+| audit-log      | Log workspace-scoped events (invite, role change, etc.) |
+| env-validation | R2 bucket binding + any new secrets                     |
+| workspaces     | Workspace creation, settings, deletion                  |
+| invitations    | Email-based workspace invitations with token flow       |
+| rbac           | Viewer / Editor / Owner role enforcement                |
+| file-storage   | Seed photo upload to Cloudflare R2                      |
+| email          | Invitation emails via Resend                            |
+| timezones      | Date display in user's local timezone                   |
+| analytics      | Plausible page tracking                                 |
 
 ## Implementation Order
 
@@ -154,17 +154,17 @@ Build the demo in phases, each producing a shippable increment:
 - Photo gallery on seed detail page, drag-to-reorder
 - Facets used: file-storage, env-validation
 
-### Phase 3 — Teams & Roles
+### Phase 3 — Workspaces & Roles
 
-- Schema: `teams`, `teamMembers` tables
-- Team creation, member management, role assignment
+- Schema: `workspaces`, `workspaceMembers` tables
+- Workspace creation, member management, role assignment
 - RBAC middleware to enforce viewer/editor/owner permissions
-- Team-scoped vaults (team vault vs personal vault)
-- Facets used: teams, rbac, audit-log
+- Workspace-scoped vaults (workspace vault vs personal vault)
+- Facets used: workspaces, rbac, audit-log
 
 ### Phase 4 — Invitations
 
-- Schema: `teamInvitations` table
+- Schema: `workspaceInvitations` table
 - Invite flow: generate token, send email, accept link
 - Invitation management UI (pending, resend, revoke)
 - Facets used: invitations, email
@@ -187,13 +187,13 @@ Delete these files/directories:
 
 ```
 app/routes/vaults/
-app/routes/teams/            (demo-specific team routes only)
+app/routes/workspaces/       (demo-specific workspace routes only)
 app/routes/invitations/
 ```
 
 In `app/db/schema.ts`, remove the `seeds`, `seedPhotos`, and `vaults` tables.
-Keep `teams`, `teamMembers`, and `teamInvitations` if your app needs
-multi-tenancy — otherwise remove those too.
+Keep `workspaces`, `workspaceMembers`, and `workspaceInvitations` if your app
+needs multi-tenancy — otherwise remove those too.
 
 Generate a fresh migration:
 
@@ -231,7 +231,7 @@ These pieces are **not** demo-specific and should stay:
 - Middleware (session, toast)
 - UI component library and icon system
 - Dark mode, notifications, timezone support
-- Audit log infrastructure (rename team scoping if needed)
+- Audit log infrastructure (rename workspace scoping if needed)
 - Database client and migration setup
 - Env validation
 - Analytics integration
@@ -247,9 +247,9 @@ Update these files with your project name:
 
 ### Quick Reference
 
-| Want to keep...        | Keep these files                                                  |
-| ---------------------- | ----------------------------------------------------------------- |
-| Auth (password)        | `app/utils/session.server.ts`, `password.server.ts`, auth routes  |
-| Teams & RBAC           | `teams`/`teamMembers` schema, team routes, RBAC middleware        |
-| File uploads           | R2 utilities, `file-storage` facet implementation                 |
-| Everything except demo | Delete `seeds`, `seedPhotos`, `vaults` schema + vault/seed routes |
+| Want to keep...        | Keep these files                                                          |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Auth (password)        | `app/utils/session.server.ts`, `password.server.ts`, auth routes          |
+| Workspaces & RBAC      | `workspaces`/`workspaceMembers` schema, workspace routes, RBAC middleware |
+| File uploads           | R2 utilities, `file-storage` facet implementation                         |
+| Everything except demo | Delete `seeds`, `seedPhotos`, `vaults` schema + vault/seed routes         |

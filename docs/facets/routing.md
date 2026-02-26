@@ -42,8 +42,9 @@ files tidy without affecting the route tree.
    `import … from '~/foo.server'` to tree-shake them from the client bundle.
 6. **Keep route modules thin** — extract shared logic into `app/lib/` or
    colocated `+/` helpers. Route files should mostly wire loader → component.
-7. **Name dynamic folders clearly** — `teams.$teamId/` beats `teams.$id/`. The
-   param name appears in `params`, so make it self-documenting.
+7. **Name dynamic folders clearly** — `workspaces.$workspaceId/` beats
+   `workspaces.$id/`. The param name appears in `params`, so make it
+   self-documenting.
 8. **Catch-all at the root** — place `$.tsx` at `routes/$.tsx` for a global 404
    page. Keep it separate from `index.tsx` to avoid error boundary conflicts.
 

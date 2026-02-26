@@ -10,7 +10,7 @@ export function uniqueEmail(): string {
 	return `test+${ts}-${rand}@example.com`
 }
 
-/** Fills the signup form and waits for redirect to team dashboard. */
+/** Fills the signup form and waits for redirect to workspace dashboard. */
 export async function signUp(
 	page: Page,
 	options?: { email?: string; password?: string },
@@ -23,12 +23,12 @@ export async function signUp(
 	await page.getByLabel('Password', { exact: true }).fill(password)
 	await page.getByLabel('Confirm password').fill(password)
 	await page.getByRole('button', { name: 'Create account' }).click()
-	await page.waitForURL(/\/teams\//)
+	await page.waitForURL(/\/workspaces\//)
 
 	return { email, password }
 }
 
-/** Fills the login form and waits for redirect (default: team dashboard). */
+/** Fills the login form and waits for redirect (default: workspace dashboard). */
 export async function logIn(
 	page: Page,
 	options: { email: string; password?: string; redirectTo?: string },
@@ -46,6 +46,6 @@ export async function logIn(
 	if (options.redirectTo) {
 		await page.waitForURL(options.redirectTo)
 	} else {
-		await page.waitForURL(/\/teams\//)
+		await page.waitForURL(/\/workspaces\//)
 	}
 }

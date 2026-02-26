@@ -9,7 +9,12 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { getDb } from '~/db/client.server'
-import { passwordCredentials, teams, teamMembers, users } from '~/db/schema'
+import {
+	passwordCredentials,
+	workspaces,
+	workspaceMembers,
+	users,
+} from '~/db/schema'
 import { VerifyEmail } from '~/emails/verify-email'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { createEmailVerificationToken } from '~/utils/email-verification.server'
@@ -17,8 +22,8 @@ import { sendEmail } from '~/utils/email.server'
 import { hashPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
-import { generateSlug } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
+import { generateSlug } from '~/utils/workspaces.server'
 
 const schema = z
 	.object({
@@ -61,8 +66,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	const userId = crypto.randomUUID()
 	const hash = await hashPassword(password)
-	const teamId = crypto.randomUUID()
-	const teamSlug = generateSlug('personal')
+	const workspaceId = crypto.randomUUID()
+	const workspaceSlug = generateSlug('personal')
 
 	// Use batch() so all inserts are atomic — a partial failure won't leave
 	// an orphaned user row with no credential.
@@ -71,15 +76,15 @@ export async function action({ request, context }: Route.ActionArgs) {
 		db
 			.insert(passwordCredentials)
 			.values({ userId, hash, updatedAt: new Date() }),
-		db.insert(teams).values({
-			id: teamId,
+		db.insert(workspaces).values({
+			id: workspaceId,
 			name: 'Personal',
-			slug: teamSlug,
+			slug: workspaceSlug,
 			isPersonal: true,
 		}),
 		db
-			.insert(teamMembers)
-			.values({ id: crypto.randomUUID(), teamId, userId, role: 'owner' }),
+			.insert(workspaceMembers)
+			.values({ id: crypto.randomUUID(), workspaceId, userId, role: 'owner' }),
 	])
 
 	// Send email verification link — non-blocking; don't fail signup if email fails
@@ -101,7 +106,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const destination =
 		redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
 			? redirectTo
-			: `/teams/${teamId}`
+			: `/workspaces/${workspaceId}`
 	return redirect(destination, {
 		headers: [
 			[

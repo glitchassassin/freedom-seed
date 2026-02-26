@@ -22,7 +22,7 @@ export const users = sqliteTable('users', {
 		.default(sql`(unixepoch('now') * 1000)`),
 })
 
-export const teams = sqliteTable('teams', {
+export const workspaces = sqliteTable('workspaces', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
@@ -39,43 +39,46 @@ export const teams = sqliteTable('teams', {
 		.default(sql`(unixepoch('now') * 1000)`),
 })
 
-export const teamMemberRoleEnum = ['owner', 'admin', 'member'] as const
-export type TeamMemberRole = (typeof teamMemberRoleEnum)[number]
+export const workspaceMemberRoleEnum = ['owner', 'admin', 'member'] as const
+export type WorkspaceMemberRole = (typeof workspaceMemberRoleEnum)[number]
 
-export const teamMembers = sqliteTable(
-	'team_members',
+export const workspaceMembers = sqliteTable(
+	'workspace_members',
 	{
 		id: text('id')
 			.primaryKey()
 			.$defaultFn(() => crypto.randomUUID()),
-		teamId: text('team_id')
+		workspaceId: text('workspace_id')
 			.notNull()
-			.references(() => teams.id, { onDelete: 'cascade' }),
+			.references(() => workspaces.id, { onDelete: 'cascade' }),
 		userId: text('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		role: text('role').$type<TeamMemberRole>().notNull(),
+		role: text('role').$type<WorkspaceMemberRole>().notNull(),
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.default(sql`(unixepoch('now') * 1000)`),
 	},
 	(table) => [
-		uniqueIndex('team_members_team_user_idx').on(table.teamId, table.userId),
+		uniqueIndex('workspace_members_workspace_user_idx').on(
+			table.workspaceId,
+			table.userId,
+		),
 	],
 )
 
-export const teamInvitations = sqliteTable('team_invitations', {
+export const workspaceInvitations = sqliteTable('workspace_invitations', {
 	id: text('id')
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	teamId: text('team_id')
+	workspaceId: text('workspace_id')
 		.notNull()
-		.references(() => teams.id, { onDelete: 'cascade' }),
+		.references(() => workspaces.id, { onDelete: 'cascade' }),
 	invitedByUserId: text('invited_by_user_id')
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
 	email: text('email').notNull(),
-	role: text('role').$type<TeamMemberRole>().notNull(),
+	role: text('role').$type<WorkspaceMemberRole>().notNull(),
 	tokenHash: text('token_hash').notNull().unique(),
 	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 	acceptedAt: integer('accepted_at', { mode: 'timestamp_ms' }),
@@ -89,9 +92,9 @@ export const auditLog = sqliteTable(
 	'audit_log',
 	{
 		id: integer('id').primaryKey({ autoIncrement: true }),
-		teamId: text('team_id')
+		workspaceId: text('workspace_id')
 			.notNull()
-			.references(() => teams.id, { onDelete: 'cascade' }),
+			.references(() => workspaces.id, { onDelete: 'cascade' }),
 		actorId: text('actor_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
@@ -108,7 +111,10 @@ export const auditLog = sqliteTable(
 			.default(sql`(unixepoch('now') * 1000)`),
 	},
 	(table) => [
-		index('audit_log_team_created_idx').on(table.teamId, table.createdAt),
+		index('audit_log_workspace_created_idx').on(
+			table.workspaceId,
+			table.createdAt,
+		),
 	],
 )
 

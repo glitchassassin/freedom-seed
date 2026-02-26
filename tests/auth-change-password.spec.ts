@@ -29,7 +29,7 @@ test.describe('Change password', () => {
 		// Log out (clear cookies) and log in with the new password
 		await page.context().clearCookies()
 		await logIn(page, { email, password: TEST_NEW_PASSWORD })
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
 	test('shows error for wrong current password', async ({ page }) => {

@@ -55,7 +55,7 @@ test.describe('Home Page', () => {
 			'Personal Vaults',
 			'Seed Cataloging',
 			'Photo Uploads',
-			'Team Collaboration',
+			'Workspace Collaboration',
 			'Role-Based Access',
 		]
 
@@ -72,14 +72,16 @@ test.describe('Home Page', () => {
 		await expect(page.getByText('Built with Freedom Seed')).toBeVisible()
 	})
 
-	test('redirects authenticated user to team dashboard', async ({ page }) => {
+	test('redirects authenticated user to workspace dashboard', async ({
+		page,
+	}) => {
 		await signUp(page)
-		// After signup, user is on team page
-		await expect(page).toHaveURL(/\/teams\//)
+		// After signup, user is on workspace page
+		await expect(page).toHaveURL(/\/workspaces\//)
 
-		// Navigating to / should redirect to team dashboard
+		// Navigating to / should redirect to workspace dashboard
 		await page.goto('/')
-		await expect(page).toHaveURL(/\/teams\//)
+		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
 	test('passes accessibility scan', async ({ page }) => {

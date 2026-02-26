@@ -30,8 +30,8 @@ test.describe('Email Verification', () => {
 		const url = new URL(verifyUrl)
 		await page.goto(url.pathname + url.search)
 
-		// After verification, should redirect to team dashboard with "Email verified" toast
-		await expect(page).toHaveURL(/\/teams\//)
+		// After verification, should redirect to workspace dashboard with "Email verified" toast
+		await expect(page).toHaveURL(/\/workspaces\//)
 		await expect(page.getByText('Email verified')).toBeVisible()
 	})
 

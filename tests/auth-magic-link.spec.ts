@@ -76,7 +76,7 @@ test.describe('Magic link login', () => {
 			await page.goto(`/magic-link/verify?token=${token}`)
 
 			// Should redirect to home with a session
-			await page.waitForURL(/\/teams\//)
+			await page.waitForURL(/\/workspaces\//)
 			const cookies = await page.context().cookies()
 			expect(cookies.some((c) => c.name === 'en_session')).toBe(true)
 		})

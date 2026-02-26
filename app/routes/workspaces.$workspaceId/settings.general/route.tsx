@@ -12,15 +12,19 @@ import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { requireRole } from '~/utils/rbac.server'
 import { requireUser } from '~/utils/session-context'
-import { requireTeamMember } from '~/utils/team-context'
-import { deleteTeam, getUserTeams, renameTeam } from '~/utils/teams.server'
 import { setToast } from '~/utils/toast.server'
+import { requireWorkspaceMember } from '~/utils/workspace-context'
+import {
+	deleteWorkspace,
+	getUserWorkspaces,
+	renameWorkspace,
+} from '~/utils/workspaces.server'
 
 const renameSchema = z.object({
 	name: z
 		.string()
-		.min(1, 'Team name is required')
-		.max(50, 'Team name is too long'),
+		.min(1, 'Workspace name is required')
+		.max(50, 'Workspace name is too long'),
 })
 
 const deleteSchema = z.object({
@@ -29,10 +33,10 @@ const deleteSchema = z.object({
 
 export async function loader({ context }: Route.LoaderArgs) {
 	requireRole(context, 'admin')
-	const member = requireTeamMember(context)
+	const member = requireWorkspaceMember(context)
 	return {
-		teamId: member.teamId,
-		teamName: member.teamName,
+		workspaceId: member.workspaceId,
+		workspaceName: member.workspaceName,
 		isPersonal: member.isPersonal,
 		role: member.role,
 	}
@@ -40,11 +44,11 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
 	const user = requireUser(context)
-	const member = requireTeamMember(context)
+	const member = requireWorkspaceMember(context)
 	const { env } = getCloudflare(context)
 	const isSecure = env.ENVIRONMENT === 'production'
 	const db = getDb(env)
-	const teamId = params.teamId!
+	const workspaceId = params.workspaceId!
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
@@ -53,22 +57,22 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 		const submission = parseWithZod(formData, { schema: renameSchema })
 		if (submission.status !== 'success') return submission.reply()
 
-		await renameTeam(db, teamId, submission.value.name)
+		await renameWorkspace(db, workspaceId, submission.value.name)
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
-			action: 'team.renamed',
-			targetType: 'team',
-			targetId: teamId,
-			metadata: { from: member.teamName, to: submission.value.name },
+			action: 'workspace.renamed',
+			targetType: 'workspace',
+			targetId: workspaceId,
+			metadata: { from: member.workspaceName, to: submission.value.name },
 		})
 
-		return redirect(`/teams/${teamId}/settings/general`, {
+		return redirect(`/workspaces/${workspaceId}/settings/general`, {
 			headers: {
 				'set-cookie': setToast(
-					{ type: 'success', title: 'Team renamed' },
+					{ type: 'success', title: 'Workspace renamed' },
 					isSecure,
 				),
 			},
@@ -78,41 +82,42 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 	if (intent === 'delete') {
 		requireRole(context, 'owner')
 		if (member.isPersonal) {
-			throw new Response('Cannot delete personal team', { status: 400 })
+			throw new Response('Cannot delete personal workspace', { status: 400 })
 		}
 
 		const submission = parseWithZod(formData, { schema: deleteSchema })
 		if (submission.status !== 'success') return submission.reply()
 
-		if (submission.value.confirmName !== member.teamName) {
+		if (submission.value.confirmName !== member.workspaceName) {
 			return submission.reply({
 				fieldErrors: {
-					confirmName: ['Team name does not match'],
+					confirmName: ['Workspace name does not match'],
 				},
 			})
 		}
 
 		await logAuditEvent({
 			db,
-			teamId,
+			workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
-			action: 'team.deleted',
-			targetType: 'team',
-			targetId: teamId,
-			targetLabel: member.teamName,
+			action: 'workspace.deleted',
+			targetType: 'workspace',
+			targetId: workspaceId,
+			targetLabel: member.workspaceName,
 		})
 
-		await deleteTeam(db, teamId)
+		await deleteWorkspace(db, workspaceId)
 
-		// Redirect to personal team
-		const userTeams = await getUserTeams(db, user.id)
-		const personalTeam = userTeams.find((t) => t.isPersonal) || userTeams[0]
+		// Redirect to personal workspace
+		const userWorkspaces = await getUserWorkspaces(db, user.id)
+		const personalWorkspace =
+			userWorkspaces.find((t) => t.isPersonal) || userWorkspaces[0]
 
-		return redirect(`/teams/${personalTeam.id}`, {
+		return redirect(`/workspaces/${personalWorkspace.id}`, {
 			headers: {
 				'set-cookie': setToast(
-					{ type: 'success', title: 'Team deleted' },
+					{ type: 'success', title: 'Workspace deleted' },
 					isSecure,
 				),
 			},
@@ -123,14 +128,14 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 }
 
 export function meta() {
-	return [{ title: 'Team Settings' }]
+	return [{ title: 'Workspace Settings' }]
 }
 
-export default function TeamSettingsGeneral({
+export default function WorkspaceSettingsGeneral({
 	loaderData,
 	actionData,
 }: Route.ComponentProps) {
-	const { teamName, isPersonal, role } = loaderData
+	const { workspaceName, isPersonal, role } = loaderData
 
 	const [renameForm, renameFields] = useForm({
 		lastResult: actionData,
@@ -150,10 +155,10 @@ export default function TeamSettingsGeneral({
 
 	return (
 		<main className="mx-auto max-w-4xl p-6">
-			<h1 className="text-2xl font-semibold">Team Settings</h1>
+			<h1 className="text-2xl font-semibold">Workspace Settings</h1>
 
 			<section className="mt-8">
-				<h2 className="text-lg font-semibold">Team Name</h2>
+				<h2 className="text-lg font-semibold">Workspace Name</h2>
 				<Form
 					method="POST"
 					{...getFormProps(renameForm)}
@@ -165,7 +170,7 @@ export default function TeamSettingsGeneral({
 						<Label htmlFor={renameFields.name.id}>Name</Label>
 						<Input
 							{...getInputProps(renameFields.name, { type: 'text' })}
-							defaultValue={teamName}
+							defaultValue={workspaceName}
 						/>
 						{renameFields.name.errors && (
 							<p className="text-destructive text-sm">
@@ -180,11 +185,11 @@ export default function TeamSettingsGeneral({
 			{!isPersonal && role === 'owner' && (
 				<section className="mt-12 rounded-lg border border-red-200 p-6 dark:border-red-900">
 					<h2 className="text-lg font-semibold text-red-600 dark:text-red-400">
-						Delete Team
+						Delete Workspace
 					</h2>
 					<p className="text-muted-foreground mt-2 text-sm">
-						This action is permanent. All team data, members, and invitations
-						will be deleted.
+						This action is permanent. All workspace data, members, and
+						invitations will be deleted.
 					</p>
 					<Form
 						method="POST"
@@ -195,11 +200,11 @@ export default function TeamSettingsGeneral({
 						<input type="hidden" name="intent" value="delete" />
 						<div className="space-y-2">
 							<Label htmlFor={deleteFields.confirmName.id}>
-								Type <strong>{teamName}</strong> to confirm
+								Type <strong>{workspaceName}</strong> to confirm
 							</Label>
 							<Input
 								{...getInputProps(deleteFields.confirmName, { type: 'text' })}
-								placeholder={teamName}
+								placeholder={workspaceName}
 							/>
 							{deleteFields.confirmName.errors && (
 								<p className="text-destructive text-sm">
@@ -208,7 +213,7 @@ export default function TeamSettingsGeneral({
 							)}
 						</div>
 						<Button type="submit" variant="destructive">
-							Delete team permanently
+							Delete workspace permanently
 						</Button>
 					</Form>
 				</section>

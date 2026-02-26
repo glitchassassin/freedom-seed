@@ -6,9 +6,9 @@ import { Icon } from '~/components/ui/icon'
 import type { IconName } from '~/components/ui/icon'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
-import { getLastTeamId } from '~/utils/last-team-cookie.server'
+import { getLastWorkspaceId } from '~/utils/last-workspace-cookie.server'
 import { getOptionalUser } from '~/utils/session-context'
-import { getUserTeams } from '~/utils/teams.server'
+import { getUserWorkspaces } from '~/utils/workspaces.server'
 
 export function meta() {
 	return [
@@ -16,7 +16,7 @@ export function meta() {
 		{
 			name: 'description',
 			content:
-				'Seed Vault helps you catalog your seed collection, track growing information, upload photos, and collaborate with your gardening team.',
+				'Seed Vault helps you catalog your seed collection, track growing information, upload photos, and collaborate with your gardening workspace.',
 		},
 	]
 }
@@ -26,12 +26,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	if (user) {
 		const { env } = getCloudflare(context)
 		const db = getDb(env)
-		const userTeams = await getUserTeams(db, user.id)
-		if (userTeams.length > 0) {
-			const lastTeamId = getLastTeamId(request)
-			const targetTeam =
-				userTeams.find((t) => t.id === lastTeamId) ?? userTeams[0]
-			throw redirect(`/teams/${targetTeam.id}`)
+		const userWorkspaces = await getUserWorkspaces(db, user.id)
+		if (userWorkspaces.length > 0) {
+			const lastWorkspaceId = getLastWorkspaceId(request)
+			const targetWorkspace =
+				userWorkspaces.find((t) => t.id === lastWorkspaceId) ??
+				userWorkspaces[0]
+			throw redirect(`/workspaces/${targetWorkspace.id}`)
 		}
 	}
 	return { user: null }
@@ -58,15 +59,15 @@ const features: { icon: IconName; title: string; description: string }[] = [
 	},
 	{
 		icon: 'lucide--users',
-		title: 'Team Collaboration',
+		title: 'Workspace Collaboration',
 		description:
-			'Create teams and share vaults with fellow gardeners to build a collection together.',
+			'Create workspaces and share vaults with fellow gardeners to build a collection together.',
 	},
 	{
 		icon: 'lucide--shield-check',
 		title: 'Role-Based Access',
 		description:
-			'Assign viewer, editor, or owner roles to team members for fine-grained permissions.',
+			'Assign viewer, editor, or owner roles to workspace members for fine-grained permissions.',
 	},
 ]
 
@@ -82,7 +83,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 				</h1>
 				<p className="text-muted-foreground text-body-md sm:text-body-lg max-w-2xl">
 					Catalog your seed collection, track growing information, upload
-					photos, and collaborate with your gardening team — all in one place.
+					photos, and collaborate with your gardening workspace — all in one
+					place.
 				</p>
 
 				<div className="flex flex-col gap-4 sm:flex-row">

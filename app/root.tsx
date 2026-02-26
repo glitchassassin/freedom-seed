@@ -49,7 +49,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 		context.set(toastContext, toastData)
 		const response = await next()
 		// Only clear the toast cookie on non-redirect responses so the
-		// flash message survives redirect chains (e.g. /verify-email → / → /teams/:id)
+		// flash message survives redirect chains (e.g. /verify-email → / → /workspaces/:id)
 		const isRedirect = response.status >= 300 && response.status < 400
 		if (setCookieHeader && !isRedirect) {
 			response.headers.append('set-cookie', setCookieHeader)

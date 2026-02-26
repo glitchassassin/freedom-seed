@@ -1,22 +1,22 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import type { Db } from '~/db/client.server'
-import { teamInvitations, teamMembers } from '~/db/schema'
-import type { TeamMemberRole } from '~/db/schema'
+import { workspaceInvitations, workspaceMembers } from '~/db/schema'
+import type { WorkspaceMemberRole } from '~/db/schema'
 import { sha256Base64url, toBase64url } from '~/utils/crypto.server'
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 /**
- * Creates a team invitation, stores the SHA-256 hash of the token in D1
+ * Creates a workspace invitation, stores the SHA-256 hash of the token in D1
  * with a 7-day expiry, and returns the raw token for the invitation URL.
  */
-export async function createTeamInvitation(
+export async function createWorkspaceInvitation(
 	db: Db,
 	opts: {
-		teamId: string
+		workspaceId: string
 		invitedByUserId: string
 		email: string
-		role: TeamMemberRole
+		role: WorkspaceMemberRole
 	},
 ): Promise<{ invitationId: string; rawToken: string }> {
 	const tokenBytes = crypto.getRandomValues(new Uint8Array(32))
@@ -25,9 +25,9 @@ export async function createTeamInvitation(
 	const expiresAt = new Date(Date.now() + INVITATION_TTL_MS)
 	const invitationId = crypto.randomUUID()
 
-	await db.insert(teamInvitations).values({
+	await db.insert(workspaceInvitations).values({
 		id: invitationId,
-		teamId: opts.teamId,
+		workspaceId: opts.workspaceId,
 		invitedByUserId: opts.invitedByUserId,
 		email: opts.email.toLowerCase(),
 		role: opts.role,
@@ -39,15 +39,15 @@ export async function createTeamInvitation(
 }
 
 /**
- * Looks up a team invitation by hashing the raw token from the URL.
+ * Looks up a workspace invitation by hashing the raw token from the URL.
  * Returns the DB row or null if not found / expired / used / revoked.
  */
 export async function findValidInvitation(db: Db, rawToken: string) {
 	const tokenHash = await sha256Base64url(rawToken)
 	const row = await db
 		.select()
-		.from(teamInvitations)
-		.where(eq(teamInvitations.tokenHash, tokenHash))
+		.from(workspaceInvitations)
+		.where(eq(workspaceInvitations.tokenHash, tokenHash))
 		.limit(1)
 		.then((r) => r[0])
 	if (!row) return null
@@ -58,24 +58,24 @@ export async function findValidInvitation(db: Db, rawToken: string) {
 
 /**
  * Accepts an invitation: marks it as accepted and inserts the user
- * as a team member in a single batch.
+ * as a workspace member in a single batch.
  */
 export async function acceptInvitation(
 	db: Db,
 	opts: {
 		invitationId: string
 		userId: string
-		teamId: string
-		role: TeamMemberRole
+		workspaceId: string
+		role: WorkspaceMemberRole
 	},
 ): Promise<void> {
 	await db.batch([
 		db
-			.update(teamInvitations)
+			.update(workspaceInvitations)
 			.set({ acceptedAt: new Date() })
-			.where(eq(teamInvitations.id, opts.invitationId)),
-		db.insert(teamMembers).values({
-			teamId: opts.teamId,
+			.where(eq(workspaceInvitations.id, opts.invitationId)),
+		db.insert(workspaceMembers).values({
+			workspaceId: opts.workspaceId,
 			userId: opts.userId,
 			role: opts.role,
 		}),
@@ -88,22 +88,22 @@ export async function revokeInvitation(
 	invitationId: string,
 ): Promise<void> {
 	await db
-		.update(teamInvitations)
+		.update(workspaceInvitations)
 		.set({ revokedAt: new Date() })
-		.where(eq(teamInvitations.id, invitationId))
+		.where(eq(workspaceInvitations.id, invitationId))
 }
 
-/** Returns all pending (non-accepted, non-revoked) invitations for a team. */
-export async function getPendingInvitations(db: Db, teamId: string) {
+/** Returns all pending (non-accepted, non-revoked) invitations for a workspace. */
+export async function getPendingInvitations(db: Db, workspaceId: string) {
 	return db
 		.select()
-		.from(teamInvitations)
+		.from(workspaceInvitations)
 		.where(
 			and(
-				eq(teamInvitations.teamId, teamId),
-				isNull(teamInvitations.acceptedAt),
-				isNull(teamInvitations.revokedAt),
+				eq(workspaceInvitations.workspaceId, workspaceId),
+				isNull(workspaceInvitations.acceptedAt),
+				isNull(workspaceInvitations.revokedAt),
 			),
 		)
-		.orderBy(teamInvitations.createdAt)
+		.orderBy(workspaceInvitations.createdAt)
 }

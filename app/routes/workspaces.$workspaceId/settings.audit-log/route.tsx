@@ -17,7 +17,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
 
-	const teamId = params.teamId!
+	const workspaceId = params.workspaceId!
 	const { timeZone } = getHints(request)
 
 	const url = new URL(request.url)
@@ -29,14 +29,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 		db
 			.select()
 			.from(auditLog)
-			.where(eq(auditLog.teamId, teamId))
+			.where(eq(auditLog.workspaceId, workspaceId))
 			.orderBy(desc(auditLog.createdAt))
 			.limit(PAGE_SIZE)
 			.offset(offset),
 		db
 			.select({ count: sql<number>`count(*)` })
 			.from(auditLog)
-			.where(eq(auditLog.teamId, teamId)),
+			.where(eq(auditLog.workspaceId, workspaceId)),
 	])
 
 	const count = countResult[0]?.count ?? 0
@@ -54,7 +54,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 		})),
 		page,
 		totalPages,
-		teamId,
+		workspaceId,
 	}
 }
 
