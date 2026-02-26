@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
-import { signUp, uniqueEmail } from './auth-helpers'
+import { uniqueEmail } from './auth-helpers'
+import { createUser } from './factories'
 
 test.describe('Forgot password', () => {
 	test('shows success message for non-existent email (prevents enumeration)', async ({
@@ -17,8 +18,8 @@ test.describe('Forgot password', () => {
 	})
 
 	test('shows success message for existing email', async ({ page }) => {
-		const { email } = await signUp(page)
-		await page.context().clearCookies()
+		const { user } = await createUser()
+		const email = user.email
 
 		await page.goto('/forgot-password')
 		await page.getByLabel('Email').fill(email)

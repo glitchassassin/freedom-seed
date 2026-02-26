@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 import { signUp, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
+import { createUser } from './factories'
 
 test.describe('Signup', () => {
 	test('creates an account and redirects to workspace dashboard', async ({
@@ -16,10 +17,9 @@ test.describe('Signup', () => {
 
 	test('shows error for duplicate email', async ({ page }) => {
 		const email = uniqueEmail()
-		await signUp(page, { email })
+		await createUser({ email })
 
-		// Clear cookies and try signing up with same email
-		await page.context().clearCookies()
+		// Try signing up with same email
 		await page.goto('/signup')
 		await page.getByLabel('Email').fill(email)
 		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD)

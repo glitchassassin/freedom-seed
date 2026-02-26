@@ -1,23 +1,22 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
-import { signUp, uniqueEmail } from './auth-helpers'
+import { uniqueEmail } from './auth-helpers'
 import {
-	getUserIdByEmail,
 	seedMagicLinkToken,
 	seedExpiredMagicLinkToken,
 	markMagicLinkTokenUsed,
 } from './db-helpers'
+import { createUser } from './factories'
 
 test.describe('Magic link login', () => {
 	test.describe('Request form', () => {
 		test('shows success message after submitting a registered email', async ({
 			page,
 		}) => {
-			const { email } = await signUp(page)
-			await page.context().clearCookies()
+			const { user } = await createUser()
 
 			await page.goto('/magic-link')
-			await page.getByLabel('Email').fill(email)
+			await page.getByLabel('Email').fill(user.email)
 			await page.getByRole('button', { name: 'Send sign-in link' }).click()
 
 			await expect(page.getByText('Check your email')).toBeVisible()
@@ -67,11 +66,8 @@ test.describe('Magic link login', () => {
 
 	test.describe('Token verification', () => {
 		test('logs in with a valid magic link token', async ({ page }) => {
-			const { email } = await signUp(page)
-			await page.context().clearCookies()
-
-			const userId = getUserIdByEmail(email)
-			const token = seedMagicLinkToken(userId)
+			const { user } = await createUser()
+			const token = seedMagicLinkToken(user.id)
 
 			await page.goto(`/magic-link/verify?token=${token}`)
 
@@ -93,11 +89,8 @@ test.describe('Magic link login', () => {
 		})
 
 		test('shows error for expired token', async ({ page }) => {
-			const { email } = await signUp(page)
-			await page.context().clearCookies()
-
-			const userId = getUserIdByEmail(email)
-			const token = seedExpiredMagicLinkToken(userId)
+			const { user } = await createUser()
+			const token = seedExpiredMagicLinkToken(user.id)
 
 			await page.goto(`/magic-link/verify?token=${token}`)
 			await expect(page.getByText('Invalid sign-in link')).toBeVisible()
@@ -105,11 +98,8 @@ test.describe('Magic link login', () => {
 		})
 
 		test('shows error for already-used token', async ({ page }) => {
-			const { email } = await signUp(page)
-			await page.context().clearCookies()
-
-			const userId = getUserIdByEmail(email)
-			const token = seedMagicLinkToken(userId)
+			const { user } = await createUser()
+			const token = seedMagicLinkToken(user.id)
 			markMagicLinkTokenUsed(token)
 
 			await page.goto(`/magic-link/verify?token=${token}`)
