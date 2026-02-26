@@ -26,17 +26,9 @@ test.describe('Workspaces', () => {
 	})
 
 	test('members page shows current user as owner', async ({ page, login }) => {
-		const { user } = await login()
+		const { user, personalWorkspace } = await login()
 
-		// Navigate to personal workspace (redirects automatically)
-		await page.goto('/')
-		await expect(page).toHaveURL(/\/workspaces\//)
-
-		// Navigate to settings, then members
-		await page.getByRole('link', { name: 'Workspace settings' }).click()
-		const url = page.url()
-		const workspaceId = url.match(/\/workspaces\/([^/]+)/)?.[1]
-		await page.goto(`/workspaces/${workspaceId}/settings/members`)
+		await page.goto(`/workspaces/${personalWorkspace.id}/settings/members`)
 
 		await expect(page.getByText(user.email)).toBeVisible()
 		await expect(page.getByText('owner')).toBeVisible()
@@ -154,7 +146,7 @@ test.describe('Workspaces', () => {
 		const { user } = await login()
 		const ws = createWorkspace({ ownerId: user.id, name: 'Old Name' })
 
-		await page.goto(`/workspaces/${ws.workspace.id}/settings`)
+		await page.goto(`/workspaces/${ws.workspace.id}/settings/general`)
 
 		await page.getByRole('textbox', { name: 'Name', exact: true }).clear()
 		await page
@@ -169,7 +161,7 @@ test.describe('Workspaces', () => {
 		const { user } = await login()
 		const ws = createWorkspace({ ownerId: user.id, name: 'Delete Me' })
 
-		await page.goto(`/workspaces/${ws.workspace.id}/settings`)
+		await page.goto(`/workspaces/${ws.workspace.id}/settings/general`)
 
 		await page.getByPlaceholder('Delete Me').fill('Delete Me')
 		await page
