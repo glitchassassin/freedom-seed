@@ -45,7 +45,9 @@ function resolveD1Path(): string {
 
 /** Opens the miniflare D1 SQLite database containing app tables. */
 export function openD1(): InstanceType<typeof DatabaseSync> {
-	return new DatabaseSync(resolveD1Path())
+	const db = new DatabaseSync(resolveD1Path())
+	db.exec('PRAGMA busy_timeout = 5000')
+	return db
 }
 
 /** Generates a new UUID v4 identifier. */
@@ -53,12 +55,14 @@ export function generateId(): string {
 	return crypto.randomUUID()
 }
 
-/** Converts a name to a URL-safe slug. */
+/** Converts a name to a URL-safe slug with a unique suffix (matches production). */
 export function generateSlug(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '')
+	const base =
+		name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '') || 'workspace'
+	return `${base}-${crypto.randomUUID().slice(0, 8)}`
 }
 
 /** Generates a 32-byte random token as base64url string. */
