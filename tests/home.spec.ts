@@ -1,6 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
-import { signUp } from './auth-helpers'
+import { test, expect } from './playwright-utils'
 
 test.describe('Home Page', () => {
 	test('renders the home page correctly', async ({ page }) => {
@@ -74,11 +73,9 @@ test.describe('Home Page', () => {
 
 	test('redirects authenticated user to workspace dashboard', async ({
 		page,
+		login,
 	}) => {
-		await signUp(page)
-		// After signup, user is on workspace page
-		await expect(page).toHaveURL(/\/workspaces\//)
-
+		await login()
 		// Navigating to / should redirect to workspace dashboard
 		await page.goto('/')
 		await expect(page).toHaveURL(/\/workspaces\//)

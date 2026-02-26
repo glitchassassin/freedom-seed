@@ -18,8 +18,10 @@ test.describe('Workspaces', () => {
 
 	test('workspace dashboard shows workspace name and description', async ({
 		page,
+		login,
 	}) => {
-		await signUp(page)
+		const { personalWorkspace } = await login()
+		await page.goto(`/workspaces/${personalWorkspace.id}`)
 		await expect(
 			page.getByText('This is your personal workspace'),
 		).toBeVisible()
@@ -34,8 +36,9 @@ test.describe('Workspaces', () => {
 		await expect(page.getByText('owner')).toBeVisible()
 	})
 
-	test('can create a new shared workspace', async ({ page }) => {
-		await signUp(page)
+	test('can create a new shared workspace', async ({ page, login }) => {
+		const { personalWorkspace } = await login()
+		await page.goto(`/workspaces/${personalWorkspace.id}`)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
 		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
@@ -51,8 +54,9 @@ test.describe('Workspaces', () => {
 		).toBeVisible()
 	})
 
-	test('workspace switcher shows all workspaces', async ({ page }) => {
-		await signUp(page)
+	test('workspace switcher shows all workspaces', async ({ page, login }) => {
+		const { personalWorkspace } = await login()
+		await page.goto(`/workspaces/${personalWorkspace.id}`)
 
 		await page.getByRole('button', { name: /Personal/ }).click()
 		await page.getByRole('menuitem', { name: 'Create workspace' }).click()
@@ -111,10 +115,12 @@ test.describe('Workspaces', () => {
 		expect(acceptUrlMatch).toBeTruthy()
 		const acceptUrl = acceptUrlMatch![1]
 
-		// User B signs up with the invited email in a fresh context
-		const context2 = await browser.newContext()
-		const page2 = await context2.newPage()
-		await signUp(page2, { email: inviteeEmail })
+		// User B created via factory (avoids flaky webkit UI signup timeout)
+		const userB = await createUser({ email: inviteeEmail })
+		const { context: context2, page: page2 } = await authenticatedContext(
+			browser,
+			userB.user.id,
+		)
 
 		await page2.goto(acceptUrl)
 		await expect(page2.getByText('Accept Test Team')).toBeVisible()

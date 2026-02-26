@@ -1,13 +1,15 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
-import { logIn, signUp, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
+import { logIn, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
+import { test, expect } from './playwright-utils'
 
 test.describe('Login', () => {
 	test('logs in with valid credentials and redirects to workspace', async ({
 		page,
+		insertNewUser,
 	}) => {
-		const { email } = await signUp(page)
-		await page.context().clearCookies()
+		const {
+			user: { email },
+		} = await insertNewUser()
 
 		await logIn(page, { email })
 		await expect(page).toHaveURL(/\/workspaces\//)
@@ -24,9 +26,13 @@ test.describe('Login', () => {
 		await expect(page.getByText('Invalid email or password')).toBeVisible()
 	})
 
-	test('shows error for correct email + wrong password', async ({ page }) => {
-		const { email } = await signUp(page)
-		await page.context().clearCookies()
+	test('shows error for correct email + wrong password', async ({
+		page,
+		insertNewUser,
+	}) => {
+		const {
+			user: { email },
+		} = await insertNewUser()
 
 		await page.goto('/login')
 		await page.getByLabel('Email').fill(email)
@@ -36,9 +42,10 @@ test.describe('Login', () => {
 		await expect(page.getByText('Invalid email or password')).toBeVisible()
 	})
 
-	test('honors redirectTo query param', async ({ page }) => {
-		const { email } = await signUp(page)
-		await page.context().clearCookies()
+	test('honors redirectTo query param', async ({ page, insertNewUser }) => {
+		const {
+			user: { email },
+		} = await insertNewUser()
 
 		await logIn(page, {
 			email,

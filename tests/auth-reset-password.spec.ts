@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
-import { logIn, signUp, uniqueEmail } from './auth-helpers'
-import { getUserIdByEmail, seedPasswordResetToken } from './db-helpers'
+import { logIn, uniqueEmail } from './auth-helpers'
+import { seedPasswordResetToken } from './db-helpers'
+import { createUser } from './factories'
 
 const NEW_PASSWORD = 'ResetPass99!'
 
@@ -25,12 +26,10 @@ test.describe('Reset password', () => {
 		page,
 	}) => {
 		const email = uniqueEmail()
-		await signUp(page, { email })
-		await page.context().clearCookies()
+		const { user } = await createUser({ email })
 
 		// Seed a reset token directly in D1
-		const userId = getUserIdByEmail(email)
-		const rawToken = seedPasswordResetToken(userId)
+		const rawToken = seedPasswordResetToken(user.id)
 
 		// Navigate to reset page with the valid token
 		await page.goto(`/reset-password?token=${rawToken}`)

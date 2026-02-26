@@ -1,22 +1,16 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
-import {
-	logIn,
-	signUp,
-	TEST_NEW_PASSWORD,
-	TEST_PASSWORD,
-	uniqueEmail,
-} from './auth-helpers'
+import { logIn, TEST_NEW_PASSWORD, TEST_PASSWORD } from './auth-helpers'
+import { test, expect } from './playwright-utils'
 
 test.describe('Change password', () => {
 	test('changes password successfully and can log in with new password', async ({
 		page,
+		login,
 	}) => {
-		const email = uniqueEmail()
-		await signUp(page, { email })
+		const { user, password } = await login()
 
 		await page.goto('/settings/change-password')
-		await page.getByLabel('Current password').fill(TEST_PASSWORD)
+		await page.getByLabel('Current password').fill(password)
 		await page
 			.getByLabel('New password', { exact: true })
 			.fill(TEST_NEW_PASSWORD)
@@ -28,12 +22,12 @@ test.describe('Change password', () => {
 
 		// Log out (clear cookies) and log in with the new password
 		await page.context().clearCookies()
-		await logIn(page, { email, password: TEST_NEW_PASSWORD })
+		await logIn(page, { email: user.email, password: TEST_NEW_PASSWORD })
 		await expect(page).toHaveURL(/\/workspaces\//)
 	})
 
-	test('shows error for wrong current password', async ({ page }) => {
-		await signUp(page)
+	test('shows error for wrong current password', async ({ page, login }) => {
+		await login()
 
 		await page.goto('/settings/change-password')
 		await page.getByLabel('Current password').fill('wrong-current-pw')
@@ -46,8 +40,11 @@ test.describe('Change password', () => {
 		await expect(page.getByText('Current password is incorrect')).toBeVisible()
 	})
 
-	test('shows validation error for short new password', async ({ page }) => {
-		await signUp(page)
+	test('shows validation error for short new password', async ({
+		page,
+		login,
+	}) => {
+		await login()
 
 		await page.goto('/settings/change-password')
 		await page.getByLabel('Current password').fill(TEST_PASSWORD)
@@ -60,8 +57,11 @@ test.describe('Change password', () => {
 		).toBeVisible()
 	})
 
-	test('shows validation error for password mismatch', async ({ page }) => {
-		await signUp(page)
+	test('shows validation error for password mismatch', async ({
+		page,
+		login,
+	}) => {
+		await login()
 
 		await page.goto('/settings/change-password')
 		await page.getByLabel('Current password').fill(TEST_PASSWORD)
@@ -74,8 +74,8 @@ test.describe('Change password', () => {
 		await expect(page.getByText('Passwords do not match')).toBeVisible()
 	})
 
-	test('passes accessibility scan', async ({ page }) => {
-		await signUp(page)
+	test('passes accessibility scan', async ({ page, login }) => {
+		await login()
 		await page.goto('/settings/change-password')
 		const results = await new AxeBuilder({ page }).analyze()
 		expect(results.violations).toEqual([])
