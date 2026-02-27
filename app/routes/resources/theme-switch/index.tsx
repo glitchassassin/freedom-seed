@@ -9,14 +9,17 @@ import { getCloudflare } from '~/utils/cloudflare-context'
 import { setTheme } from '~/utils/theme.server'
 import type { Theme } from '~/utils/theme.server'
 
-type ThemeMode = Theme | 'system'
-const validThemes: ThemeMode[] = ['system', 'light', 'dark']
+const themeValues = ['system', 'light', 'dark'] as const
+type ThemeMode = (typeof themeValues)[number]
 
 function isThemeMode(value: unknown): value is ThemeMode {
-	return typeof value === 'string' && (validThemes as string[]).includes(value)
+	return (
+		typeof value === 'string' &&
+		(themeValues as readonly string[]).includes(value)
+	)
 }
 
-const themeSchema = z.object({ theme: z.enum(['system', 'light', 'dark']) })
+const themeSchema = z.object({ theme: z.enum(themeValues) })
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
