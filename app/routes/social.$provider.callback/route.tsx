@@ -2,6 +2,7 @@ import { redirect } from 'react-router'
 import type { Route } from './+types/route'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { getOptionalUser } from '~/utils/session-context'
 import { createSession } from '~/utils/session.server'
 import {
@@ -115,8 +116,11 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 		const currentUser = getOptionalUser(context)
 		if (stateData.mode === 'link' && currentUser) {
 			await linkSocialIdentity(env, currentUser.id, profile)
-			const redirectTo = stateData.redirectTo ?? '/settings/connected-accounts'
-			return redirect(redirectTo, {
+			const linkDestination = safeRedirect(
+				stateData.redirectTo,
+				'/settings/connected-accounts',
+			)
+			return redirect(linkDestination, {
 				headers: [
 					['set-cookie', clearOAuthStateCookie(isSecure)],
 					[
@@ -141,20 +145,16 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 		const { userId, isNewUser } = await findOrCreateUserFromOAuth(env, profile)
 		const { cookie } = await createSession(env, userId, request)
 
-		// Determine redirect destination
-		let destination = '/'
-		if (
-			stateData.redirectTo &&
-			stateData.redirectTo.startsWith('/') &&
-			!stateData.redirectTo.startsWith('//')
-		) {
-			destination = stateData.redirectTo
+		// Determine redirect destination (empty default to detect "no redirect" and fall through)
+		let destination: string
+		const validRedirect = safeRedirect(stateData.redirectTo, '')
+		if (validRedirect) {
+			destination = validRedirect
 		} else {
 			const db = getDb(env)
 			const userWorkspaces = await getUserWorkspaces(db, userId)
-			if (userWorkspaces.length > 0) {
-				destination = `/workspaces/${userWorkspaces[0].id}`
-			}
+			destination =
+				userWorkspaces.length > 0 ? `/workspaces/${userWorkspaces[0].id}` : '/'
 		}
 
 		const toastTitle = isNewUser ? 'Account created' : 'Welcome back'
