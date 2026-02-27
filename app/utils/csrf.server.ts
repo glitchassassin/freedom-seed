@@ -33,6 +33,25 @@ export function makeCsrfCookie(signedToken: string, isSecure: boolean): string {
 }
 
 /**
+ * Reads and verifies the existing CSRF signed cookie, returning the
+ * { token, signedCookie } pair so the middleware can re-issue the
+ * same token (no rotation) on non-navigation requests (e.g. API
+ * routes like /resources/passkeys/*).  Returns null if the cookie is
+ * absent or its signature is invalid.
+ */
+export async function readExistingCsrfToken(
+	request: Request,
+	secret: string,
+	isSecure: boolean,
+): Promise<{ token: string; signedCookie: string } | null> {
+	const cookieValue = readCookie(request, csrfCookieName(isSecure))
+	if (!cookieValue) return null
+	const token = await verifySignedToken(cookieValue, secret)
+	if (!token) return null
+	return { token, signedCookie: cookieValue }
+}
+
+/**
  * Validates the CSRF token by comparing the cookie value against the
  * form field value. Clones the request internally to read formData
  * without consuming the original body.
