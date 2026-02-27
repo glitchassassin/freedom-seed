@@ -3,8 +3,11 @@
 export const iconNames = [
 	'lucide--x',
 	'lucide--users',
+	'lucide--sun',
 	'lucide--sprout',
 	'lucide--shield-check',
+	'lucide--moon',
+	'lucide--monitor',
 	'lucide--lock-keyhole',
 	'lucide--circle',
 	'lucide--chevron-right',
