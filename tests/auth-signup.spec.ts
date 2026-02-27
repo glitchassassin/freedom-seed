@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
 import { signUp, TEST_PASSWORD, uniqueEmail } from './auth-helpers'
 import { createUser } from './factories'
+import { test, expect } from './playwright-utils'
 
 test.describe('Signup', () => {
 	test('creates an account and redirects to workspace dashboard', async ({

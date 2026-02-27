@@ -48,7 +48,7 @@
 - React Router 7 + Cloudflare Workers (SSR)
 - Cloudflare D1 (SQLite) + Drizzle ORM
 - Vite 7 + Tailwind CSS v4
-- Playwright for E2E tests (port 4173, preview build)
+- Playwright for E2E tests (per-worker `vite preview`, ports 4200+)
 - Node >= 24 required (engines.node bumped from >=22 to >=24 in Feb 2026)
 
 ## Context API (v8_middleware)
@@ -139,3 +139,21 @@
 - Timestamps: `integer('...', { mode: 'timestamp_ms' })` with
   `unixepoch('now') * 1000` default
 - `{ schema }` passed to `drizzle()` in client.server.ts
+
+## E2E Test Architecture
+
+- Per-worker isolation: each Playwright worker gets its own `vite preview`
+  server with deep-copied `.wrangler/state/` (isolated D1 database)
+- No `webServer` in playwright.config.ts; servers managed via `workerServer`
+  fixture in `tests/playwright-utils.ts`
+- Port range: `4200 + workerInfo.parallelIndex`; `--strictPort` enforced
+- `tests/worker-server.ts` encapsulates start/stop/cleanup lifecycle
+- `setWorkerRoot()` in `tests/factories/db.ts` points factories at isolated DB
+- All spec files MUST import `test`/`expect` from `./playwright-utils`
+- Shared mock Resend server on port 3001; email isolation via `uniqueEmail()`
+- `RESEND_BASE_URL` baked in at build time, not runtime
+- Temp dir strategy: symlink everything except `.wrangler/` and `.react-router/`
+  (deep-copied to avoid race conditions)
+- `CF_INSPECTOR_PORT=false` env var disables miniflare inspector port conflicts
+- `stopWorkerServer` is synchronous (SIGTERM only, no wait)
+- CI workers: 4 (set in playwright.config.ts)

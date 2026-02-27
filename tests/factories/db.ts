@@ -9,20 +9,31 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-const MINIFLARE_D1_DIR = join(
-	process.cwd(),
-	'.wrangler/state/v3/d1/miniflare-D1DatabaseObject',
-)
+/** Root directory for resolving .wrangler state. Defaults to project root. */
+let workerRoot = join(import.meta.dirname, '../..')
+
+/**
+ * Sets the root directory used to locate the miniflare D1 database.
+ * Each Playwright worker calls this with its isolated temp dir.
+ */
+export function setWorkerRoot(root: string): void {
+	workerRoot = root
+	cachedDbPath = undefined
+	cachedSecret = undefined
+}
+
+function getD1Dir(): string {
+	return join(workerRoot, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject')
+}
 
 let cachedDbPath: string | undefined
 
 function resolveD1Path(): string {
 	if (cachedDbPath) return cachedDbPath
-	const files = readdirSync(MINIFLARE_D1_DIR).filter((f) =>
-		f.endsWith('.sqlite'),
-	)
+	const d1Dir = getD1Dir()
+	const files = readdirSync(d1Dir).filter((f) => f.endsWith('.sqlite'))
 	for (const file of files) {
-		const fullPath = join(MINIFLARE_D1_DIR, file)
+		const fullPath = join(d1Dir, file)
 		const db = new DatabaseSync(fullPath)
 		try {
 			const tables = db
@@ -107,12 +118,11 @@ export function signSessionToken(rawToken: string): string {
 let cachedSecret: string | undefined
 function readSessionSecret(): string {
 	if (cachedSecret) return cachedSecret
-	const cwd = process.cwd()
 	let content: string
 	try {
-		content = readFileSync(join(cwd, '.dev.vars'), 'utf-8')
+		content = readFileSync(join(workerRoot, '.dev.vars'), 'utf-8')
 	} catch {
-		content = readFileSync(join(cwd, '.dev.vars.test'), 'utf-8')
+		content = readFileSync(join(workerRoot, '.dev.vars.test'), 'utf-8')
 	}
 	const match = content.match(/^SESSION_SECRET\s*=\s*"?(.+?)"?\s*$/m)
 	if (!match)

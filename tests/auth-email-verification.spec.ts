@@ -1,13 +1,9 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
 import { signUp, uniqueEmail } from './auth-helpers'
-import { clearCapturedEmails, waitForEmail } from './email-helpers'
+import { waitForEmail } from './email-helpers'
+import { test, expect } from './playwright-utils'
 
 test.describe('Email Verification', () => {
-	test.beforeEach(() => {
-		clearCapturedEmails()
-	})
-
 	test('signup sends verification email and token link works', async ({
 		page,
 	}) => {
@@ -25,8 +21,7 @@ test.describe('Email Verification', () => {
 		const verifyUrl = match[1]
 
 		// Navigate to the verification URL
-		// The URL from the email is absolute (http://localhost:4173/verify-email?token=...)
-		// so we extract just the path + query
+		// The URL from the email is absolute, so we extract just the path + query
 		const url = new URL(verifyUrl)
 		await page.goto(url.pathname + url.search)
 

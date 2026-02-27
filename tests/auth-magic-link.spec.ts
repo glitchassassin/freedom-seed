@@ -1,5 +1,4 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
 import { uniqueEmail } from './auth-helpers'
 import {
 	seedMagicLinkToken,
@@ -7,6 +6,7 @@ import {
 	markMagicLinkTokenUsed,
 } from './db-helpers'
 import { createUser } from './factories'
+import { test, expect } from './playwright-utils'
 
 test.describe('Magic link login', () => {
 	test.describe('Request form', () => {

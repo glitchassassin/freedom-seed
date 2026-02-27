@@ -1,13 +1,9 @@
 import { signUp, uniqueEmail } from './auth-helpers'
-import { clearCapturedEmails, waitForEmail } from './email-helpers'
+import { waitForEmail } from './email-helpers'
 import { createUser, createWorkspace } from './factories'
 import { authenticatedContext, test, expect } from './playwright-utils'
 
 test.describe('Workspaces', () => {
-	test.beforeEach(() => {
-		clearCapturedEmails()
-	})
-
 	test('signup creates personal workspace and redirects to workspace dashboard', async ({
 		page,
 	}) => {

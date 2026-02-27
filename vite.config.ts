@@ -15,7 +15,13 @@ export default defineConfig({
 			withTypes: true,
 			iconNameTransformer: (name) => name,
 		}),
-		cloudflare({ viteEnvironment: { name: 'ssr' } }),
+		cloudflare({
+			viteEnvironment: { name: 'ssr' },
+			// Per-worker E2E tests set CF_INSPECTOR_PORT=false to avoid port conflicts
+			...(process.env.CF_INSPECTOR_PORT === 'false'
+				? { inspectorPort: false }
+				: {}),
+		}),
 		tailwindcss(),
 		reactRouter(),
 		tsconfigPaths(),

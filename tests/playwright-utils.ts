@@ -2,12 +2,32 @@
 import { test as base, expect } from '@playwright/test'
 import type { Browser } from '@playwright/test'
 import type { CreateUserOptions, CreateUserResult } from './factories'
-import { createUser, createSession } from './factories'
+import { createUser, createSession, setWorkerRoot } from './factories'
+import { startWorkerServer, stopWorkerServer } from './worker-server'
 
-export const test = base.extend<{
-	login: (options?: CreateUserOptions) => Promise<CreateUserResult>
-	insertNewUser: (options?: CreateUserOptions) => Promise<CreateUserResult>
-}>({
+export const test = base.extend<
+	{
+		login: (options?: CreateUserOptions) => Promise<CreateUserResult>
+		insertNewUser: (options?: CreateUserOptions) => Promise<CreateUserResult>
+	},
+	{
+		workerServer: { port: number; tmpDir: string }
+	}
+>({
+	workerServer: [
+		async ({}, use, workerInfo) => {
+			const server = await startWorkerServer(workerInfo.parallelIndex)
+			setWorkerRoot(server.tmpDir)
+			await use({ port: server.port, tmpDir: server.tmpDir })
+			stopWorkerServer(server)
+		},
+		{ scope: 'worker', timeout: 60_000 },
+	],
+
+	baseURL: async ({ workerServer }, use) => {
+		await use(`http://localhost:${workerServer.port}`)
+	},
+
 	login: async ({ page }, use) => {
 		await use(async (options?: CreateUserOptions) => {
 			const result = await createUser(options)
