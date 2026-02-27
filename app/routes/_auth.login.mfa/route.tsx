@@ -178,7 +178,7 @@ function TotpForm({
 
 	return (
 		<Form method="POST" {...getFormProps(form)} className="space-y-4">
-				<input type="hidden" name="mode" value="totp" />
+			<input type="hidden" name="mode" value="totp" />
 
 			{form.errors && (
 				<p className="text-destructive text-sm">{form.errors[0]}</p>
@@ -222,7 +222,7 @@ function BackupForm({
 
 	return (
 		<Form method="POST" {...getFormProps(form)} className="space-y-4">
-				<input type="hidden" name="mode" value="backup" />
+			<input type="hidden" name="mode" value="backup" />
 
 			{form.errors && (
 				<p className="text-destructive text-sm">{form.errors[0]}</p>

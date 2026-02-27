@@ -260,7 +260,7 @@ function InactiveView() {
 				</div>
 
 				<Form method="POST">
-						<input type="hidden" name="intent" value="setup" />
+					<input type="hidden" name="intent" value="setup" />
 					<Button type="submit" className="w-full">
 						Enable two-factor authentication
 					</Button>
@@ -326,7 +326,7 @@ function SetupView({
 				</div>
 
 				<Form method="POST" {...getFormProps(form)} className="space-y-4">
-						<input type="hidden" name="intent" value="verify" />
+					<input type="hidden" name="intent" value="verify" />
 
 					{form.errors && (
 						<p className="text-destructive text-sm">{form.errors[0]}</p>
@@ -466,7 +466,7 @@ function ActiveView({ actionData }: { actionData: unknown }) {
 						</DialogHeader>
 
 						<Form method="POST" {...getFormProps(form)} className="space-y-4">
-										<input type="hidden" name="intent" value="disable" />
+							<input type="hidden" name="intent" value="disable" />
 
 							{form.errors && (
 								<p className="text-destructive text-sm">{form.errors[0]}</p>
