@@ -10,8 +10,16 @@ blog pages.
 
 ## Related Files
 
-_Not yet implemented._
+- `app/utils/seo.ts` — `seoMeta()` helper that generates title, description, OG,
+  Twitter, and canonical meta tags from a single config object.
+- `app/utils/structured-data.ts` — `jsonLd()`, `websiteJsonLd()`, and
+  `webPageJsonLd()` helpers for injecting JSON-LD structured data via meta.
+- `app/routes/robots[.]txt.ts` — Resource route serving `/robots.txt` with
+  allow-all policy and sitemap reference.
+- `app/routes/sitemap[.]xml.ts` — Resource route generating `/sitemap.xml` with
+  all public static pages.
 
 ## Removal
 
-_Not yet implemented._
+1. Delete the four files listed above.
+2. Remove any `seoMeta()` or `jsonLd()` calls from route `meta` exports.
