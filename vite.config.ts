@@ -13,6 +13,7 @@ export default defineConfig({
 			typesOutputFile: './app/components/ui/icons/icon-name.ts',
 			fileName: 'sprite.svg',
 			withTypes: true,
+			formatter: 'prettier',
 			iconNameTransformer: (name) => name,
 		}),
 		cloudflare({
