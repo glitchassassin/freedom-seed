@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
 import { uniqueEmail } from './auth-helpers'
 import { createUser } from './factories'
+import { test, expect } from './playwright-utils'
 
 test.describe('Forgot password', () => {
 	test('shows success message for non-existent email (prevents enumeration)', async ({

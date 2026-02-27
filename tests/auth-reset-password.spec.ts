@@ -1,8 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from '@playwright/test'
 import { logIn, uniqueEmail } from './auth-helpers'
 import { seedPasswordResetToken } from './db-helpers'
 import { createUser } from './factories'
+import { test, expect } from './playwright-utils'
 
 const NEW_PASSWORD = 'ResetPass99!'
 

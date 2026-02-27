@@ -6,6 +6,7 @@ export {
 	hashToken,
 	hashPassword,
 	signSessionToken,
+	setWorkerRoot,
 } from './db'
 export { createUser, getUserIdByEmail } from './user'
 export type { CreateUserOptions, CreateUserResult } from './user'
