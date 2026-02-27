@@ -43,7 +43,7 @@ const CHALLENGE_TTL_SECONDS = 300 // 5 minutes
 export async function createChallengeCookie(
 	env: ValidatedEnv,
 	challenge: string,
-	context?: string, // optional extra data like userId
+	context?: string, // optional extra data appended after the challenge, separated by ':'
 ): Promise<string> {
 	const payload = context ? `${challenge}:${context}` : challenge
 	const signed = await signToken(payload, env.SESSION_SECRET)
