@@ -27,6 +27,11 @@ export const envSchema = z.object({
 	// Omit or leave empty in development to log emails to console instead.
 	RESEND_API_KEY: z.string().default(''),
 	FROM_EMAIL: z.string().default('Seed Vault <onboarding@resend.dev>'),
+
+	// WebAuthn — passkey relying party configuration
+	RP_ID: z.string().default('localhost'), // e.g., 'example.com'
+	RP_NAME: z.string().default('Seed Vault'),
+	RP_ORIGIN: z.string().default('http://localhost:5173'), // e.g., 'https://example.com'
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>

@@ -219,3 +219,31 @@ export const emailVerificationTokens = sqliteTable(
 	},
 	(table) => [index('email_verification_tokens_user_id_idx').on(table.userId)],
 )
+
+export const passkeyCredentials = sqliteTable(
+	'passkey_credentials',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		credentialId: text('credential_id').notNull().unique(), // base64url-encoded credential ID
+		publicKey: text('public_key').notNull(), // base64url-encoded public key
+		counter: integer('counter').notNull().default(0),
+		deviceType: text('device_type').notNull(), // 'singleDevice' or 'multiDevice'
+		backedUp: integer('backed_up', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		transports: text('transports', { mode: 'json' })
+			.$type<string[]>()
+			.default(sql`'[]'`), // JSON array of AuthenticatorTransport strings
+		name: text('name').notNull().default('Passkey'), // user-provided friendly name
+		lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+	},
+	(table) => [index('passkey_credentials_user_id_idx').on(table.userId)],
+)
