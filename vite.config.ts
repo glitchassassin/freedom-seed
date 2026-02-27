@@ -25,7 +25,7 @@ export default defineConfig({
 				: {}),
 		}),
 		tailwindcss(),
-		mdx(),
+		{ enforce: 'pre' as const, ...mdx() },
 		reactRouter(),
 		tsconfigPaths(),
 	],
