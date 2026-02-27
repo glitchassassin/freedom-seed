@@ -2,7 +2,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { data, useFetcher, useFetchers, useRouteLoaderData } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/index'
-import { CsrfInput } from '~/components/csrf-input'
 import { Icon } from '~/components/ui/icon'
 import type { loader as rootLoader } from '~/root'
 import { useOptionalHints } from '~/utils/client-hints'
@@ -111,7 +110,6 @@ export function ThemeSwitch({
 
 	return (
 		<fetcher.Form method="POST" action="/resources/theme-switch">
-			<CsrfInput />
 			<input type="hidden" name="theme" value={nextMode} />
 			<button
 				type="submit"

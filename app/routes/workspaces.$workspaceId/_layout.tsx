@@ -1,6 +1,5 @@
 import { data, Form, Link, Outlet } from 'react-router'
 import type { Route } from './+types/_layout'
-import { CsrfInput } from '~/components/csrf-input'
 import { GeneralErrorBoundary } from '~/components/error-boundary'
 import { Button } from '~/components/ui/button'
 import {
@@ -132,7 +131,6 @@ export default function WorkspaceLayout({ loaderData }: Route.ComponentProps) {
 							</Button>
 						)}
 						<Form method="POST" action="/resources/logout">
-							<CsrfInput />
 							<Button variant="ghost" size="sm">
 								Sign out
 							</Button>
@@ -150,7 +148,6 @@ export default function WorkspaceLayout({ loaderData }: Route.ComponentProps) {
 							Please verify your email address to access all features.
 						</p>
 						<Form method="POST" action="/resources/resend-verification">
-							<CsrfInput />
 							<Button variant="outline" size="sm">
 								Resend verification email
 							</Button>

@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Form } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/index'
-import { CsrfInput } from '~/components/csrf-input'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
@@ -385,7 +384,6 @@ export default function DemoRoute() {
 				<div id="toasts" className="flex flex-wrap gap-3">
 					{toastTypes.map((type) => (
 						<Form key={type} method="POST">
-							<CsrfInput />
 							<input type="hidden" name="type" value={type} />
 							<Button type="submit" variant="outline" className="capitalize">
 								{type}

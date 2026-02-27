@@ -2,7 +2,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Form } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -268,7 +267,6 @@ export default function WorkspaceMembersPage({
 											<div className="flex justify-end gap-2">
 												{m.role !== 'owner' && (
 													<Form method="POST">
-														<CsrfInput />
 														<input
 															type="hidden"
 															name="intent"
@@ -292,7 +290,6 @@ export default function WorkspaceMembersPage({
 													</Form>
 												)}
 												<Form method="POST">
-													<CsrfInput />
 													<input type="hidden" name="intent" value="remove" />
 													<input type="hidden" name="userId" value={m.userId} />
 													<Button
@@ -335,7 +332,6 @@ export default function WorkspaceMembersPage({
 											</TableCell>
 											<TableCell className="text-right">
 												<Form method="POST">
-													<CsrfInput />
 													<input type="hidden" name="intent" value="revoke" />
 													<input
 														type="hidden"
@@ -361,7 +357,6 @@ export default function WorkspaceMembersPage({
 					<div className="mt-8">
 						<h2 className="text-lg font-semibold">Invite a member</h2>
 						<Form method="POST" className="mt-4 flex items-end gap-4">
-							<CsrfInput />
 							<input type="hidden" name="intent" value="invite" />
 							<div className="flex-1 space-y-2">
 								<Label htmlFor="invite-email">Email</Label>
