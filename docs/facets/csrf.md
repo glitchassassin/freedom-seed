@@ -11,10 +11,14 @@ authenticated API routes are exempt.
 
 ## How It Works
 
-1. **Token generation** (every request) — the CSRF middleware in `app/root.tsx`
-   generates a random 32-byte token, signs it with the `SESSION_SECRET`, stores
-   the raw token in React Router context, and sets the signed value as the
-   `__Host-csrf` cookie on the response.
+1. **Token generation** — the CSRF middleware in `app/root.tsx` generates a
+   random 32-byte token, signs it with the `SESSION_SECRET`, stores the raw
+   token in React Router context, and sets the signed value as the `__Host-csrf`
+   cookie on the response. On GET/HEAD requests a fresh token is always issued.
+   On mutating requests (POST/PUT/PATCH/DELETE) the middleware reuses the
+   existing verified token so that multi-step fetch flows (e.g. passkey
+   registration: options → verify) can share the same token without a page
+   reload in between.
 2. **Form embedding** — the `<CsrfInput />` component reads the token from root
    loader data and renders a hidden input (`name="csrf"`).
 3. **Validation** (mutating requests) — on POST/PUT/PATCH/DELETE the middleware
@@ -26,8 +30,8 @@ authenticated API routes are exempt.
 
 - `app/utils/csrf-constants.ts` — `CSRF_COOKIE_NAME` and `CSRF_FIELD_NAME`
   constants (shared between server and client code).
-- `app/utils/csrf.server.ts` — `generateCsrfToken`, `validateCsrfToken`,
-  `makeCsrfCookie`.
+- `app/utils/csrf.server.ts` — `generateCsrfToken`, `readExistingCsrfToken`,
+  `validateCsrfToken`, `makeCsrfCookie`.
 - `app/utils/csrf-context.ts` — React Router context key for the CSRF token.
 - `app/utils/cookie.server.ts` — shared `readCookie` helper used by CSRF and
   session utilities.
