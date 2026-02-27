@@ -20,11 +20,13 @@ const allFlags = await getAllFlags(db, workspaceId)
 ```
 
 Add new flags by adding entries to `FLAG_REGISTRY` in
-`app/utils/feature-flags.server.ts`.
+`app/utils/feature-flags.ts`.
 
 ## Related Files
 
-- `app/utils/feature-flags.server.ts` — Flag registry, resolution logic, CRUD
+- `app/utils/feature-flags.ts` — Flag registry, `FeatureFlagKey` type, key list
+  (client-safe)
+- `app/utils/feature-flags.server.ts` — Resolution logic, CRUD (server-only)
 - `app/db/schema.ts` — `featureFlags` table definition
 - `app/routes/workspaces.$workspaceId/settings.feature-flags/route.tsx` — Admin
   UI
@@ -34,6 +36,7 @@ Add new flags by adding entries to `FLAG_REGISTRY` in
 ## Removal
 
 Drop the `feature_flags` table (generate a migration after removing it from
-`app/db/schema.ts`). Delete `app/utils/feature-flags.server.ts` and the
-`settings.feature-flags` route directory. Remove `feature_flag.*` entries from
-the `AuditAction` type in `app/db/audit-log.server.ts`.
+`app/db/schema.ts`). Delete `app/utils/feature-flags.ts`,
+`app/utils/feature-flags.server.ts`, and the `settings.feature-flags` route
+directory. Remove `feature_flag.*` entries from the `AuditAction` type in
+`app/db/audit-log.server.ts`.
