@@ -48,6 +48,26 @@ files tidy without affecting the route tree.
 8. **Catch-all at the root** — place `$.tsx` at `routes/$.tsx` for a global 404
    page. Keep it separate from `index.tsx` to avoid error boundary conflicts.
 
+## Action Validation
+
+Actions that read form data **must** validate with Conform's `parseWithZod`:
+```ts
+import { parseWithZod } from '@conform-to/zod/v4'
+import { z } from 'zod'
+
+const schema = z.object({ name: z.string() })
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData()
+  const submission = parseWithZod(formData, { schema })
+  if (submission.status !== 'success') return submission.reply()
+  // use submission.value
+}
+```
+
+**Intent-based actions** — dispatch to a per-intent schema after reading
+`formData.get('intent')`. **Exempt** — actions that never read `formData`
+(e.g. logout, WebAuthn challenge generation) may skip validation.
+
 ## Configuration
 
 `app/routes.ts`:
