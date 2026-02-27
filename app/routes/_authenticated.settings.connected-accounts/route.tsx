@@ -15,6 +15,7 @@ import {
 	DialogTrigger,
 } from '~/components/ui/dialog'
 import type { SocialProvider } from '~/db/schema'
+import { countUserAuthMethods } from '~/utils/auth-methods.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { requireUser } from '~/utils/session-context'
 import {
@@ -32,7 +33,9 @@ export async function loader({ context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
 	const user = requireUser(context)
 	const identities = await getUserSocialIdentities(env, user.id)
-	return { identities }
+	const authMethods = await countUserAuthMethods(env, user.id)
+	const canUnlink = authMethods.total > 1
+	return { identities, canUnlink }
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -45,6 +48,22 @@ export async function action({ request, context }: Route.ActionArgs) {
 	if (submission.status !== 'success') return submission.reply()
 
 	const { identityId } = submission.value
+
+	const authMethods = await countUserAuthMethods(env, user.id)
+	if (authMethods.total <= 1) {
+		return redirect('/settings/connected-accounts', {
+			headers: {
+				'set-cookie': setToast(
+					{
+						type: 'error',
+						title: 'Cannot disconnect',
+						description: 'You must keep at least one sign-in method.',
+					},
+					isSecure,
+				),
+			},
+		})
+	}
 
 	await unlinkSocialIdentity(env, user.id, identityId)
 
@@ -117,7 +136,13 @@ function providerLabel(provider: SocialProvider): string {
 	return provider === 'google' ? 'Google' : 'GitHub'
 }
 
-function ConnectedAccountRow({ identity }: { identity: Identity }) {
+function ConnectedAccountRow({
+	identity,
+	canUnlink,
+}: {
+	identity: Identity
+	canUnlink: boolean
+}) {
 	const [dialogOpen, setDialogOpen] = useState(false)
 
 	return (
@@ -144,7 +169,17 @@ function ConnectedAccountRow({ identity }: { identity: Identity }) {
 
 			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 				<DialogTrigger asChild>
-					<Button variant="outline" size="sm" className="text-destructive">
+					<Button
+						variant="outline"
+						size="sm"
+						className="text-destructive"
+						disabled={!canUnlink}
+						title={
+							canUnlink
+								? undefined
+								: 'You must keep at least one sign-in method'
+						}
+					>
 						Disconnect
 					</Button>
 				</DialogTrigger>
@@ -185,7 +220,7 @@ function ConnectedAccountRow({ identity }: { identity: Identity }) {
 export default function ConnectedAccountsPage({
 	loaderData,
 }: Route.ComponentProps) {
-	const { identities } = loaderData
+	const { identities, canUnlink } = loaderData
 
 	const connectedProviders = new Set(identities.map((i) => i.provider))
 
@@ -205,7 +240,11 @@ export default function ConnectedAccountsPage({
 					<div className="space-y-3">
 						<h2 className="text-sm font-medium">Connected</h2>
 						{identities.map((identity) => (
-							<ConnectedAccountRow key={identity.id} identity={identity} />
+							<ConnectedAccountRow
+								key={identity.id}
+								identity={identity}
+								canUnlink={canUnlink}
+							/>
 						))}
 					</div>
 				)}
