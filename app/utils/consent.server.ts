@@ -31,5 +31,5 @@ export function setConsentCookie(
 	state: ConsentState,
 	isSecure: boolean,
 ): string {
-	return `${CONSENT_COOKIE}=${state}; Path=/; Max-Age=${CONSENT_MAX_AGE}; SameSite=Lax${secureSuffix(isSecure)}`
+	return `${CONSENT_COOKIE}=${state}; Path=/; Max-Age=${CONSENT_MAX_AGE}; HttpOnly; SameSite=Lax${secureSuffix(isSecure)}`
 }

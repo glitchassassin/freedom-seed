@@ -12,7 +12,7 @@ import { getCloudflare } from '~/utils/cloudflare-context'
 import { sendEmail } from '~/utils/email.server'
 import { softDeleteUser } from '~/utils/gdpr.server'
 import { requireUser } from '~/utils/session-context'
-import { deleteAllSessions, clearSessionCookie } from '~/utils/session.server'
+import { clearSessionCookie } from '~/utils/session.server'
 import { setToast } from '~/utils/toast.server'
 
 const schema = z.object({
@@ -34,9 +34,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 		})
 	}
 
-	const scheduledForDeletionAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+	// Send confirmation email before anonymising PII (email address is needed)
+	// softDeleteUser returns the scheduled date so we stay in sync with the DB
+	const { scheduledForDeletionAt } = await softDeleteUser(env, user.id)
 
-	// Send confirmation email before anonymising PII
 	await sendEmail(env, {
 		to: user.email,
 		subject: 'Your account deletion request',
@@ -47,9 +48,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 			/>
 		),
 	})
-
-	await softDeleteUser(env, user.id)
-	await deleteAllSessions(env, user.id)
 
 	return redirect('/', {
 		headers: [

@@ -1,15 +1,17 @@
 import { eq } from 'drizzle-orm'
 import { getDb } from '~/db/client.server'
 import {
+	mfaBackupCodes,
 	mfaCredentials,
 	passkeyCredentials,
+	passwordCredentials,
 	sessions,
 	socialIdentities,
 	users,
 	workspaceMembers,
 } from '~/db/schema'
 
-const DELETION_GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+export const DELETION_GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
 /**
  * Collects all personal data for a user and returns it as a plain object
@@ -96,29 +98,42 @@ export async function exportUserData(
 }
 
 /**
- * Soft-deletes a user account by:
- * 1. Anonymising all PII stored directly on the users row.
- * 2. Setting `scheduledForDeletionAt` to 30 days from now so a cron job can
- *    perform the hard deletion after the grace period.
+ * Soft-deletes a user account:
+ * 1. Anonymises PII on the users row and schedules hard deletion in 30 days.
+ * 2. Deletes all credential and session rows that contain PII (IP addresses,
+ *    OAuth profiles, password hashes, passkey keys, TOTP secrets).
  *
- * Call `deleteAllSessions` separately to revoke active sessions.
+ * Returns the `scheduledForDeletionAt` date so callers can include it in
+ * confirmation emails without duplicating the grace-period constant.
  */
 export async function softDeleteUser(
 	env: { DB: D1Database },
 	userId: string,
-): Promise<void> {
+): Promise<{ scheduledForDeletionAt: Date }> {
 	const db = getDb(env)
 	const scheduledForDeletionAt = new Date(Date.now() + DELETION_GRACE_PERIOD_MS)
 
-	await db
-		.update(users)
-		.set({
-			// Replace PII with non-identifiable placeholders
-			email: `deleted-${userId}@deleted.invalid`,
-			displayName: null,
-			emailVerifiedAt: null,
-			scheduledForDeletionAt,
-			updatedAt: new Date(),
-		})
-		.where(eq(users.id, userId))
+	await db.batch([
+		db
+			.update(users)
+			.set({
+				email: `deleted-${userId}@deleted.invalid`,
+				displayName: null,
+				emailVerifiedAt: null,
+				scheduledForDeletionAt,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, userId)),
+		// Remove all PII-containing credential rows immediately
+		db.delete(sessions).where(eq(sessions.userId, userId)),
+		db.delete(socialIdentities).where(eq(socialIdentities.userId, userId)),
+		db
+			.delete(passwordCredentials)
+			.where(eq(passwordCredentials.userId, userId)),
+		db.delete(passkeyCredentials).where(eq(passkeyCredentials.userId, userId)),
+		db.delete(mfaCredentials).where(eq(mfaCredentials.userId, userId)),
+		db.delete(mfaBackupCodes).where(eq(mfaBackupCodes.userId, userId)),
+	])
+
+	return { scheduledForDeletionAt }
 }

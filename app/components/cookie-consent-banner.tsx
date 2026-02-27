@@ -1,4 +1,5 @@
 import { Form, useLocation } from 'react-router'
+import { CsrfInput } from './csrf-input'
 import { Button } from './ui/button'
 
 /**
@@ -30,6 +31,7 @@ export function CookieConsentBanner() {
 					action="/resources/consent-cookie"
 					className="flex shrink-0 gap-2"
 				>
+					<CsrfInput />
 					<input type="hidden" name="returnTo" value={returnTo} />
 					<Button
 						type="submit"
