@@ -25,10 +25,8 @@ export function seoMeta(config: SeoConfig): MetaDescriptor[] {
 
 	if (image) {
 		meta.push({ property: 'og:image', content: image })
-	}
-
-	if (image) {
 		meta.push({ name: 'twitter:card', content: 'summary_large_image' })
+		meta.push({ name: 'twitter:image', content: image })
 	} else {
 		meta.push({ name: 'twitter:card', content: 'summary' })
 	}

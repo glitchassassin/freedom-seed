@@ -12,17 +12,20 @@ import { getOptionalUser } from '~/utils/session-context'
 import { websiteJsonLd } from '~/utils/structured-data'
 import { getUserWorkspaces } from '~/utils/workspaces.server'
 
-export function meta() {
+export function meta({ data }: Route.MetaArgs) {
+	const origin = data?.origin ?? ''
 	return [
 		...seoMeta({
 			title: `${siteConfig.name} — ${siteConfig.tagline}`,
 			description: siteConfig.description,
+			url: `${origin}/`,
 		}),
-		websiteJsonLd(siteConfig.name, '/'),
+		websiteJsonLd(siteConfig.name, `${origin}/`),
 	]
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+	const origin = new URL(request.url).origin
 	const user = getOptionalUser(context)
 	if (user) {
 		const { env } = getCloudflare(context)
@@ -36,7 +39,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 			throw redirect(`/workspaces/${targetWorkspace.id}`)
 		}
 	}
-	return { user: null }
+	return { user: !!user, origin }
 }
 
 function HeroSection({ user }: { user: boolean }) {

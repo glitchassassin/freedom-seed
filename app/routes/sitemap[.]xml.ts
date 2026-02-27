@@ -3,20 +3,15 @@ import type { Route } from './+types/sitemap[.]xml'
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin
 
-	const staticPages = [
-		{ loc: '/', priority: '1.0', changefreq: 'weekly' },
-		{ loc: '/login', priority: '0.3', changefreq: 'monthly' },
-		{ loc: '/signup', priority: '0.5', changefreq: 'monthly' },
-		{ loc: '/privacy', priority: '0.2', changefreq: 'yearly' },
-		{ loc: '/terms', priority: '0.2', changefreq: 'yearly' },
-	]
+	const lastmod = new Date().toISOString().slice(0, 10)
+
+	const staticPages = ['/', '/login', '/signup', '/privacy', '/terms']
 
 	const urls = staticPages
 		.map(
-			(page) => `  <url>
-    <loc>${origin}${page.loc}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
+			(loc) => `  <url>
+    <loc>${origin}${loc}</loc>
+    <lastmod>${lastmod}</lastmod>
   </url>`,
 		)
 		.join('\n')

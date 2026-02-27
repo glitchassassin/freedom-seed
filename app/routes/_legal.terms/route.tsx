@@ -1,9 +1,16 @@
+import type { Route } from './+types/route'
 import { seoMeta } from '~/utils/seo'
 
-export function meta() {
+export function loader({ request }: Route.LoaderArgs) {
+	return { origin: new URL(request.url).origin }
+}
+
+export function meta({ data }: Route.MetaArgs) {
+	const origin = data?.origin ?? ''
 	return seoMeta({
 		title: 'Terms of Service — Seed Vault',
 		description: 'Terms of Service for Seed Vault.',
+		url: `${origin}/terms`,
 	})
 }
 
