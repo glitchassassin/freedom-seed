@@ -2,19 +2,16 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import { eq } from 'drizzle-orm'
 import { useState } from 'react'
-import { Form, Link, redirect, useRouteLoaderData } from 'react-router'
+import { Form, Link, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { ProviderIcon } from '~/components/ui/provider-icon'
 import { getDb } from '~/db/client.server'
 import { mfaCredentials, passwordCredentials, users } from '~/db/schema'
-import type { loader as rootLoader } from '~/root'
 import { getCloudflare } from '~/utils/cloudflare-context'
-import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
@@ -144,9 +141,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 		shouldRevalidate: 'onInput',
 	})
 
-	const rootData = useRouteLoaderData<typeof rootLoader>('root')
-	const csrfToken = rootData?.csrfToken ?? ''
-
 	const [passkeyStatus, setPasskeyStatus] = useState<
 		'idle' | 'loading' | 'error'
 	>('idle')
@@ -159,7 +153,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 		try {
 			// 1. Get authentication options
 			const optionsFormData = new FormData()
-			optionsFormData.set(CSRF_FIELD_NAME, csrfToken)
 			const optionsRes = await fetch(
 				'/resources/passkeys/authentication-options',
 				{
@@ -184,7 +177,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 
 			// 3. Submit verification
 			const verifyFormData = new FormData()
-			verifyFormData.set(CSRF_FIELD_NAME, csrfToken)
 			verifyFormData.set('response', JSON.stringify(assertion))
 
 			const verifyRes = await fetch(
@@ -225,7 +217,6 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 			</div>
 
 			<Form method="POST" {...getFormProps(form)} className="space-y-4">
-				<CsrfInput />
 				{form.errors && (
 					<p className="text-destructive text-sm">{form.errors[0]}</p>
 				)}

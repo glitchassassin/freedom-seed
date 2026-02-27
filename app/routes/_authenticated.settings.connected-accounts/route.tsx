@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import {
 	Dialog,
@@ -153,7 +152,6 @@ function ConnectedAccountRow({
 						</DialogDescription>
 					</DialogHeader>
 					<Form method="POST">
-						<CsrfInput />
 						<input type="hidden" name="intent" value="unlink" />
 						<input type="hidden" name="identityId" value={identity.id} />
 						<DialogFooter>

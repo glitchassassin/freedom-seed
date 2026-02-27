@@ -18,7 +18,6 @@ const authVerifySchema = z.object({ response: z.string().min(1) })
 
 // POST: Verify authentication response and create session.
 // Expects FormData with:
-//   - csrf: CSRF token (validated by root middleware)
 //   - response: JSON-stringified AuthenticationResponseJSON from startAuthentication()
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)

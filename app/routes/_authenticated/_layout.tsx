@@ -1,6 +1,5 @@
 import { Form, Outlet, redirect } from 'react-router'
 import type { Route } from './+types/_layout'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { getOptionalUser } from '~/utils/session-context'
 
@@ -23,7 +22,6 @@ export default function AuthenticatedLayout({
 			<header className="border-b px-4 py-2">
 				<div className="mx-auto flex max-w-4xl justify-end">
 					<Form method="POST" action="/resources/logout">
-						<CsrfInput />
 						<Button variant="ghost" size="sm">
 							Sign out
 						</Button>
@@ -40,7 +38,6 @@ export default function AuthenticatedLayout({
 							Please verify your email address to access all features.
 						</p>
 						<Form method="POST" action="/resources/resend-verification">
-							<CsrfInput />
 							<Button variant="outline" size="sm">
 								Resend verification email
 							</Button>

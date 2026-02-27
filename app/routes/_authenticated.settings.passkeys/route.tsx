@@ -1,9 +1,8 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import { useState } from 'react'
-import { Form, redirect, useRouteLoaderData } from 'react-router'
+import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -17,10 +16,8 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
-import type { loader as rootLoader } from '~/root'
 import { countUserAuthMethods } from '~/utils/auth-methods.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
-import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 import {
 	deletePasskey,
 	getUserPasskeys,
@@ -144,8 +141,6 @@ export default function PasskeysSettingsPage({
 	loaderData,
 }: Route.ComponentProps) {
 	const { passkeys, canDelete } = loaderData
-	const rootData = useRouteLoaderData<typeof rootLoader>('root')
-	const csrfToken = rootData?.csrfToken ?? ''
 
 	const [registerOpen, setRegisterOpen] = useState(false)
 	const [registerName, setRegisterName] = useState('')
@@ -161,7 +156,6 @@ export default function PasskeysSettingsPage({
 		try {
 			// 1. Fetch registration options
 			const optionsFormData = new FormData()
-			optionsFormData.set(CSRF_FIELD_NAME, csrfToken)
 			const optionsRes = await fetch(
 				'/resources/passkeys/registration-options',
 				{
@@ -186,7 +180,6 @@ export default function PasskeysSettingsPage({
 
 			// 3. Submit verification
 			const verifyFormData = new FormData()
-			verifyFormData.set(CSRF_FIELD_NAME, csrfToken)
 			verifyFormData.set('response', JSON.stringify(registration))
 			verifyFormData.set('name', registerName || 'Passkey')
 
@@ -289,7 +282,6 @@ export default function PasskeysSettingsPage({
 							<PasskeyRow
 								key={passkey.id}
 								passkey={passkey}
-								csrfToken={csrfToken}
 								canDelete={canDelete}
 							/>
 						))}
@@ -304,11 +296,9 @@ export default function PasskeysSettingsPage({
 
 function PasskeyRow({
 	passkey,
-	csrfToken,
 	canDelete,
 }: {
 	passkey: Passkey
-	csrfToken: string
 	canDelete: boolean
 }) {
 	const [renameOpen, setRenameOpen] = useState(false)
@@ -358,7 +348,6 @@ function PasskeyRow({
 							className="space-y-4"
 							onSubmit={() => setRenameOpen(false)}
 						>
-							<input type="hidden" name={CSRF_FIELD_NAME} value={csrfToken} />
 							<input type="hidden" name="intent" value="rename" />
 							<input type="hidden" name="passkeyId" value={passkey.id} />
 
@@ -388,7 +377,6 @@ function PasskeyRow({
 
 				{/* Delete */}
 				<Form method="POST">
-					<CsrfInput />
 					<input type="hidden" name="intent" value="delete" />
 					<input type="hidden" name="passkeyId" value={passkey.id} />
 					<Button

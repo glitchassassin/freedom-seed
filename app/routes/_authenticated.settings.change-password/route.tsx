@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -103,7 +102,6 @@ export default function ChangePasswordPage({
 				</div>
 
 				<Form method="POST" {...getFormProps(form)} className="space-y-4">
-					<CsrfInput />
 					{form.errors && (
 						<p className="text-destructive text-sm">{form.errors[0]}</p>
 					)}
