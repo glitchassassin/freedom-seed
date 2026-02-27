@@ -175,10 +175,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<main className="bg-background text-foreground min-h-screen">
-			<HeroSection user={!!user} />
+			<HeroSection user={user} />
 			<FeaturesSection />
 			<FaqSection />
-			<CtaSection user={!!user} />
+			<CtaSection user={user} />
 			<Footer />
 		</main>
 	)
