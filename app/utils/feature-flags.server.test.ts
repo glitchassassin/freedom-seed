@@ -129,6 +129,18 @@ describe('getAllFlags', () => {
 		expect(result['ai-assistant']).toBe(true)
 	})
 
+	test('returns only defaults and global overrides when workspaceId is omitted', async () => {
+		const db = createChainMock({
+			all: [{ key: 'new-dashboard', workspaceId: null, enabled: true }],
+		})
+		const result = await getAllFlags(db as any)
+
+		expect(result['new-dashboard']).toBe(true)
+		expect(result['ai-assistant']).toBe(
+			FLAG_REGISTRY['ai-assistant'].defaultEnabled,
+		)
+	})
+
 	test('workspace override takes precedence over global override in getAllFlags', async () => {
 		// Both a workspace and a global override exist for the same key;
 		// the workspace one should win.
