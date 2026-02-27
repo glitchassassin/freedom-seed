@@ -12,7 +12,7 @@ import { requireUser } from '~/utils/session-context'
 
 const regVerifySchema = z.object({
 	response: z.string().min(1),
-	name: z.string().optional(),
+	name: z.string().min(1).optional(),
 })
 
 // POST: Verify the registration response from the browser.
