@@ -26,6 +26,12 @@
 		"RP_ID": "example.com",
 		"RP_NAME": "Seed Vault",
 		"RP_ORIGIN": "https://example.com",
+		// OAuth — Google (set real values via `wrangler secret put`)
+		"GOOGLE_CLIENT_ID": "",
+		"GOOGLE_CLIENT_SECRET": "",
+		// OAuth — GitHub (set real values via `wrangler secret put`)
+		"GITHUB_CLIENT_ID": "",
+		"GITHUB_CLIENT_SECRET": "",
 	},
 	"env": {
 		"development": {
@@ -39,6 +45,10 @@
 				"RP_ID": "localhost",
 				"RP_NAME": "Seed Vault",
 				"RP_ORIGIN": "http://localhost:5173",
+				"GOOGLE_CLIENT_ID": "",
+				"GOOGLE_CLIENT_SECRET": "",
+				"GITHUB_CLIENT_ID": "",
+				"GITHUB_CLIENT_SECRET": "",
 			},
 			"d1_databases": [
 				{
@@ -67,6 +77,10 @@
 				"RP_ID": "localhost",
 				"RP_NAME": "Seed Vault",
 				"RP_ORIGIN": "http://localhost:5173",
+				"GOOGLE_CLIENT_ID": "",
+				"GOOGLE_CLIENT_SECRET": "",
+				"GITHUB_CLIENT_ID": "",
+				"GITHUB_CLIENT_SECRET": "",
 			},
 			"d1_databases": [
 				{
