@@ -247,3 +247,33 @@ export const passkeyCredentials = sqliteTable(
 	},
 	(table) => [index('passkey_credentials_user_id_idx').on(table.userId)],
 )
+
+export const socialProviderEnum = ['google', 'github'] as const
+export type SocialProvider = (typeof socialProviderEnum)[number]
+
+export const socialIdentities = sqliteTable(
+	'social_identities',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		provider: text('provider').$type<SocialProvider>().notNull(),
+		providerUserId: text('provider_user_id').notNull(),
+		email: text('email'), // email from provider profile
+		displayName: text('display_name'),
+		avatarUrl: text('avatar_url'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('social_identities_provider_user_idx').on(
+			table.provider,
+			table.providerUserId,
+		),
+		index('social_identities_user_id_idx').on(table.userId),
+	],
+)

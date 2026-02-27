@@ -32,6 +32,14 @@ export const envSchema = z.object({
 	RP_ID: z.string().default('localhost'), // e.g., 'example.com'
 	RP_NAME: z.string().default('Seed Vault'),
 	RP_ORIGIN: z.string().default('http://localhost:5173'), // e.g., 'https://example.com'
+
+	// OAuth — Google
+	GOOGLE_CLIENT_ID: z.string().default(''),
+	GOOGLE_CLIENT_SECRET: z.string().default(''),
+
+	// OAuth — GitHub
+	GITHUB_CLIENT_ID: z.string().default(''),
+	GITHUB_CLIENT_SECRET: z.string().default(''),
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>
