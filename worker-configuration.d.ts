@@ -33,7 +33,6 @@ declare namespace Cloudflare {
 		FROM_EMAIL: string;
 		RATE_LIMIT_KV: KVNamespace;
 		DB: D1Database;
-		ENVIRONMENT: "development" | "test" | "production";
 		PLAUSIBLE_DOMAIN: "";
 		PLAUSIBLE_HOST: "";
 		DISABLE_RATE_LIMITING?: "true";
