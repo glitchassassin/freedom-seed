@@ -40,8 +40,8 @@ describe('Logger', () => {
 		expect(entry).toMatchObject({ level: 'error', message: 'failure' })
 	})
 
-	test('debug writes to console.log', () => {
-		const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+	test('debug writes to console.debug', () => {
+		const spy = vi.spyOn(console, 'debug').mockImplementation(() => {})
 		const logger = new Logger('req-abc')
 		logger.debug('details')
 		const entry = captureLog(spy)

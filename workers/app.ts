@@ -13,10 +13,10 @@ const requestHandler = createRequestHandler(
 // Validated once per cold start; throws immediately on misconfiguration.
 let validatedEnv: ReturnType<typeof validateEnv> | null = null
 
-export default Sentry.withSentry(
+export default Sentry.withSentry<Env>(
 	(env) => ({
 		dsn: env.SENTRY_DSN || undefined,
-		tracesSampleRate: 1.0,
+		tracesSampleRate: env.ENVIRONMENT === 'development' ? 1.0 : 0.2,
 	}),
 	{
 		async fetch(request, env, ctx) {

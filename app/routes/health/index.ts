@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 
-import type { Route } from './+types/route'
+import type { Route } from './+types/index'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 
