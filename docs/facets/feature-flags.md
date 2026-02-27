@@ -29,6 +29,7 @@ Add new flags by adding entries to `FLAG_REGISTRY` in
 - `app/routes/workspaces.$workspaceId/settings.feature-flags/route.tsx` — Admin
   UI
 - `migrations/0004_colossal_forgotten_one.sql` — Schema migration
+- `app/db/audit-log.server.ts` — `feature_flag.*` audit action types
 
 ## Removal
 

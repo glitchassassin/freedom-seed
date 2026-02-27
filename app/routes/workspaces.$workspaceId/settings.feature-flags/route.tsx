@@ -28,25 +28,24 @@ import { requireUser } from '~/utils/session-context'
 import { setToast } from '~/utils/toast.server'
 import { requireWorkspaceMember } from '~/utils/workspace-context'
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ context }: Route.LoaderArgs) {
 	requireRole(context, 'admin')
-	requireWorkspaceMember(context)
-	const workspaceId = params.workspaceId!
+	const member = requireWorkspaceMember(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
 
 	const [flags, overrides] = await Promise.all([
-		getAllFlags(db, workspaceId),
-		getFlagOverrides(db, workspaceId),
+		getAllFlags(db, member.workspaceId),
+		getFlagOverrides(db, member.workspaceId),
 	])
 
-	return { flags, overrides, workspaceId }
+	return { flags, overrides, workspaceId: member.workspaceId }
 }
 
-export async function action({ request, params, context }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
 	requireRole(context, 'admin')
 	const user = requireUser(context)
-	const workspaceId = params.workspaceId!
+	const member = requireWorkspaceMember(context)
 	const { env } = getCloudflare(context)
 	const isSecure = env.ENVIRONMENT === 'production'
 	const db = getDb(env)
@@ -64,13 +63,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 		await setFlagOverride(db, {
 			key: key as FeatureFlagKey,
-			workspaceId,
+			workspaceId: member.workspaceId,
 			enabled: enabled === 'true',
 		})
 
 		await logAuditEvent({
 			db,
-			workspaceId,
+			workspaceId: member.workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'feature_flag.updated',
@@ -79,14 +78,17 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 			metadata: { enabled: enabled === 'true', scope: 'workspace' },
 		})
 
-		return redirect(`/workspaces/${workspaceId}/settings/feature-flags`, {
-			headers: {
-				'set-cookie': setToast(
-					{ type: 'success', title: 'Flag updated' },
-					isSecure,
-				),
+		return redirect(
+			`/workspaces/${member.workspaceId}/settings/feature-flags`,
+			{
+				headers: {
+					'set-cookie': setToast(
+						{ type: 'success', title: 'Flag updated' },
+						isSecure,
+					),
+				},
 			},
-		})
+		)
 	}
 
 	if (intent === 'reset') {
@@ -98,12 +100,12 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 		await removeFlagOverride(db, {
 			key: key as FeatureFlagKey,
-			workspaceId,
+			workspaceId: member.workspaceId,
 		})
 
 		await logAuditEvent({
 			db,
-			workspaceId,
+			workspaceId: member.workspaceId,
 			actorId: user.id,
 			actorEmail: user.email,
 			action: 'feature_flag.deleted',
@@ -111,14 +113,17 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 			targetLabel: key,
 		})
 
-		return redirect(`/workspaces/${workspaceId}/settings/feature-flags`, {
-			headers: {
-				'set-cookie': setToast(
-					{ type: 'success', title: 'Flag reset to default' },
-					isSecure,
-				),
+		return redirect(
+			`/workspaces/${member.workspaceId}/settings/feature-flags`,
+			{
+				headers: {
+					'set-cookie': setToast(
+						{ type: 'success', title: 'Flag reset to default' },
+						isSecure,
+					),
+				},
 			},
-		})
+		)
 	}
 
 	throw new Response('Unknown intent', { status: 400 })

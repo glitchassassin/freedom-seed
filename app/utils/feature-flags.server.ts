@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, or } from 'drizzle-orm'
 import type { Db } from '~/db/client.server'
 import { featureFlags } from '~/db/schema'
 
@@ -71,25 +71,27 @@ export async function getAllFlags(
 	db: Db,
 	workspaceId?: string,
 ): Promise<Record<FeatureFlagKey, boolean>> {
-	// Fetch all overrides in one query
-	const overrides = workspaceId
-		? await db
-				.select()
-				.from(featureFlags)
-				.where(eq(featureFlags.workspaceId, workspaceId))
-				.all()
-		: []
-
-	const globalOverrides = await db
+	const allOverrides = await db
 		.select()
 		.from(featureFlags)
-		.where(isNull(featureFlags.workspaceId))
+		.where(
+			workspaceId
+				? or(
+						eq(featureFlags.workspaceId, workspaceId),
+						isNull(featureFlags.workspaceId),
+					)
+				: isNull(featureFlags.workspaceId),
+		)
 		.all()
 
 	const result = {} as Record<FeatureFlagKey, boolean>
 	for (const key of featureFlagKeys) {
-		const wsOverride = overrides.find((o) => o.key === key)
-		const globalOverride = globalOverrides.find((o) => o.key === key)
+		const wsOverride = allOverrides.find(
+			(o) => o.key === key && o.workspaceId === workspaceId,
+		)
+		const globalOverride = allOverrides.find(
+			(o) => o.key === key && o.workspaceId === null,
+		)
 		if (wsOverride) {
 			result[key] = wsOverride.enabled
 		} else if (globalOverride) {
@@ -118,19 +120,16 @@ export async function getFlagOverrides(
 		updatedAt: Date
 	}>
 > {
-	const wsOverrides = await db
+	return db
 		.select()
 		.from(featureFlags)
-		.where(eq(featureFlags.workspaceId, workspaceId))
+		.where(
+			or(
+				eq(featureFlags.workspaceId, workspaceId),
+				isNull(featureFlags.workspaceId),
+			),
+		)
 		.all()
-
-	const globalOverrides = await db
-		.select()
-		.from(featureFlags)
-		.where(isNull(featureFlags.workspaceId))
-		.all()
-
-	return [...wsOverrides, ...globalOverrides]
 }
 
 /**
