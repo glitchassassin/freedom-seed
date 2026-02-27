@@ -279,3 +279,31 @@ export const socialIdentities = sqliteTable(
 		index('social_identities_user_id_idx').on(table.userId),
 	],
 )
+
+export const featureFlags = sqliteTable(
+	'feature_flags',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		key: text('key').notNull(),
+		workspaceId: text('workspace_id').references(() => workspaces.id, {
+			onDelete: 'cascade',
+		}),
+		enabled: integer('enabled', { mode: 'boolean' }).notNull(),
+		description: text('description'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+	},
+	(table) => [
+		uniqueIndex('feature_flags_key_workspace_idx').on(
+			table.key,
+			table.workspaceId,
+		),
+		index('feature_flags_workspace_idx').on(table.workspaceId),
+	],
+)
