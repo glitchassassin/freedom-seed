@@ -1,7 +1,7 @@
 import { parseWithZod } from '@conform-to/zod/v4'
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server'
-import type { Route } from './+types/route'
 import { z } from 'zod'
+import type { Route } from './+types/route'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
