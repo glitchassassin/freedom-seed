@@ -34,8 +34,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 		})
 	}
 
-	// Send confirmation email before anonymising PII (email address is needed)
-	// softDeleteUser returns the scheduled date so we stay in sync with the DB
+	// `user` is an in-memory snapshot from the session middleware and retains
+	// the original email/displayName even after softDeleteUser anonymises the DB.
+	// softDeleteUser returns the scheduled deletion date so we stay in sync.
 	const { scheduledForDeletionAt } = await softDeleteUser(env, user.id)
 
 	await sendEmail(env, {
