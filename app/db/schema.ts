@@ -300,6 +300,9 @@ export const featureFlags = sqliteTable(
 			.default(sql`(unixepoch('now') * 1000)`),
 	},
 	(table) => [
+		// Note: SQLite treats NULLs as distinct in unique indexes, so this
+		// does not prevent duplicate global overrides (workspaceId = NULL).
+		// Uniqueness for global overrides is enforced in setFlagOverride().
 		uniqueIndex('feature_flags_key_workspace_idx').on(
 			table.key,
 			table.workspaceId,

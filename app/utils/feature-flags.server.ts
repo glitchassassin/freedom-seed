@@ -86,9 +86,9 @@ export async function getAllFlags(
 
 	const result = {} as Record<FeatureFlagKey, boolean>
 	for (const key of featureFlagKeys) {
-		const wsOverride = allOverrides.find(
-			(o) => o.key === key && o.workspaceId === workspaceId,
-		)
+		const wsOverride = workspaceId
+			? allOverrides.find((o) => o.key === key && o.workspaceId === workspaceId)
+			: undefined
 		const globalOverride = allOverrides.find(
 			(o) => o.key === key && o.workspaceId === null,
 		)
