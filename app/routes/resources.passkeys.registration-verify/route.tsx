@@ -19,7 +19,16 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const user = requireUser(context)
 
 	const challengeData = await readChallengeCookie(request, env)
-	if (!challengeData || challengeData.context !== user.id) {
+	if (!challengeData?.context) {
+		return Response.json(
+			{ error: 'Challenge expired or invalid' },
+			{ status: 400 },
+		)
+	}
+
+	// Parse context: "userId:webauthnUserId"
+	const [contextUserId, webauthnUserId] = challengeData.context.split(':')
+	if (contextUserId !== user.id || !webauthnUserId) {
 		return Response.json(
 			{ error: 'Challenge expired or invalid' },
 			{ status: 400 },
@@ -48,6 +57,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 			parsedResponse,
 			challengeData.challenge,
 			typeof name === 'string' ? name : 'Passkey',
+			webauthnUserId,
 		)
 		return Response.json(
 			{ verified: true },

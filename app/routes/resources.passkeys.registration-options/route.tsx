@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm'
 import type { Route } from './+types/route'
+import { getDb } from '~/db/client.server'
+import { passkeyCredentials } from '~/db/schema'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
 	createChallengeCookie,
@@ -14,11 +17,27 @@ export async function action({ request: _request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
 	const user = requireUser(context)
 
-	const options = await getRegistrationOptions(env, user.id, user.email)
+	// Reuse the webauthnUserId from an existing passkey, or generate a new one
+	const db = getDb(env)
+	const existingPasskey = await db
+		.select({ webauthnUserId: passkeyCredentials.webauthnUserId })
+		.from(passkeyCredentials)
+		.where(eq(passkeyCredentials.userId, user.id))
+		.limit(1)
+		.then((r) => r[0])
+
+	const webauthnUserId = existingPasskey?.webauthnUserId ?? crypto.randomUUID()
+
+	const options = await getRegistrationOptions(
+		env,
+		user.id,
+		user.email,
+		webauthnUserId,
+	)
 	const challengeCookie = await createChallengeCookie(
 		env,
 		options.challenge,
-		user.id,
+		`${user.id}:${webauthnUserId}`,
 	)
 
 	return Response.json(options, {

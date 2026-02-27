@@ -43,6 +43,13 @@
 			"when": 1772202915710,
 			"tag": "0005_white_rawhide_kid",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1772214101621,
+			"tag": "0006_cooing_jasper_sitwell",
+			"breakpoints": true
 		}
 	]
 }

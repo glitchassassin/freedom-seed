@@ -79,6 +79,7 @@ export async function getRegistrationOptions(
 	env: ValidatedEnv,
 	userId: string,
 	userEmail: string,
+	webauthnUserId: string,
 ) {
 	const db = getDb(env)
 
@@ -94,6 +95,7 @@ export async function getRegistrationOptions(
 	const options = await generateRegistrationOptions({
 		rpName: env.RP_NAME,
 		rpID: env.RP_ID,
+		userID: new TextEncoder().encode(webauthnUserId),
 		userName: userEmail,
 		userDisplayName: userEmail,
 		attestationType: 'none',
@@ -125,6 +127,7 @@ export async function verifyAndSaveRegistration(
 	response: RegistrationResponseJSON,
 	expectedChallenge: string,
 	name: string,
+	webauthnUserId: string,
 ) {
 	const verification = await verifyRegistrationResponse({
 		response,
@@ -137,7 +140,7 @@ export async function verifyAndSaveRegistration(
 		throw new Error('Registration verification failed')
 	}
 
-	const { credential, credentialDeviceType, credentialBackedUp } =
+	const { credential, credentialDeviceType, credentialBackedUp, aaguid } =
 		verification.registrationInfo
 
 	const db = getDb(env)
@@ -148,6 +151,8 @@ export async function verifyAndSaveRegistration(
 		counter: credential.counter,
 		deviceType: credentialDeviceType,
 		backedUp: credentialBackedUp,
+		aaguid: aaguid || null,
+		webauthnUserId,
 		transports: credential.transports as string[] | undefined,
 		name: name || 'Passkey',
 	})
@@ -240,6 +245,7 @@ export async function getUserPasskeys(env: ValidatedEnv, userId: string) {
 			lastUsedAt: passkeyCredentials.lastUsedAt,
 			deviceType: passkeyCredentials.deviceType,
 			backedUp: passkeyCredentials.backedUp,
+			aaguid: passkeyCredentials.aaguid,
 		})
 		.from(passkeyCredentials)
 		.where(eq(passkeyCredentials.userId, userId))

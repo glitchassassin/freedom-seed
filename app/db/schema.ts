@@ -236,6 +236,8 @@ export const passkeyCredentials = sqliteTable(
 		backedUp: integer('backed_up', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		aaguid: text('aaguid'), // Authenticator Attestation GUID - identifies authenticator type
+		webauthnUserId: text('webauthn_user_id'), // Opaque user handle for WebAuthn (not the real user ID)
 		transports: text('transports', { mode: 'json' })
 			.$type<string[]>()
 			.default(sql`'[]'`), // JSON array of AuthenticatorTransport strings
