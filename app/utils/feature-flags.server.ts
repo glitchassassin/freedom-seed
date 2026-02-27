@@ -1,31 +1,10 @@
 import { and, eq, isNull, or } from 'drizzle-orm'
 import type { Db } from '~/db/client.server'
 import { featureFlags } from '~/db/schema'
+import { FLAG_REGISTRY, featureFlagKeys } from '~/utils/feature-flags'
+import type { FeatureFlagKey } from '~/utils/feature-flags'
 
-/**
- * Registry of known feature flags with their defaults.
- * Add new flags here — the admin UI enumerates this list.
- */
-export const FLAG_REGISTRY = {
-	// Example flags — replace with real ones as features are built
-	'new-dashboard': {
-		defaultEnabled: false,
-		label: 'New Dashboard',
-		description: 'Enable the redesigned dashboard experience',
-	},
-	'ai-assistant': {
-		defaultEnabled: false,
-		label: 'AI Assistant',
-		description: 'Enable the AI assistant in the workspace sidebar',
-	},
-} as const satisfies Record<
-	string,
-	{ defaultEnabled: boolean; label: string; description: string }
->
-
-export type FeatureFlagKey = keyof typeof FLAG_REGISTRY
-
-export const featureFlagKeys = Object.keys(FLAG_REGISTRY) as FeatureFlagKey[]
+export { FLAG_REGISTRY, featureFlagKeys, type FeatureFlagKey }
 
 /**
  * Resolves the effective state of a feature flag.
