@@ -260,6 +260,24 @@ export default function SignupPage({ actionData }: Route.ComponentProps) {
 					Sign in
 				</Link>
 			</p>
+
+			<p className="text-muted-foreground text-center text-xs">
+				By creating an account you agree to our{' '}
+				<Link
+					to="/terms"
+					className="text-foreground underline underline-offset-4"
+				>
+					Terms of Service
+				</Link>{' '}
+				and{' '}
+				<Link
+					to="/privacy"
+					className="text-foreground underline underline-offset-4"
+				>
+					Privacy Policy
+				</Link>
+				.
+			</p>
 		</div>
 	)
 }
