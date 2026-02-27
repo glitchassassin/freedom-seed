@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `scheduled_for_deletion_at` integer;

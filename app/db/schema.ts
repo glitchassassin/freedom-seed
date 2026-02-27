@@ -14,6 +14,9 @@ export const users = sqliteTable('users', {
 	email: text('email').notNull().unique(),
 	displayName: text('display_name'),
 	emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp_ms' }),
+	scheduledForDeletionAt: integer('scheduled_for_deletion_at', {
+		mode: 'timestamp_ms',
+	}),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.default(sql`(unixepoch('now') * 1000)`),
