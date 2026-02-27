@@ -20,6 +20,7 @@ import {
 	verifyTotpCode,
 } from '~/utils/mfa.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { createSession } from '~/utils/session.server'
 import { setToast } from '~/utils/toast.server'
 
@@ -95,15 +96,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 	// MFA verified — create a real session
 	const { cookie: sessionCookie } = await createSession(env, userId, request)
 
-	// Honor redirectTo if it's a safe relative path
 	const url = new URL(request.url)
-	const redirectTo = url.searchParams.get('redirectTo') ?? '/'
-	const safeRedirect =
-		redirectTo.startsWith('/') && !redirectTo.startsWith('//')
-			? redirectTo
-			: '/'
+	const destination = safeRedirect(url.searchParams.get('redirectTo'))
 
-	return redirect(safeRedirect, {
+	return redirect(destination, {
 		headers: [
 			[
 				'set-cookie',

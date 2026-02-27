@@ -17,6 +17,7 @@ import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { createSession } from '~/utils/session.server'
 import { setToast } from '~/utils/toast.server'
 import { getUserWorkspaces } from '~/utils/workspaces.server'
@@ -112,14 +113,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 		}
 	}
 
-	// Honor redirectTo if it's a safe relative path
-	const redirectTo = url.searchParams.get('redirectTo') ?? defaultRedirect
-	const safeRedirect =
-		redirectTo.startsWith('/') && !redirectTo.startsWith('//')
-			? redirectTo
-			: '/'
+	const destination = safeRedirect(
+		url.searchParams.get('redirectTo'),
+		defaultRedirect,
+	)
 
-	return redirect(safeRedirect, {
+	return redirect(destination, {
 		headers: [
 			[
 				'set-cookie',

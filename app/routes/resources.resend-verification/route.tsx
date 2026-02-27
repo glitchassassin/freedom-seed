@@ -5,6 +5,7 @@ import { getCloudflare } from '~/utils/cloudflare-context'
 import { createEmailVerificationToken } from '~/utils/email-verification.server'
 import { sendEmail } from '~/utils/email.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
+import { safeRedirect } from '~/utils/safe-redirect'
 import { requireUser } from '~/utils/session-context'
 import { setToast } from '~/utils/toast.server'
 
@@ -42,8 +43,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 		react: VerifyEmail({ verifyUrl }),
 	})
 
+	let pathname: string | undefined
 	const referrer = request.headers.get('referer')
-	let pathname = '/'
 	if (referrer) {
 		try {
 			pathname = new URL(referrer).pathname
@@ -51,10 +52,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 			// malformed Referer — fall back to root
 		}
 	}
-	const redirectTo =
-		pathname.startsWith('/') && !pathname.startsWith('//') ? pathname : '/'
 
-	return redirect(redirectTo, {
+	return redirect(safeRedirect(pathname), {
 		headers: {
 			'set-cookie': setToast(
 				{
