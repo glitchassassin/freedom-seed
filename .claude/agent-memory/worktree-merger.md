@@ -1,0 +1,57 @@
+# Worktree Merger Agent Memory
+
+## Branch Naming Convention
+
+Worktree branches follow the pattern `worktree-agent-<8-hex-chars>`.
+
+## Common Conflict Zones (issue-56 integration: passkeys + social auth)
+
+### Files that conflict when both auth features are added simultaneously
+
+- `app/db/schema.ts` — Both add tables at the end of the file. Resolution: keep
+  all table definitions from both branches in sequence.
+- `workers/env.ts` — Both add env vars in the `envSchema` object. Resolution:
+  keep all additions from both branches.
+- `wrangler.jsonc` — Both add `vars` entries in root, `development`, and `test`
+  env sections. Resolution: keep all additions in all sections.
+- `app/routes/_auth.login/route.tsx` — Both may modify the login page UI.
+  Resolution: ensure all buttons/sections from both branches are present.
+- `worker-configuration.d.ts` — Generated file; conflict in type declarations
+  for env vars. Resolution: keep all env var types from both branches, then
+  re-run `npm run cf-typegen` to regenerate properly after resolving other
+  files.
+
+### Migration file numbering conflicts
+
+When two parallel branches both generate a `0004_*.sql` migration:
+
+- Keep the first branch's `0004_*.sql` as-is (already on working branch)
+- Rename the second branch's `0004_*.sql` to `0005_*.sql`
+- Create a corresponding `0005_snapshot.json` from the second branch's
+  `0004_snapshot.json` with `prevId` updated to match the first
+  `0004_snapshot`'s `id`
+- Update `migrations/meta/_journal.json` to list both entries (idx 4 and idx 5)
+- The `migrations/meta/0004_snapshot.json` conflict: use `git show HEAD:path`
+  and `git show <branch>:path` to extract clean versions of each side
+
+## Rebase Ordering
+
+When passkeys and social auth are both being integrated:
+
+1. Passkeys first (fewer migration conflicts, no UI overlap with social-only
+   routes)
+2. Social second (resolves against the passkeys base)
+
+## Post-Rebase Verification
+
+Always run `npm run typecheck` — this runs `cf-typegen` + `react-router typegen`
+
+- `tsc -b`. The `cf-typegen` step regenerates `worker-configuration.d.ts` from
+  `wrangler.jsonc`, so stage the regenerated file after typecheck passes.
+
+## Known Safe Force-Deletes
+
+Worktree branches that show "not fully merged" vs `origin/main` can safely be
+force-deleted with `git branch -D` when `git branch --merged <working-branch>`
+confirms they are merged into the working branch. The working branch is a
+feature branch that hasn't been pushed to main yet.
