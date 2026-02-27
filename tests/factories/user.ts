@@ -1,6 +1,7 @@
 /**
  * User factory — creates a user with password credentials and personal workspace.
  */
+import { TEST_PASSWORD } from '../auth-helpers'
 import { generateId, hashPassword, openD1 } from './db'
 
 export interface CreateUserOptions {
@@ -27,7 +28,7 @@ export async function createUser(
 	const now = Date.now()
 	const rand = Math.random().toString(36).slice(2, 8)
 	const email = overrides?.email ?? `factory+${now}-${rand}@example.com`
-	const plainPassword = overrides?.password ?? 'TestPass1!'
+	const plainPassword = overrides?.password ?? TEST_PASSWORD
 	const displayName = overrides?.displayName ?? null
 	const emailVerifiedAt = overrides?.emailVerifiedAt ?? null
 	const hash = await hashPassword(plainPassword)
