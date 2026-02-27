@@ -13,6 +13,7 @@ import { csrfContext } from './utils/csrf-context'
 import {
 	generateCsrfToken,
 	makeCsrfCookie,
+	readExistingCsrfToken,
 	validateCsrfToken,
 } from './utils/csrf.server'
 import { sessionContext } from './utils/session-context'
@@ -32,8 +33,17 @@ export const middleware: Route.MiddlewareFunction[] = [
 			await validateCsrfToken(request, env.SESSION_SECRET, isSecure)
 		}
 
-		// Generate a fresh CSRF token for every response
-		const { token, signedCookie } = await generateCsrfToken(env.SESSION_SECRET)
+		// For GET/HEAD requests, always issue a fresh CSRF token so the page
+		// has an up-to-date token.  For mutating requests (POST etc.), reuse
+		// the existing verified token so multi-step fetch flows (e.g. passkey
+		// registration: options → verify) can reuse the same token without
+		// a page reload in between.
+		const existing =
+			method !== 'GET' && method !== 'HEAD'
+				? await readExistingCsrfToken(request, env.SESSION_SECRET, isSecure)
+				: null
+		const { token, signedCookie } =
+			existing ?? (await generateCsrfToken(env.SESSION_SECRET))
 		context.set(csrfContext, token)
 		const response = await next()
 		response.headers.append(

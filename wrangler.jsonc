@@ -76,7 +76,10 @@
 				"DISABLE_RATE_LIMITING": "true",
 				"RP_ID": "localhost",
 				"RP_NAME": "Seed Vault",
-				"RP_ORIGIN": "http://localhost:5173",
+				// Each Playwright worker runs on port 4200+workerIndex.
+				// Listing all 8 potential ports so WebAuthn origin checks pass
+				// regardless of which worker runs the virtual-authenticator test.
+				"RP_ORIGIN": "http://localhost:4200,http://localhost:4201,http://localhost:4202,http://localhost:4203,http://localhost:4204,http://localhost:4205,http://localhost:4206,http://localhost:4207",
 				"GOOGLE_CLIENT_ID": "",
 				"GOOGLE_CLIENT_SECRET": "",
 				"GITHUB_CLIENT_ID": "",

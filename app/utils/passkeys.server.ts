@@ -110,6 +110,15 @@ export async function getRegistrationOptions(
 	return options
 }
 
+/** Parses RP_ORIGIN — supports a comma-separated list for multi-port test envs. */
+function parseRpOrigin(raw: string): string | string[] {
+	const parts = raw
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+	return parts.length === 1 ? parts[0] : parts
+}
+
 export async function verifyAndSaveRegistration(
 	env: ValidatedEnv,
 	userId: string,
@@ -120,7 +129,7 @@ export async function verifyAndSaveRegistration(
 	const verification = await verifyRegistrationResponse({
 		response,
 		expectedChallenge,
-		expectedOrigin: env.RP_ORIGIN,
+		expectedOrigin: parseRpOrigin(env.RP_ORIGIN),
 		expectedRPID: env.RP_ID,
 	})
 
@@ -180,7 +189,7 @@ export async function verifyAndAuthenticate(
 	const verification = await verifyAuthenticationResponse({
 		response,
 		expectedChallenge,
-		expectedOrigin: env.RP_ORIGIN,
+		expectedOrigin: parseRpOrigin(env.RP_ORIGIN),
 		expectedRPID: env.RP_ID,
 		credential: {
 			id: credential.credentialId,

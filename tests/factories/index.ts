@@ -20,3 +20,10 @@ export {
 	seedEmailVerificationToken,
 	createInvitation,
 } from './token'
+export { createPasskey } from './passkey'
+export type { CreatePasskeyOptions, CreatePasskeyResult } from './passkey'
+export { createSocialIdentity } from './social-identity'
+export type {
+	CreateSocialIdentityOptions,
+	CreateSocialIdentityResult,
+} from './social-identity'
