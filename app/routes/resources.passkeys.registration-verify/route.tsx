@@ -10,7 +10,10 @@ import {
 } from '~/utils/passkeys.server'
 import { requireUser } from '~/utils/session-context'
 
-const regVerifySchema = z.object({ response: z.string(), name: z.string().optional() })
+const regVerifySchema = z.object({
+	response: z.string().min(1),
+	name: z.string().optional(),
+})
 
 // POST: Verify the registration response from the browser.
 // Expects FormData with:
@@ -47,7 +50,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 	let parsedResponse: RegistrationResponseJSON
 	try {
-		parsedResponse = JSON.parse(submission.value.response) as RegistrationResponseJSON
+		parsedResponse = JSON.parse(
+			submission.value.response,
+		) as RegistrationResponseJSON
 	} catch {
 		return Response.json({ error: 'Invalid response JSON' }, { status: 400 })
 	}
