@@ -18,6 +18,7 @@ import {
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import type { loader as rootLoader } from '~/root'
+import { countUserAuthMethods } from '~/utils/auth-methods.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 import {
@@ -47,7 +48,9 @@ export async function loader({ context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
 	const user = requireUser(context)
 	const passkeys = await getUserPasskeys(env, user.id)
-	return { passkeys }
+	const authMethods = await countUserAuthMethods(env, user.id)
+	const canDelete = authMethods.total > 1
+	return { passkeys, canDelete }
 }
 
 // ── Action ────────────────────────────────────────────────────────────────────
@@ -63,6 +66,22 @@ export async function action({ request, context }: Route.ActionArgs) {
 	if (intent === 'delete') {
 		const submission = parseWithZod(formData, { schema: deleteSchema })
 		if (submission.status !== 'success') return submission.reply()
+
+		const authMethods = await countUserAuthMethods(env, user.id)
+		if (authMethods.total <= 1) {
+			return redirect('/settings/passkeys', {
+				headers: {
+					'set-cookie': setToast(
+						{
+							type: 'error',
+							title: 'Cannot remove',
+							description: 'You must keep at least one sign-in method.',
+						},
+						isSecure,
+					),
+				},
+			})
+		}
 
 		await deletePasskey(env, user.id, submission.value.passkeyId)
 
@@ -124,7 +143,7 @@ type Passkey = Awaited<ReturnType<typeof getUserPasskeys>>[number]
 export default function PasskeysSettingsPage({
 	loaderData,
 }: Route.ComponentProps) {
-	const { passkeys } = loaderData
+	const { passkeys, canDelete } = loaderData
 	const rootData = useRouteLoaderData<typeof rootLoader>('root')
 	const csrfToken = rootData?.csrfToken ?? ''
 
@@ -271,6 +290,7 @@ export default function PasskeysSettingsPage({
 								key={passkey.id}
 								passkey={passkey}
 								csrfToken={csrfToken}
+								canDelete={canDelete}
 							/>
 						))}
 					</div>
@@ -285,9 +305,11 @@ export default function PasskeysSettingsPage({
 function PasskeyRow({
 	passkey,
 	csrfToken,
+	canDelete,
 }: {
 	passkey: Passkey
 	csrfToken: string
+	canDelete: boolean
 }) {
 	const [renameOpen, setRenameOpen] = useState(false)
 
@@ -374,6 +396,12 @@ function PasskeyRow({
 						variant="ghost"
 						size="sm"
 						className="text-destructive hover:text-destructive"
+						disabled={!canDelete}
+						title={
+							canDelete
+								? undefined
+								: 'You must keep at least one sign-in method'
+						}
 						onClick={(e) => {
 							if (
 								!window.confirm(
