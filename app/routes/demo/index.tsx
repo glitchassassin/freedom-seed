@@ -1,6 +1,8 @@
+import { parseWithZod } from '@conform-to/zod/v4'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { Form } from 'react-router'
+import { z } from 'zod'
 import type { Route } from './+types/index'
 import { CsrfInput } from '~/components/csrf-input'
 import { Badge } from '~/components/ui/badge'
@@ -51,18 +53,21 @@ import { showToast } from '~/utils/toast.server'
 
 const toastTypes = ['success', 'error', 'warning', 'info'] as const
 
+const toastSchema = z.object({ type: z.enum(toastTypes) })
+
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
 	const isSecure = env.ENVIRONMENT === 'production'
 	const formData = await request.formData()
-	const type = formData.get('type')
-	if (!toastTypes.includes(type as (typeof toastTypes)[number])) {
+	const submission = parseWithZod(formData, { schema: toastSchema })
+	if (submission.status !== 'success') {
 		return showToast(
 			{ type: 'error', title: 'Invalid toast type' },
 			'/demo',
 			isSecure,
 		)
 	}
+	const { type } = submission.value
 	const labels: Record<string, string> = {
 		success: 'Changes saved successfully',
 		error: 'Something went wrong',
@@ -77,9 +82,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 	}
 	return showToast(
 		{
-			type: type as (typeof toastTypes)[number],
-			title: labels[type as string],
-			description: descriptions[type as string],
+			type,
+			title: labels[type],
+			description: descriptions[type],
 		},
 		'/demo#toasts',
 		isSecure,

@@ -79,6 +79,20 @@
 - Recognized extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.md`, `.mdx`
 - Facet doc: `docs/facets/routing.md`
 
+## Action Validation
+
+- Actions that read `formData` MUST use `parseWithZod` from `@conform-to/zod/v4`
+- Standard pattern: `parseWithZod(formData, { schema })` → check
+  `submission.status !== 'success'` → return `submission.reply()`
+- Intent-based actions dispatch to per-intent schemas via
+  `formData.get('intent')`
+- Exempt: actions that never read formData (logout, WebAuthn challenge gen)
+- JSON API actions that read formData (e.g. passkey verify) should also use
+  `parseWithZod` for the validation step
+- Facet reference: `docs/facets/routing.md` → "Action Validation" section
+- When reviewing changes in `app/routes/`, always check compliance with routing
+  facet rules including action validation
+
 ## Patterns & Conventions
 
 - [hooks-patterns.md](hooks-patterns.md) -- detailed notes on hook

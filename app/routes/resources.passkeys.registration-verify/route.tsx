@@ -1,4 +1,6 @@
+import { parseWithZod } from '@conform-to/zod/v4'
 import type { RegistrationResponseJSON } from '@simplewebauthn/server'
+import { z } from 'zod'
 import type { Route } from './+types/route'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
@@ -7,6 +9,11 @@ import {
 	verifyAndSaveRegistration,
 } from '~/utils/passkeys.server'
 import { requireUser } from '~/utils/session-context'
+
+const regVerifySchema = z.object({
+	response: z.string().min(1),
+	name: z.string().min(1).optional(),
+})
 
 // POST: Verify the registration response from the browser.
 // Expects FormData with:
@@ -36,16 +43,16 @@ export async function action({ request, context }: Route.ActionArgs) {
 	}
 
 	const formData = await request.formData()
-	const responseRaw = formData.get('response')
-	const name = formData.get('name')
-
-	if (typeof responseRaw !== 'string') {
+	const submission = parseWithZod(formData, { schema: regVerifySchema })
+	if (submission.status !== 'success') {
 		return Response.json({ error: 'Missing response field' }, { status: 400 })
 	}
 
 	let parsedResponse: RegistrationResponseJSON
 	try {
-		parsedResponse = JSON.parse(responseRaw) as RegistrationResponseJSON
+		parsedResponse = JSON.parse(
+			submission.value.response,
+		) as RegistrationResponseJSON
 	} catch {
 		return Response.json({ error: 'Invalid response JSON' }, { status: 400 })
 	}
@@ -56,7 +63,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 			user.id,
 			parsedResponse,
 			challengeData.challenge,
-			typeof name === 'string' ? name : 'Passkey',
+			submission.value.name ?? 'Passkey',
 			webauthnUserId,
 		)
 		return Response.json(
