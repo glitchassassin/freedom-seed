@@ -13,11 +13,7 @@ export function websiteJsonLd(name: string, url: string) {
 	})
 }
 
-export function webPageJsonLd(
-	name: string,
-	description: string,
-	url: string,
-) {
+export function webPageJsonLd(name: string, description: string, url: string) {
 	return jsonLd({
 		'@context': 'https://schema.org',
 		'@type': 'WebPage',

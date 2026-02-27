@@ -12,10 +12,11 @@ simplify customization without touching component code.
 
 - `app/routes/_index/route.tsx` — Home page composed from section components:
   `HeroSection`, `FeaturesSection`, `FaqSection`, `CtaSection`, `Footer`.
-- `app/routes/_index/content.ts` — All marketing copy (site config, hero, features,
-  FAQ, CTA, footer) extracted into a single editable file.
+- `app/routes/_index/content.ts` — All marketing copy (site config, hero,
+  features, FAQ, CTA, footer) extracted into a single editable file.
 
 ## Removal
 
 1. Delete `app/routes/_index/` directory.
-2. Create a minimal `app/routes/index.tsx` with your own landing page or redirect.
+2. Create a minimal `app/routes/index.tsx` with your own landing page or
+   redirect.

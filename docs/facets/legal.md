@@ -10,15 +10,16 @@ headings and placeholder text only.
 
 ## Related Files
 
-- `app/routes/_legal/_layout.tsx` — Shared layout for legal pages with back-to-home
-  link, centered prose container, and footer.
+- `app/routes/_legal/_layout.tsx` — Shared layout for legal pages with
+  back-to-home link, centered prose container, and footer.
 - `app/routes/_legal.privacy/route.tsx` — Privacy Policy page (stub content).
 - `app/routes/_legal.terms/route.tsx` — Terms of Service page (stub content).
 - `content/legal/privacy-policy.md` — Reference markdown for privacy policy.
 - `content/legal/terms-of-service.md` — Reference markdown for terms of service.
 - `app/routes/_index/content.ts` — Footer links array includes `/privacy` and
   `/terms`.
-- `app/routes/_auth.signup/route.tsx` — Consent notice linking to both legal pages.
+- `app/routes/_auth.signup/route.tsx` — Consent notice linking to both legal
+  pages.
 
 ## Removal
 
