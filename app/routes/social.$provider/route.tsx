@@ -3,14 +3,14 @@ import { redirect } from 'react-router'
 import type { Route } from './+types/route'
 import type { SocialProvider } from '~/db/schema'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { getOptionalUser } from '~/utils/session-context'
+import type { OAuthStatePayload } from '~/utils/social-auth.server'
 import {
 	createOAuthStateCookie,
 	getGitHubProvider,
-	getGoogleProvider
-	
+	getGoogleProvider,
 } from '~/utils/social-auth.server'
-import type {OAuthStatePayload} from '~/utils/social-auth.server';
 
 const VALID_PROVIDERS: SocialProvider[] = ['google', 'github']
 
@@ -21,6 +21,12 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 	if (!VALID_PROVIDERS.includes(provider as SocialProvider)) {
 		throw new Response('Invalid provider', { status: 404 })
 	}
+
+	await requireRateLimit(env, request, {
+		prefix: 'oauth-init',
+		limit: 10,
+		windowSeconds: 300,
+	})
 
 	const user = getOptionalUser(context)
 	const mode: OAuthStatePayload['mode'] = user ? 'link' : 'login'

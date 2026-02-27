@@ -63,15 +63,38 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 	const provider = params.provider
 	const origin = url.origin
 
+	// Verify that the callback provider matches the initiating provider
+	if (stateData.provider !== provider) {
+		return redirect('/login', {
+			headers: [
+				['set-cookie', clearOAuthStateCookie(isSecure)],
+				[
+					'set-cookie',
+					setToast(
+						{
+							type: 'error',
+							title: 'OAuth error',
+							description: 'Provider mismatch',
+						},
+						isSecure,
+					),
+				],
+			],
+		})
+	}
+
 	try {
 		// Exchange code for tokens
 		let accessToken: string
 
 		if (provider === 'google') {
+			if (!stateData.codeVerifier) {
+				throw new Error('Missing PKCE code verifier')
+			}
 			const google = getGoogleProvider(env, origin)
 			const tokens = await google.validateAuthorizationCode(
 				code,
-				stateData.codeVerifier!,
+				stateData.codeVerifier,
 			)
 			accessToken = tokens.accessToken()
 		} else if (provider === 'github') {
@@ -148,8 +171,6 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 		})
 	} catch (error) {
 		console.error('[oauth callback] Error:', error)
-		const errorMessage =
-			error instanceof Error ? error.message : 'Authentication failed'
 		return redirect('/login', {
 			headers: [
 				['set-cookie', clearOAuthStateCookie(isSecure)],
@@ -159,7 +180,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 						{
 							type: 'error',
 							title: 'Authentication failed',
-							description: errorMessage,
+							description: 'Unable to complete sign-in. Please try again.',
 						},
 						isSecure,
 					),

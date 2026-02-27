@@ -2,14 +2,13 @@ import { Google, GitHub } from 'arctic'
 import { and, eq } from 'drizzle-orm'
 import type { ValidatedEnv } from '../../workers/env'
 import { getDb } from '~/db/client.server'
+import type { SocialProvider } from '~/db/schema'
 import {
-	users,
 	socialIdentities,
+	users,
+	workspaceMembers,
 	workspaces,
-	workspaceMembers
-	
 } from '~/db/schema'
-import type {SocialProvider} from '~/db/schema';
 import { secureSuffix } from '~/utils/cookie-flags.server'
 import { readCookie } from '~/utils/cookie.server'
 import { signToken, verifySignedToken } from '~/utils/crypto.server'
@@ -287,7 +286,7 @@ export async function linkSocialIdentity(
 
 	if (existing) {
 		if (existing.userId === userId) return // already linked to this user
-		throw new Error('This account is already linked to a different user')
+		throw new Error('Unable to link this account')
 	}
 
 	await db.insert(socialIdentities).values({
