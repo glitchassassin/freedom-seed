@@ -44,6 +44,9 @@ npm run validate         # Run lint:fix, typecheck, and format (run before commi
 **Always run `npm run validate` before committing changes** to catch lint
 errors, type errors, and formatting issues.
 
+When working on a specific GitHub issue, reference the issue number in commit
+messages (e.g., `fix login redirect loop (#42)`).
+
 See `docs/facets/database.md` for database commands and schema workflow. See
 `docs/facets/e2e-testing.md` for E2E test commands.
 
