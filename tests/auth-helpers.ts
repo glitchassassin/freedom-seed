@@ -41,7 +41,7 @@ export async function logIn(
 	await page.goto(loginUrl)
 	await page.getByLabel('Email').fill(options.email)
 	await page.getByLabel('Password').fill(password)
-	await page.getByRole('button', { name: 'Sign in' }).click()
+	await page.getByRole('button', { name: 'Sign in', exact: true }).click()
 
 	if (options.redirectTo) {
 		await page.waitForURL(options.redirectTo)
