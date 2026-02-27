@@ -41,6 +41,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@react-email/components": "^1.0.8",
     "@react-email/render": "^2.0.4",
+    "@sentry/cloudflare": "^10.40.0",
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.3",
     "arctic": "^3.7.0",
