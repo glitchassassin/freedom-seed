@@ -1,62 +1,62 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1771723897766,
-      "tag": "0000_round_pyro",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1771899358053,
-      "tag": "0001_shocking_rumiko_fujikawa",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1772034193357,
-      "tag": "0002_careless_killraven",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1772093600000,
-      "tag": "0003_rename_teams_to_workspaces",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1772202923520,
-      "tag": "0004_perpetual_winter_soldier",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1772202915710,
-      "tag": "0005_white_rawhide_kid",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1772214101621,
-      "tag": "0006_cooing_jasper_sitwell",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1772230420566,
-      "tag": "0007_serious_killmonger",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1771723897766,
+			"tag": "0000_round_pyro",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1771899358053,
+			"tag": "0001_shocking_rumiko_fujikawa",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1772034193357,
+			"tag": "0002_careless_killraven",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "6",
+			"when": 1772093600000,
+			"tag": "0003_rename_teams_to_workspaces",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "6",
+			"when": 1772202923520,
+			"tag": "0004_perpetual_winter_soldier",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "6",
+			"when": 1772202915710,
+			"tag": "0005_white_rawhide_kid",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1772214101621,
+			"tag": "0006_cooing_jasper_sitwell",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "6",
+			"when": 1772230420566,
+			"tag": "0007_serious_killmonger",
+			"breakpoints": true
+		}
+	]
 }
