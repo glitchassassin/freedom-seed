@@ -68,6 +68,13 @@ HTTP Request → workers/app.ts (Cloudflare Worker)
 - `migrations/` — Auto-generated SQL migration files (do not hand-edit)
 - `docs/` — Operations guides and architecture decision records
 
+## Testing
+
+When planning new features or bug fixes, consider what automated tests are
+needed (unit tests via Vitest, E2E tests via Playwright, or both). Unit tests
+live in `app/**/*.test.ts`. See `docs/facets/e2e-testing.md` and
+`docs/facets/test-factories.md` for E2E patterns.
+
 ## Agent Memory
 
 Files in `.claude/agent-memory/` should be committed alongside the work that

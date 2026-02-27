@@ -111,6 +111,17 @@ Evaluate each changed file/section against these dimensions:
 - Testability of the written code
 - Consistency with existing codebase patterns
 
+**Test Coverage**
+
+- Do the changes introduce new behavior, business logic, or bug fixes that
+  warrant automated tests (unit or E2E)?
+- If tests are expected but missing, flag it. Consult
+  `docs/facets/e2e-testing.md` and `docs/facets/test-factories.md` for the
+  project's test patterns.
+- Are existing tests updated to reflect behavioral changes?
+- Pure refactors with no behavior change, trivial config tweaks, and
+  documentation-only edits do not require new tests.
+
 **Project-Specific Compliance**
 
 - Adherence to documented coding standards
