@@ -15,7 +15,7 @@ written to `console` (Cloudflare captures them in Workers Logs / Logpush).
 - `app/utils/request-id-context.ts` — `requestIdContext` key
 - `app/utils/logger.server.ts` — `Logger` class, `loggerContext` key,
   `getLogger()` helper
-- `app/routes/health/route.ts` — `GET /health` endpoint (DB reachability)
+- `app/routes/health/index.ts` — `GET /health` endpoint (DB reachability)
 - `wrangler.jsonc` — `SENTRY_DSN` var, `observability.enabled` flag
 
 ## Removal
@@ -26,5 +26,5 @@ written to `console` (Cloudflare captures them in Workers Logs / Logpush).
 3. Delete `app/utils/request-id-context.ts` and `app/utils/logger.server.ts`.
 4. Remove `requestIdContext` / `loggerContext` from `workers/app.ts` context
    setup and all `getLogger(context)` calls from loaders/actions.
-5. Delete `app/routes/health/route.ts`.
+5. Delete `app/routes/health/index.ts`.
 6. Remove `SENTRY_DSN` from `workers/env.ts` and `wrangler.jsonc`.
