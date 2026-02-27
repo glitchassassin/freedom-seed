@@ -110,9 +110,9 @@ test.describe('Passkeys', () => {
 			const { user } = await login()
 			void user // user is logged in via session cookie
 
-			// Navigate to the page first so the CSRF cookie and token are set
-			// before attaching the CDP session. Wait for networkidle to ensure
-			// any client-hint-triggered reloads have settled.
+			// Navigate to the page first and wait for networkidle to ensure
+			// any client-hint-triggered reloads have settled before attaching
+			// the CDP session.
 			await page.goto('/settings/passkeys')
 			await page.waitForLoadState('networkidle')
 
@@ -145,7 +145,6 @@ test.describe('Passkeys', () => {
 
 			// Now test authentication — clear session cookies but keep the
 			// WebAuthn virtual authenticator (reuse the same CDP client).
-			const cookies = await page.context().cookies()
 			await page.context().clearCookies()
 
 			await page.goto('/login')
@@ -153,18 +152,6 @@ test.describe('Passkeys', () => {
 			// The virtual authenticator persists in the CDP session; we only
 			// need to re-enable the WebAuthn domain after navigation.
 			await client.send('WebAuthn.enable')
-
-			// Restore the CSRF cookie from before (session cookie was the only
-			// one we needed to remove to simulate logout). The login page needs
-			// the CSRF cookie to be present for the passkey sign-in fetch.
-			const csrfCookie = cookies.find(
-				(c) => c.name === 'csrf' || c.name === '__Host-csrf',
-			)
-			if (csrfCookie) {
-				await page.context().addCookies([csrfCookie])
-			}
-			// Reload to get a fresh CSRF token (page was loaded without a CSRF cookie)
-			await page.reload()
 
 			await page.getByRole('button', { name: 'Sign in with passkey' }).click()
 
