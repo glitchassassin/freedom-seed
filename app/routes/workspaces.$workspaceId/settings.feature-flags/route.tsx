@@ -1,6 +1,5 @@
 import { Form, redirect } from 'react-router'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -192,7 +191,6 @@ export default function FeatureFlagsPage({ loaderData }: Route.ComponentProps) {
 									<TableCell>
 										<div className="flex items-center gap-2">
 											<Form method="POST">
-												<CsrfInput />
 												<input type="hidden" name="intent" value="toggle" />
 												<input type="hidden" name="key" value={key} />
 												<input
@@ -206,7 +204,6 @@ export default function FeatureFlagsPage({ loaderData }: Route.ComponentProps) {
 											</Form>
 											{wsOverride && (
 												<Form method="POST">
-													<CsrfInput />
 													<input type="hidden" name="intent" value="reset" />
 													<input type="hidden" name="key" value={key} />
 													<Button type="submit" variant="ghost" size="sm">
