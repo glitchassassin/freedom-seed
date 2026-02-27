@@ -22,6 +22,10 @@
 		"RESEND_API_KEY": "",
 		// Default sender address for transactional emails
 		"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
+		// WebAuthn relying party — set to your production domain
+		"RP_ID": "example.com",
+		"RP_NAME": "Seed Vault",
+		"RP_ORIGIN": "https://example.com",
 	},
 	"env": {
 		"development": {
@@ -32,6 +36,9 @@
 				"SESSION_SECRET": "",
 				"RESEND_API_KEY": "",
 				"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
+				"RP_ID": "localhost",
+				"RP_NAME": "Seed Vault",
+				"RP_ORIGIN": "http://localhost:5173",
 			},
 			"d1_databases": [
 				{
@@ -57,6 +64,9 @@
 				"RESEND_API_KEY": "re_test_mock",
 				"FROM_EMAIL": "Seed Vault <onboarding@resend.dev>",
 				"DISABLE_RATE_LIMITING": "true",
+				"RP_ID": "localhost",
+				"RP_NAME": "Seed Vault",
+				"RP_ORIGIN": "http://localhost:5173",
 			},
 			"d1_databases": [
 				{

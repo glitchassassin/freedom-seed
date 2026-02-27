@@ -1,7 +1,8 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod/v4'
 import { eq } from 'drizzle-orm'
-import { Form, Link, redirect } from 'react-router'
+import { useState } from 'react'
+import { Form, Link, redirect, useRouteLoaderData } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
 import { CsrfInput } from '~/components/csrf-input'
@@ -10,7 +11,9 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { getDb } from '~/db/client.server'
 import { mfaCredentials, passwordCredentials, users } from '~/db/schema'
+import type { loader as rootLoader } from '~/root'
 import { getCloudflare } from '~/utils/cloudflare-context'
+import { CSRF_FIELD_NAME } from '~/utils/csrf-constants'
 import { createMfaPendingCookie } from '~/utils/mfa.server'
 import { hashPassword, verifyPassword } from '~/utils/password.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
@@ -141,6 +144,77 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 		shouldRevalidate: 'onInput',
 	})
 
+	const rootData = useRouteLoaderData<typeof rootLoader>('root')
+	const csrfToken = rootData?.csrfToken ?? ''
+
+	const [passkeyStatus, setPasskeyStatus] = useState<
+		'idle' | 'loading' | 'error'
+	>('idle')
+	const [passkeyError, setPasskeyError] = useState<string | null>(null)
+
+	async function handlePasskeyLogin() {
+		setPasskeyStatus('loading')
+		setPasskeyError(null)
+
+		try {
+			// 1. Get authentication options
+			const optionsFormData = new FormData()
+			optionsFormData.set(CSRF_FIELD_NAME, csrfToken)
+			const optionsRes = await fetch(
+				'/resources/passkeys/authentication-options',
+				{
+					method: 'POST',
+					body: optionsFormData,
+				},
+			)
+
+			if (!optionsRes.ok) {
+				throw new Error('Failed to get authentication options')
+			}
+
+			const options = await optionsRes.json()
+
+			// 2. Start browser authentication via @simplewebauthn/browser
+			const { startAuthentication } = await import('@simplewebauthn/browser')
+			const assertion = await startAuthentication({
+				optionsJSON: options as unknown as Parameters<
+					typeof startAuthentication
+				>[0]['optionsJSON'],
+			})
+
+			// 3. Submit verification
+			const verifyFormData = new FormData()
+			verifyFormData.set(CSRF_FIELD_NAME, csrfToken)
+			verifyFormData.set('response', JSON.stringify(assertion))
+
+			const verifyRes = await fetch(
+				'/resources/passkeys/authentication-verify',
+				{
+					method: 'POST',
+					body: verifyFormData,
+				},
+			)
+
+			const result = (await verifyRes.json()) as {
+				verified?: boolean
+				redirectTo?: string
+				error?: string
+			}
+
+			if (!verifyRes.ok || !result.verified) {
+				throw new Error(result.error ?? 'Authentication failed')
+			}
+
+			// 4. Navigate to the returned destination
+			window.location.href = result.redirectTo ?? '/'
+		} catch (err) {
+			setPasskeyError(
+				err instanceof Error ? err.message : 'Passkey sign-in failed',
+			)
+			setPasskeyStatus('idle')
+		}
+	}
+
 	return (
 		<div className="space-y-6">
 			<div className="space-y-1 text-center">
@@ -202,12 +276,33 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 				</div>
 			</div>
 
-			<Link
-				to="/magic-link"
-				className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
-			>
-				Sign in with email link
-			</Link>
+			<div className="space-y-3">
+				<Link
+					to="/magic-link"
+					className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+				>
+					Sign in with email link
+				</Link>
+
+				<div className="space-y-1">
+					{passkeyError && (
+						<p className="text-destructive text-center text-sm">
+							{passkeyError}
+						</p>
+					)}
+					<Button
+						type="button"
+						variant="outline"
+						className="w-full"
+						onClick={() => void handlePasskeyLogin()}
+						disabled={passkeyStatus === 'loading'}
+					>
+						{passkeyStatus === 'loading'
+							? 'Waiting for passkey…'
+							: 'Sign in with passkey'}
+					</Button>
+				</div>
+			</div>
 
 			<p className="text-muted-foreground text-center text-sm">
 				Don&apos;t have an account?{' '}
