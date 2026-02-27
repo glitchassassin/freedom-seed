@@ -1,4 +1,6 @@
+import { parseWithZod } from '@conform-to/zod/v4'
 import { data, useFetcher, useFetchers, useRouteLoaderData } from 'react-router'
+import { z } from 'zod'
 import type { Route } from './+types/index'
 import { CsrfInput } from '~/components/csrf-input'
 import type { loader as rootLoader } from '~/root'
@@ -14,14 +16,17 @@ function isThemeMode(value: unknown): value is ThemeMode {
 	return typeof value === 'string' && (validThemes as string[]).includes(value)
 }
 
+const themeSchema = z.object({ theme: z.enum(['system', 'light', 'dark']) })
+
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
 	const isSecure = env.ENVIRONMENT === 'production'
 	const formData = await request.formData()
-	const theme = formData.get('theme')
-	if (!isThemeMode(theme)) {
+	const submission = parseWithZod(formData, { schema: themeSchema })
+	if (submission.status !== 'success') {
 		return data({ error: 'Invalid theme' }, { status: 400 })
 	}
+	const { theme } = submission.value
 	return data(
 		{ ok: true },
 		{ headers: { 'set-cookie': setTheme(theme, isSecure) } },

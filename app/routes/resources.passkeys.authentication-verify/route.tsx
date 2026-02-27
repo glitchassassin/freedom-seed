@@ -1,5 +1,7 @@
+import { parseWithZod } from '@conform-to/zod/v4'
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server'
 import type { Route } from './+types/route'
+import { z } from 'zod'
 import { getDb } from '~/db/client.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
@@ -11,6 +13,8 @@ import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { createSession } from '~/utils/session.server'
 import { setToast } from '~/utils/toast.server'
 import { getUserWorkspaces } from '~/utils/workspaces.server'
+
+const authVerifySchema = z.object({ response: z.string() })
 
 // POST: Verify authentication response and create session.
 // Expects FormData with:
@@ -34,15 +38,14 @@ export async function action({ request, context }: Route.ActionArgs) {
 	}
 
 	const formData = await request.formData()
-	const responseRaw = formData.get('response')
-
-	if (typeof responseRaw !== 'string') {
+	const submission = parseWithZod(formData, { schema: authVerifySchema })
+	if (submission.status !== 'success') {
 		return Response.json({ error: 'Missing response field' }, { status: 400 })
 	}
 
 	let parsedResponse: AuthenticationResponseJSON
 	try {
-		parsedResponse = JSON.parse(responseRaw) as AuthenticationResponseJSON
+		parsedResponse = JSON.parse(submission.value.response) as AuthenticationResponseJSON
 	} catch {
 		return Response.json({ error: 'Invalid response JSON' }, { status: 400 })
 	}
