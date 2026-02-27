@@ -69,6 +69,9 @@ export class Logger {
 			case 'warn':
 				console.warn(json)
 				break
+			case 'debug':
+				console.debug(json)
+				break
 			default:
 				console.log(json)
 				break
