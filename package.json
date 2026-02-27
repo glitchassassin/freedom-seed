@@ -26,7 +26,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b"
+    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
+    "validate": "npm run lint:fix && npm run typecheck && npm run format"
   },
   "dependencies": {
     "@conform-to/react": "^1.17.1",
