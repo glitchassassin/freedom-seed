@@ -20,6 +20,8 @@ export type AuditAction =
 	| 'resource.updated'
 	| 'resource.deleted'
 	| 'auth.owner_transferred'
+	| 'feature_flag.updated'
+	| 'feature_flag.deleted'
 
 export interface LogAuditEventArgs {
 	db: Db

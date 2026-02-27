@@ -1,0 +1,175 @@
+import { and, eq, isNull, or } from 'drizzle-orm'
+import type { Db } from '~/db/client.server'
+import { featureFlags } from '~/db/schema'
+import { FLAG_REGISTRY, featureFlagKeys } from '~/utils/feature-flags'
+import type { FeatureFlagKey } from '~/utils/feature-flags'
+
+export { FLAG_REGISTRY, featureFlagKeys, type FeatureFlagKey }
+
+/**
+ * Resolves the effective state of a feature flag.
+ * Priority: workspace override > global override > code default.
+ */
+export async function getFlag(
+	db: Db,
+	key: FeatureFlagKey,
+	workspaceId?: string,
+): Promise<boolean> {
+	const defaults = FLAG_REGISTRY[key]
+
+	// Check workspace-level override first
+	if (workspaceId) {
+		const wsOverride = await db
+			.select({ enabled: featureFlags.enabled })
+			.from(featureFlags)
+			.where(
+				and(
+					eq(featureFlags.key, key),
+					eq(featureFlags.workspaceId, workspaceId),
+				),
+			)
+			.get()
+		if (wsOverride) return wsOverride.enabled
+	}
+
+	// Check global override
+	const globalOverride = await db
+		.select({ enabled: featureFlags.enabled })
+		.from(featureFlags)
+		.where(and(eq(featureFlags.key, key), isNull(featureFlags.workspaceId)))
+		.get()
+	if (globalOverride) return globalOverride.enabled
+
+	return defaults.defaultEnabled
+}
+
+/**
+ * Returns the effective state of all known flags for a workspace.
+ */
+export async function getAllFlags(
+	db: Db,
+	workspaceId?: string,
+): Promise<Record<FeatureFlagKey, boolean>> {
+	const allOverrides = await db
+		.select()
+		.from(featureFlags)
+		.where(
+			workspaceId
+				? or(
+						eq(featureFlags.workspaceId, workspaceId),
+						isNull(featureFlags.workspaceId),
+					)
+				: isNull(featureFlags.workspaceId),
+		)
+		.all()
+
+	const result = {} as Record<FeatureFlagKey, boolean>
+	for (const key of featureFlagKeys) {
+		const wsOverride = workspaceId
+			? allOverrides.find((o) => o.key === key && o.workspaceId === workspaceId)
+			: undefined
+		const globalOverride = allOverrides.find(
+			(o) => o.key === key && o.workspaceId === null,
+		)
+		if (wsOverride) {
+			result[key] = wsOverride.enabled
+		} else if (globalOverride) {
+			result[key] = globalOverride.enabled
+		} else {
+			result[key] = FLAG_REGISTRY[key].defaultEnabled
+		}
+	}
+	return result
+}
+
+/**
+ * Returns all overrides for a workspace (both workspace-level and global).
+ */
+export async function getFlagOverrides(
+	db: Db,
+	workspaceId: string,
+): Promise<
+	Array<{
+		id: string
+		key: string
+		workspaceId: string | null
+		enabled: boolean
+		description: string | null
+		createdAt: Date
+		updatedAt: Date
+	}>
+> {
+	return db
+		.select()
+		.from(featureFlags)
+		.where(
+			or(
+				eq(featureFlags.workspaceId, workspaceId),
+				isNull(featureFlags.workspaceId),
+			),
+		)
+		.all()
+}
+
+/**
+ * Sets a feature flag override. Creates or updates an override row.
+ */
+export async function setFlagOverride(
+	db: Db,
+	opts: {
+		key: FeatureFlagKey
+		workspaceId: string | null
+		enabled: boolean
+		description?: string
+	},
+): Promise<void> {
+	const existing = await db
+		.select({ id: featureFlags.id })
+		.from(featureFlags)
+		.where(
+			opts.workspaceId
+				? and(
+						eq(featureFlags.key, opts.key),
+						eq(featureFlags.workspaceId, opts.workspaceId),
+					)
+				: and(eq(featureFlags.key, opts.key), isNull(featureFlags.workspaceId)),
+		)
+		.get()
+
+	if (existing) {
+		await db
+			.update(featureFlags)
+			.set({
+				enabled: opts.enabled,
+				description: opts.description ?? null,
+				updatedAt: new Date(),
+			})
+			.where(eq(featureFlags.id, existing.id))
+	} else {
+		await db.insert(featureFlags).values({
+			key: opts.key,
+			workspaceId: opts.workspaceId,
+			enabled: opts.enabled,
+			description: opts.description ?? null,
+		})
+	}
+}
+
+/**
+ * Removes a feature flag override, reverting to the next fallback.
+ */
+export async function removeFlagOverride(
+	db: Db,
+	opts: { key: FeatureFlagKey; workspaceId: string | null },
+): Promise<void> {
+	await db
+		.delete(featureFlags)
+		.where(
+			opts.workspaceId
+				? and(
+						eq(featureFlags.key, opts.key),
+						eq(featureFlags.workspaceId, opts.workspaceId),
+					)
+				: and(eq(featureFlags.key, opts.key), isNull(featureFlags.workspaceId)),
+		)
+}

@@ -2,16 +2,41 @@
 
 ## Description
 
-Database-backed feature flags for gradual rollout, A/B testing, and
-per-account/plan overrides. Flags are defined in code with a type-safe enum and
-evaluated via a `flag(name, context)` helper that checks D1 for overrides before
-falling back to the default. The admin panel exposes a flags UI for toggling
-without a deploy.
+Database-backed feature flags for gradual rollout and per-account overrides.
+Flags are defined in code with a type-safe registry (`FLAG_REGISTRY`) and
+resolved via `getFlag(db, key, workspaceId?)` which checks D1 for overrides
+before falling back to the default. Resolution priority: workspace override >
+global override > code default. The admin settings page exposes a flags UI for
+toggling without a deploy.
+
+## Usage
+
+```typescript
+// In a loader or action
+import { getFlag, getAllFlags } from '~/utils/feature-flags.server'
+
+const enabled = await getFlag(db, 'new-dashboard', workspaceId)
+const allFlags = await getAllFlags(db, workspaceId)
+```
+
+Add new flags by adding entries to `FLAG_REGISTRY` in
+`app/utils/feature-flags.ts`.
 
 ## Related Files
 
-_Not yet implemented._
+- `app/utils/feature-flags.ts` — Flag registry, `FeatureFlagKey` type, key list
+  (client-safe)
+- `app/utils/feature-flags.server.ts` — Resolution logic, CRUD (server-only)
+- `app/db/schema.ts` — `featureFlags` table definition
+- `app/routes/workspaces.$workspaceId/settings.feature-flags/route.tsx` — Admin
+  UI
+- `migrations/0007_serious_killmonger.sql` — Schema migration
+- `app/db/audit-log.server.ts` — `feature_flag.*` audit action types
 
 ## Removal
 
-_Not yet implemented._
+Drop the `feature_flags` table (generate a migration after removing it from
+`app/db/schema.ts`). Delete `app/utils/feature-flags.ts`,
+`app/utils/feature-flags.server.ts`, and the `settings.feature-flags` route
+directory. Remove `feature_flag.*` entries from the `AuditAction` type in
+`app/db/audit-log.server.ts`.

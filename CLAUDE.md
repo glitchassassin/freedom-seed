@@ -38,7 +38,11 @@ npm run format           # Format with Prettier
 npm run cf-typegen       # Regenerate Cloudflare Worker types
 npm run test             # Run unit tests (vitest)
 npm run test:watch       # Run unit tests in watch mode
+npm run validate         # Run lint:fix, typecheck, and format (run before committing)
 ```
+
+**Always run `npm run validate` before committing changes** to catch lint
+errors, type errors, and formatting issues.
 
 See `docs/facets/database.md` for database commands and schema workflow. See
 `docs/facets/e2e-testing.md` for E2E test commands.
