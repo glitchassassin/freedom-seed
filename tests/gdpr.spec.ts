@@ -100,6 +100,7 @@ test.describe('GDPR — Data Export', () => {
 		expect(data).toHaveProperty('user')
 		expect(data).toHaveProperty('sessions')
 		expect(data).toHaveProperty('workspaceMemberships')
+		expect(data).toHaveProperty('workspaceInvitationsSent')
 		expect(data).toHaveProperty('connectedAccounts')
 		expect(data).toHaveProperty('passkeys')
 		expect(data).toHaveProperty('mfaEnabled')
