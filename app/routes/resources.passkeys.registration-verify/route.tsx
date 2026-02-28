@@ -17,7 +17,6 @@ const regVerifySchema = z.object({
 
 // POST: Verify the registration response from the browser.
 // Expects FormData with:
-//   - csrf: CSRF token (validated by root middleware)
 //   - response: JSON-stringified RegistrationResponseJSON from startRegistration()
 //   - name: optional friendly name for the passkey
 export async function action({ request, context }: Route.ActionArgs) {

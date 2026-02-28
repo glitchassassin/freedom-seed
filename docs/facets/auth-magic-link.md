@@ -49,7 +49,6 @@ with passkeys as a fallback recovery method.
 - [auth-sessions](./auth-sessions.md) — session creation on successful login
 - [email](./email.md) — sending the magic link email
 - [email-templates](./email-templates.md) — `EmailLayout` and shared styles
-- [csrf](./csrf.md) — CSRF protection on the request form
 - [rate-limiting](./rate-limiting.md) — 3 requests per 5 minutes per IP
 
 ## Removal

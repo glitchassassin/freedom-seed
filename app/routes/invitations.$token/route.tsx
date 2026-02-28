@@ -1,6 +1,5 @@
 import { Form, Link, redirect } from 'react-router'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { logAuditEvent } from '~/db/audit-log.server'
 import { getDb } from '~/db/client.server'
@@ -175,7 +174,6 @@ export default function InvitationPage({ loaderData }: Route.ComponentProps) {
 				You&apos;ve been invited to join as a {role}.
 			</p>
 			<Form method="POST" className="mt-6">
-				<CsrfInput />
 				<Button type="submit" className="w-full">
 					Accept invitation
 				</Button>

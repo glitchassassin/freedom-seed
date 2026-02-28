@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm'
 import { Form } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -90,7 +89,6 @@ export default function ForgotPasswordPage({
 			</div>
 
 			<Form method="POST" {...getFormProps(form)} className="space-y-4">
-				<CsrfInput />
 				<div className="space-y-2">
 					<Label htmlFor={fields.email.id}>Email</Label>
 					<Input

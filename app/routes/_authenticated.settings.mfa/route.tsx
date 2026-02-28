@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react'
 import { Form, redirect, useActionData } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import {
 	Dialog,
@@ -261,7 +260,6 @@ function InactiveView() {
 				</div>
 
 				<Form method="POST">
-					<CsrfInput />
 					<input type="hidden" name="intent" value="setup" />
 					<Button type="submit" className="w-full">
 						Enable two-factor authentication
@@ -328,7 +326,6 @@ function SetupView({
 				</div>
 
 				<Form method="POST" {...getFormProps(form)} className="space-y-4">
-					<CsrfInput />
 					<input type="hidden" name="intent" value="verify" />
 
 					{form.errors && (
@@ -469,7 +466,6 @@ function ActiveView({ actionData }: { actionData: unknown }) {
 						</DialogHeader>
 
 						<Form method="POST" {...getFormProps(form)} className="space-y-4">
-							<CsrfInput />
 							<input type="hidden" name="intent" value="disable" />
 
 							{form.errors && (

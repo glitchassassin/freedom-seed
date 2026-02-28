@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -179,7 +178,6 @@ function TotpForm({
 
 	return (
 		<Form method="POST" {...getFormProps(form)} className="space-y-4">
-			<CsrfInput />
 			<input type="hidden" name="mode" value="totp" />
 
 			{form.errors && (
@@ -224,7 +222,6 @@ function BackupForm({
 
 	return (
 		<Form method="POST" {...getFormProps(form)} className="space-y-4">
-			<CsrfInput />
 			<input type="hidden" name="mode" value="backup" />
 
 			{form.errors && (

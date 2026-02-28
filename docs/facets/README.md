@@ -72,8 +72,6 @@ your app doesn't need it.
   X-Frame-Options, etc.) applied at the Worker layer.
 - [rate-limiting](./rate-limiting.md) — Per-IP and per-user request throttling
   on sensitive endpoints.
-- [csrf](./csrf.md) — CSRF token protection for cookie-authenticated form
-  submissions.
 - [bot-protection](./bot-protection.md) — Cloudflare Turnstile challenge on auth
   and high-risk public forms.
 

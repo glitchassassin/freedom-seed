@@ -9,13 +9,6 @@ import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getCloudflare } from './utils/cloudflare-context'
-import { csrfContext } from './utils/csrf-context'
-import {
-	generateCsrfToken,
-	makeCsrfCookie,
-	readExistingCsrfToken,
-	validateCsrfToken,
-} from './utils/csrf.server'
 import { sessionContext } from './utils/session-context'
 import { getSessionUser, makeSessionCookie } from './utils/session.server'
 import { getTheme } from './utils/theme.server'
@@ -23,35 +16,6 @@ import { toastContext } from './utils/toast-context'
 import { getToast } from './utils/toast.server'
 
 export const middleware: Route.MiddlewareFunction[] = [
-	// CSRF: generate token on GET/HEAD, validate on mutating methods
-	async ({ request, context }, next) => {
-		const { env } = getCloudflare(context)
-		const isSecure = env.ENVIRONMENT === 'production'
-		const method = request.method.toUpperCase()
-
-		if (method !== 'GET' && method !== 'HEAD') {
-			await validateCsrfToken(request, env.SESSION_SECRET, isSecure)
-		}
-
-		// For GET/HEAD requests, always issue a fresh CSRF token so the page
-		// has an up-to-date token.  For mutating requests (POST etc.), reuse
-		// the existing verified token so multi-step fetch flows (e.g. passkey
-		// registration: options → verify) can reuse the same token without
-		// a page reload in between.
-		const existing =
-			method !== 'GET' && method !== 'HEAD'
-				? await readExistingCsrfToken(request, env.SESSION_SECRET, isSecure)
-				: null
-		const { token, signedCookie } =
-			existing ?? (await generateCsrfToken(env.SESSION_SECRET))
-		context.set(csrfContext, token)
-		const response = await next()
-		response.headers.append(
-			'set-cookie',
-			makeCsrfCookie(signedCookie, isSecure),
-		)
-		return response
-	},
 	async ({ request, context }, next) => {
 		const { env } = getCloudflare(context)
 		const isSecure = env.ENVIRONMENT === 'production'
@@ -103,7 +67,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	}
 
 	const toastData = context.get(toastContext)
-	const csrfToken = context.get(csrfContext)
 	return {
 		hints: getHints(request),
 		userPrefs: { theme: getTheme(request) },
@@ -111,7 +74,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 		plausibleHost,
 		toast: toastData,
 		toastKey: toastData ? crypto.randomUUID() : null,
-		csrfToken,
 	}
 }
 

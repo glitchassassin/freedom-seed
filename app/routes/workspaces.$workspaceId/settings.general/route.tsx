@@ -3,7 +3,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -164,7 +163,6 @@ export default function WorkspaceSettingsGeneral({
 					{...getFormProps(renameForm)}
 					className="mt-4 flex items-end gap-4"
 				>
-					<CsrfInput />
 					<input type="hidden" name="intent" value="rename" />
 					<div className="flex-1 space-y-2">
 						<Label htmlFor={renameFields.name.id}>Name</Label>
@@ -196,7 +194,6 @@ export default function WorkspaceSettingsGeneral({
 						{...getFormProps(deleteForm)}
 						className="mt-4 space-y-4"
 					>
-						<CsrfInput />
 						<input type="hidden" name="intent" value="delete" />
 						<div className="space-y-2">
 							<Label htmlFor={deleteFields.confirmName.id}>
