@@ -3,7 +3,6 @@ import { parseWithZod } from '@conform-to/zod/v4'
 import { Form, redirect } from 'react-router'
 import { z } from 'zod'
 import type { Route } from './+types/route'
-import { CsrfInput } from '~/components/csrf-input'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -11,6 +10,7 @@ import { AccountDeletionEmail } from '~/emails/account-deletion'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { sendEmail } from '~/utils/email.server'
 import { softDeleteUser } from '~/utils/gdpr.server'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { requireUser } from '~/utils/session-context'
 import { clearSessionCookie } from '~/utils/session.server'
 import { setToast } from '~/utils/toast.server'
@@ -21,6 +21,11 @@ const schema = z.object({
 
 export async function action({ request, context }: Route.ActionArgs) {
 	const { env } = getCloudflare(context)
+	await requireRateLimit(env, request, {
+		prefix: 'delete-account',
+		limit: 3,
+		windowSeconds: 3600,
+	})
 	const isSecure = env.ENVIRONMENT === 'production'
 	const user = requireUser(context)
 
@@ -106,7 +111,6 @@ export default function DeleteAccountPage({
 				</div>
 
 				<Form method="POST" {...getFormProps(form)} className="space-y-4">
-					<CsrfInput />
 					{form.errors && (
 						<p className="text-destructive text-sm">{form.errors[0]}</p>
 					)}

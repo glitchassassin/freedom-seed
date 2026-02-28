@@ -83,6 +83,57 @@ test.describe('GDPR — Delete Account', () => {
 	})
 })
 
+test.describe('GDPR — Data Export', () => {
+	test('authenticated user can GET /resources/account/export-data and receives JSON with expected top-level keys', async ({
+		page,
+		login,
+	}) => {
+		await login()
+
+		const response = await page.request.get('/resources/account/export-data')
+
+		expect(response.status()).toBe(200)
+		expect(response.headers()['content-type']).toContain('application/json')
+
+		const data = await response.json()
+		expect(data).toHaveProperty('exportedAt')
+		expect(data).toHaveProperty('user')
+		expect(data).toHaveProperty('sessions')
+		expect(data).toHaveProperty('workspaceMemberships')
+		expect(data).toHaveProperty('connectedAccounts')
+		expect(data).toHaveProperty('passkeys')
+		expect(data).toHaveProperty('mfaEnabled')
+	})
+
+	test('unauthenticated request redirects to /login', async ({ page }) => {
+		const response = await page.request.get('/resources/account/export-data', {
+			maxRedirects: 0,
+		})
+
+		// Should redirect (3xx) or ultimately land on /login
+		expect([301, 302, 303, 307, 308].includes(response.status())).toBe(true)
+		const location = response.headers()['location']
+		expect(location).toMatch(/\/login/)
+	})
+
+	test('export excludes sensitive fields (no password hashes, no TOTP secrets)', async ({
+		page,
+		login,
+	}) => {
+		await login()
+
+		const response = await page.request.get('/resources/account/export-data')
+		const data = await response.json()
+
+		// Top-level response must not contain sensitive credential fields
+		const json = JSON.stringify(data)
+		expect(json).not.toContain('passwordHash')
+		expect(json).not.toContain('totpSecret')
+		expect(json).not.toContain('secret')
+		expect(json).not.toContain('backupCodes')
+	})
+})
+
 test.describe('GDPR — Cookie Consent Banner', () => {
 	test('shows consent banner for new visitor with no consent cookie', async ({
 		page,
