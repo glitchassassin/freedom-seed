@@ -7,6 +7,7 @@ import {
 	MAX_FILE_SIZE,
 	createPendingFile,
 } from '~/utils/file-storage.server'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { requireUser } from '~/utils/session-context'
 
 const presignSchema = z.object({
@@ -18,6 +19,12 @@ const presignSchema = z.object({
 export async function action({ request, context }: Route.ActionArgs) {
 	const user = requireUser(context)
 	const { env } = getCloudflare(context)
+
+	await requireRateLimit(env, request, {
+		prefix: 'file-presign',
+		limit: 20,
+		windowSeconds: 60,
+	})
 
 	const body = await request.json().catch(() => null)
 	const parsed = presignSchema.safeParse(body)

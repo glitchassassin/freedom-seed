@@ -11,7 +11,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 	if (!fileId) return data({ error: 'Missing file ID' }, { status: 400 })
 
 	if (request.method === 'PATCH') {
-		await confirmFileUpload(env, fileId, user.id)
+		const updated = await confirmFileUpload(env, fileId, user.id)
+		if (!updated) return data({ error: 'File not found' }, { status: 404 })
 		return data({ ok: true })
 	}
 

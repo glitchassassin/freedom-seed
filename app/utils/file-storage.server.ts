@@ -8,13 +8,16 @@ import { files } from '~/db/schema'
 /** Maximum file size in bytes (default: 50 MB). */
 export const MAX_FILE_SIZE = 50 * 1024 * 1024
 
-/** MIME types accepted by the presign endpoint. */
+/**
+ * MIME types accepted by the presign endpoint.
+ * Note: image/svg+xml is intentionally excluded — SVGs can contain embedded
+ * JavaScript and become XSS vectors when served with their original content type.
+ */
 export const ALLOWED_MIME_TYPES = [
 	'image/jpeg',
 	'image/png',
 	'image/gif',
 	'image/webp',
-	'image/svg+xml',
 	'application/pdf',
 	'text/plain',
 	'text/csv',
@@ -29,22 +32,186 @@ export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number]
 /**
  * Generates an AWS Signature V4 presigned PUT URL for Cloudflare R2.
  * The browser can use this URL to upload directly to R2 without proxying
- * through the Worker.
+ * through the Worker. Returns null if R2 credentials are not configured.
  */
-export async function generatePresignedUploadUrl({
+export async function generatePresignedUploadUrl(
+	env: ValidatedEnv,
+	key: string,
+	expiresIn = 3600,
+): Promise<string | null> {
+	if (!isR2Configured(env)) return null
+	return buildPresignedUrl({
+		method: 'PUT',
+		accountId: env.R2_ACCOUNT_ID,
+		bucket: env.R2_BUCKET_NAME,
+		key,
+		accessKeyId: env.R2_ACCESS_KEY_ID,
+		secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+		expiresIn,
+	})
+}
+
+/**
+ * Generates a presigned GET URL for reading a file from R2.
+ * Returns null if R2 credentials are not configured.
+ */
+export async function generatePresignedDownloadUrl(
+	env: ValidatedEnv,
+	key: string,
+	expiresIn = 3600,
+): Promise<string | null> {
+	if (!isR2Configured(env)) return null
+	return buildPresignedUrl({
+		method: 'GET',
+		accountId: env.R2_ACCOUNT_ID,
+		bucket: env.R2_BUCKET_NAME,
+		key,
+		accessKeyId: env.R2_ACCESS_KEY_ID,
+		secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+		expiresIn,
+	})
+}
+
+// ── File metadata CRUD ────────────────────────────────────────────────────────
+
+/** Creates a pending file record in D1 and returns a presigned PUT URL. */
+export async function createPendingFile(
+	env: ValidatedEnv,
+	{
+		ownerId,
+		filename,
+		contentType,
+		size,
+	}: {
+		ownerId: string
+		filename: string
+		contentType: string
+		size: number
+	},
+): Promise<{ fileId: string; uploadUrl: string }> {
+	if (!isR2Configured(env)) {
+		throw new Error(
+			'File storage is not configured. Set R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.',
+		)
+	}
+
+	const db = getDb(env)
+	const fileId = crypto.randomUUID()
+	const key = `uploads/${ownerId}/${fileId}`
+
+	await db.insert(files).values({
+		id: fileId,
+		ownerId,
+		key,
+		filename,
+		contentType,
+		size,
+		status: 'pending',
+	})
+
+	// Non-null: isR2Configured() checked above
+	const uploadUrl = (await generatePresignedUploadUrl(env, key))!
+	return { fileId, uploadUrl }
+}
+
+/**
+ * Marks a pending file as complete after a successful direct upload.
+ * Returns true if the file was found and updated, false if it was not found
+ * (invalid ID, wrong owner, or already confirmed/deleted).
+ */
+export async function confirmFileUpload(
+	env: ValidatedEnv,
+	fileId: string,
+	ownerId: string,
+): Promise<boolean> {
+	const db = getDb(env)
+
+	// Check existence first so we can report 404 vs silent no-op
+	const existing = await db
+		.select({ id: files.id })
+		.from(files)
+		.where(
+			and(
+				eq(files.id, fileId),
+				eq(files.ownerId, ownerId),
+				eq(files.status, 'pending'),
+			),
+		)
+		.limit(1)
+		.then((r) => r[0])
+
+	if (!existing) return false
+
+	await db
+		.update(files)
+		.set({ status: 'complete', updatedAt: new Date() })
+		.where(eq(files.id, fileId))
+
+	return true
+}
+
+/**
+ * Deletes a file from R2 (via binding) and removes its D1 record.
+ * R2 is deleted before D1: an orphaned D1 row is recoverable, but an
+ * orphaned R2 object with no metadata row is not.
+ */
+export async function deleteFile(
+	env: ValidatedEnv,
+	fileId: string,
+	ownerId: string,
+): Promise<void> {
+	const db = getDb(env)
+
+	const row = await db
+		.select({ key: files.key })
+		.from(files)
+		.where(and(eq(files.id, fileId), eq(files.ownerId, ownerId)))
+		.limit(1)
+		.then((r) => r[0])
+
+	if (!row) return
+
+	if (env.FILE_BUCKET) {
+		await env.FILE_BUCKET.delete(row.key)
+	}
+
+	await db
+		.delete(files)
+		.where(and(eq(files.id, fileId), eq(files.ownerId, ownerId)))
+}
+
+// ── Internal helpers ──────────────────────────────────────────────────────────
+
+function isR2Configured(env: ValidatedEnv): boolean {
+	return !!(
+		env.R2_ACCOUNT_ID &&
+		env.R2_BUCKET_NAME &&
+		env.R2_ACCESS_KEY_ID &&
+		env.R2_SECRET_ACCESS_KEY
+	)
+}
+
+/**
+ * Core AWS Signature V4 presigned URL builder for Cloudflare R2 (S3-compatible).
+ * Each path segment is individually RFC 3986-encoded so the canonical URI is
+ * correct for keys containing reserved characters.
+ */
+async function buildPresignedUrl({
+	method,
 	accountId,
 	bucket,
 	key,
 	accessKeyId,
 	secretAccessKey,
-	expiresIn = 3600,
+	expiresIn,
 }: {
+	method: 'GET' | 'PUT'
 	accountId: string
 	bucket: string
 	key: string
 	accessKeyId: string
 	secretAccessKey: string
-	expiresIn?: number
+	expiresIn: number
 }): Promise<string> {
 	const region = 'auto'
 	const service = 's3'
@@ -74,12 +241,14 @@ export async function generatePresignedUploadUrl({
 		.map(([k, v]) => `${encodeRfc3986(k)}=${encodeRfc3986(v)}`)
 		.join('&')
 
-	const canonicalUri = `/${bucket}/${key}`
+	// Encode each path segment individually (AWS Sig V4 canonical URI requirement)
+	const encodedPath =
+		'/' + [bucket, ...key.split('/')].map(encodeRfc3986).join('/')
 	const canonicalHeaders = `host:${host}\n`
 
 	const canonicalRequest = [
-		'PUT',
-		canonicalUri,
+		method,
+		encodedPath,
 		canonicalQueryString,
 		canonicalHeaders,
 		signedHeaders,
@@ -101,184 +270,10 @@ export async function generatePresignedUploadUrl({
 	)
 	const signature = await hmacHex(signingKey, stringToSign)
 
-	return `https://${host}/${bucket}/${key}?${canonicalQueryString}&X-Amz-Signature=${signature}`
+	return `https://${host}${encodedPath}?${canonicalQueryString}&X-Amz-Signature=${signature}`
 }
 
-/**
- * Generates a presigned GET URL for reading a file from R2.
- * Returns null if R2 credentials are not configured.
- */
-export async function generatePresignedDownloadUrl(
-	env: ValidatedEnv,
-	key: string,
-	expiresIn = 3600,
-): Promise<string | null> {
-	if (
-		!env.R2_ACCOUNT_ID ||
-		!env.R2_BUCKET_NAME ||
-		!env.R2_ACCESS_KEY_ID ||
-		!env.R2_SECRET_ACCESS_KEY
-	) {
-		return null
-	}
-
-	const region = 'auto'
-	const service = 's3'
-	const host = `${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
-	const bucket = env.R2_BUCKET_NAME
-
-	const now = new Date()
-	const amzDate = now
-		.toISOString()
-		.replace(/[:-]/g, '')
-		.replace(/\.\d{3}Z$/, 'Z')
-	const dateStamp = amzDate.slice(0, 8)
-
-	const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`
-	const credential = `${env.R2_ACCESS_KEY_ID}/${credentialScope}`
-	const signedHeaders = 'host'
-
-	const params: [string, string][] = [
-		['X-Amz-Algorithm', 'AWS4-HMAC-SHA256'],
-		['X-Amz-Credential', credential],
-		['X-Amz-Date', amzDate],
-		['X-Amz-Expires', String(expiresIn)],
-		['X-Amz-SignedHeaders', signedHeaders],
-	]
-	params.sort(([a], [b]) => a.localeCompare(b))
-	const canonicalQueryString = params
-		.map(([k, v]) => `${encodeRfc3986(k)}=${encodeRfc3986(v)}`)
-		.join('&')
-
-	const canonicalUri = `/${bucket}/${key}`
-	const canonicalHeaders = `host:${host}\n`
-
-	const canonicalRequest = [
-		'GET',
-		canonicalUri,
-		canonicalQueryString,
-		canonicalHeaders,
-		signedHeaders,
-		'UNSIGNED-PAYLOAD',
-	].join('\n')
-
-	const stringToSign = [
-		'AWS4-HMAC-SHA256',
-		amzDate,
-		credentialScope,
-		await sha256Hex(canonicalRequest),
-	].join('\n')
-
-	const signingKey = await deriveSigningKey(
-		env.R2_SECRET_ACCESS_KEY,
-		dateStamp,
-		region,
-		service,
-	)
-	const signature = await hmacHex(signingKey, stringToSign)
-
-	return `https://${host}/${bucket}/${key}?${canonicalQueryString}&X-Amz-Signature=${signature}`
-}
-
-// ── File metadata CRUD ────────────────────────────────────────────────────────
-
-/** Creates a pending file record in D1 and returns a presigned PUT URL. */
-export async function createPendingFile(
-	env: ValidatedEnv,
-	{
-		ownerId,
-		filename,
-		contentType,
-		size,
-	}: {
-		ownerId: string
-		filename: string
-		contentType: string
-		size: number
-	},
-): Promise<{ fileId: string; uploadUrl: string }> {
-	if (
-		!env.R2_ACCOUNT_ID ||
-		!env.R2_BUCKET_NAME ||
-		!env.R2_ACCESS_KEY_ID ||
-		!env.R2_SECRET_ACCESS_KEY
-	) {
-		throw new Error(
-			'File storage is not configured. Set R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.',
-		)
-	}
-
-	const db = getDb(env)
-	const fileId = crypto.randomUUID()
-	const key = `uploads/${ownerId}/${fileId}`
-
-	await db.insert(files).values({
-		id: fileId,
-		ownerId,
-		key,
-		filename,
-		contentType,
-		size,
-		status: 'pending',
-	})
-
-	const uploadUrl = await generatePresignedUploadUrl({
-		accountId: env.R2_ACCOUNT_ID,
-		bucket: env.R2_BUCKET_NAME,
-		key,
-		accessKeyId: env.R2_ACCESS_KEY_ID,
-		secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-	})
-
-	return { fileId, uploadUrl }
-}
-
-/** Marks a pending file as complete after a successful direct upload. */
-export async function confirmFileUpload(
-	env: ValidatedEnv,
-	fileId: string,
-	ownerId: string,
-): Promise<void> {
-	const db = getDb(env)
-	await db
-		.update(files)
-		.set({ status: 'complete', updatedAt: new Date() })
-		.where(
-			and(
-				eq(files.id, fileId),
-				eq(files.ownerId, ownerId),
-				eq(files.status, 'pending'),
-			),
-		)
-}
-
-/** Deletes a file from R2 (via binding) and removes its D1 record. */
-export async function deleteFile(
-	env: ValidatedEnv,
-	fileId: string,
-	ownerId: string,
-): Promise<void> {
-	const db = getDb(env)
-
-	const row = await db
-		.select({ key: files.key })
-		.from(files)
-		.where(and(eq(files.id, fileId), eq(files.ownerId, ownerId)))
-		.limit(1)
-		.then((r) => r[0])
-
-	if (!row) return
-
-	if (env.FILE_BUCKET) {
-		await env.FILE_BUCKET.delete(row.key)
-	}
-
-	await db
-		.delete(files)
-		.where(and(eq(files.id, fileId), eq(files.ownerId, ownerId)))
-}
-
-// ── AWS Signature V4 helpers ──────────────────────────────────────────────────
+// ── AWS Signature V4 low-level helpers ───────────────────────────────────────
 
 function encodeRfc3986(value: string): string {
 	return encodeURIComponent(value).replace(

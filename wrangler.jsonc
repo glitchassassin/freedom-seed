@@ -34,13 +34,12 @@
 		"GITHUB_CLIENT_SECRET": "",
 		// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 		"SENTRY_DSN": "",
-		// File storage (R2) — set real values via `wrangler secret put`
+		// File storage (R2) — non-secret config.
 		// Run `wrangler r2 bucket create <name>` to create the bucket first.
-		// Generate R2 API tokens at https://dash.cloudflare.com/ → R2 → Manage R2 API Tokens.
+		// Set secrets via `wrangler secret put R2_ACCESS_KEY_ID` and
+		// `wrangler secret put R2_SECRET_ACCESS_KEY` — do NOT add them here.
 		"R2_ACCOUNT_ID": "",
 		"R2_BUCKET_NAME": "",
-		"R2_ACCESS_KEY_ID": "",
-		"R2_SECRET_ACCESS_KEY": "",
 	},
 	"env": {
 		"development": {
@@ -62,8 +61,6 @@
 				"SENTRY_DSN": "",
 				"R2_ACCOUNT_ID": "",
 				"R2_BUCKET_NAME": "",
-				"R2_ACCESS_KEY_ID": "",
-				"R2_SECRET_ACCESS_KEY": "",
 			},
 			"d1_databases": [
 				{
@@ -105,8 +102,6 @@
 				"SENTRY_DSN": "",
 				"R2_ACCOUNT_ID": "",
 				"R2_BUCKET_NAME": "",
-				"R2_ACCESS_KEY_ID": "",
-				"R2_SECRET_ACCESS_KEY": "",
 			},
 			"d1_databases": [
 				{
