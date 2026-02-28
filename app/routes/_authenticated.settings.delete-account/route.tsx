@@ -55,7 +55,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 		),
 	})
 
-	return redirect('/', {
+	return redirect('/login', {
 		headers: [
 			['set-cookie', clearSessionCookie(isSecure)],
 			[
