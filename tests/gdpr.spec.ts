@@ -104,6 +104,7 @@ test.describe('GDPR — Data Export', () => {
 		expect(data).toHaveProperty('connectedAccounts')
 		expect(data).toHaveProperty('passkeys')
 		expect(data).toHaveProperty('mfaEnabled')
+		expect(data).toHaveProperty('auditLogEntries')
 	})
 
 	test('unauthenticated request redirects to /login', async ({ page }) => {
