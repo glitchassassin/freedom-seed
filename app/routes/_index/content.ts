@@ -91,6 +91,7 @@ export const footer = {
 	copyright: `© ${new Date().getFullYear()} Seed Vault`,
 	builtWith: 'Built with Freedom Seed',
 	links: [
+		{ label: 'Blog', href: '/blog' },
 		{ label: 'Privacy', href: '/privacy' },
 		{ label: 'Terms', href: '/terms' },
 	],
