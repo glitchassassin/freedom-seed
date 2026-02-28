@@ -90,7 +90,15 @@ export default function BlogPost({ loaderData }: Route.ComponentProps) {
 				</div>
 			</div>
 			<BlogProse>
-				<Suspense fallback={null}>
+				<Suspense
+					fallback={
+						<div className="mx-auto max-w-prose animate-pulse space-y-4">
+							<div className="bg-muted h-4 w-3/4 rounded" />
+							<div className="bg-muted h-4 rounded" />
+							<div className="bg-muted h-4 w-5/6 rounded" />
+						</div>
+					}
+				>
 					<LazyComponent components={blogComponents} />
 				</Suspense>
 			</BlogProse>

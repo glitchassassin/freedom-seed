@@ -1,13 +1,7 @@
-import type { MDXComponents } from 'mdx/types'
-import type { ReactElement } from 'react'
-import type { Post, PostFrontmatter } from '~/types/blog'
-
-export type MDXContentComponent = (props: {
-	components?: MDXComponents
-}) => ReactElement | null
+import type { PostFrontmatter, Post } from '~/types/blog'
 
 type BlogModule = {
-	default: MDXContentComponent
+	default: unknown
 	frontmatter: PostFrontmatter
 }
 
@@ -29,9 +23,7 @@ export const allPosts: Post[] = Object.entries(modules)
 			new Date(a.frontmatter.date).getTime(),
 	)
 
-export function getPost(
-	slug: string,
-): { post: Post; Component: MDXContentComponent } | null {
+export function getPost(slug: string): { post: Post } | null {
 	const entry = Object.entries(modules).find(([path]) =>
 		path.endsWith(`/${slug}.mdx`),
 	)
@@ -42,6 +34,5 @@ export function getPost(
 			slug,
 			frontmatter: mod.frontmatter,
 		},
-		Component: mod.default,
 	}
 }
