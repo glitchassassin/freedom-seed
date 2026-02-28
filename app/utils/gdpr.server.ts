@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { getDb } from '~/db/client.server'
 import {
+	auditLog,
 	mfaBackupCodes,
 	mfaCredentials,
 	passkeyCredentials,
@@ -10,6 +11,7 @@ import {
 	users,
 	workspaceInvitations,
 	workspaceMembers,
+	workspaces,
 } from '~/db/schema'
 
 export const DELETION_GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
@@ -25,79 +27,102 @@ export async function exportUserData(
 ): Promise<Record<string, unknown>> {
 	const db = getDb(env)
 
-	const [user, userSessions, members, identities, passkeys, mfa, invitations] =
-		await Promise.all([
-			db
-				.select({
-					id: users.id,
-					email: users.email,
-					displayName: users.displayName,
-					emailVerifiedAt: users.emailVerifiedAt,
-					createdAt: users.createdAt,
-					updatedAt: users.updatedAt,
-				})
-				.from(users)
-				.where(eq(users.id, userId))
-				.limit(1)
-				.then((r) => r[0] ?? null),
-			db
-				.select({
-					createdAt: sessions.createdAt,
-					expiresAt: sessions.expiresAt,
-					ipAddress: sessions.ipAddress,
-					userAgent: sessions.userAgent,
-				})
-				.from(sessions)
-				.where(eq(sessions.userId, userId)),
-			db
-				.select({
-					workspaceId: workspaceMembers.workspaceId,
-					role: workspaceMembers.role,
-					createdAt: workspaceMembers.createdAt,
-				})
-				.from(workspaceMembers)
-				.where(eq(workspaceMembers.userId, userId)),
-			db
-				.select({
-					provider: socialIdentities.provider,
-					email: socialIdentities.email,
-					displayName: socialIdentities.displayName,
-					createdAt: socialIdentities.createdAt,
-				})
-				.from(socialIdentities)
-				.where(eq(socialIdentities.userId, userId)),
-			db
-				.select({
-					name: passkeyCredentials.name,
-					deviceType: passkeyCredentials.deviceType,
-					backedUp: passkeyCredentials.backedUp,
-					lastUsedAt: passkeyCredentials.lastUsedAt,
-					createdAt: passkeyCredentials.createdAt,
-				})
-				.from(passkeyCredentials)
-				.where(eq(passkeyCredentials.userId, userId)),
-			db
-				.select({
-					verifiedAt: mfaCredentials.verifiedAt,
-					createdAt: mfaCredentials.createdAt,
-				})
-				.from(mfaCredentials)
-				.where(eq(mfaCredentials.userId, userId))
-				.limit(1)
-				.then((r) => r[0] ?? null),
-			db
-				.select({
-					workspaceId: workspaceInvitations.workspaceId,
-					email: workspaceInvitations.email,
-					role: workspaceInvitations.role,
-					expiresAt: workspaceInvitations.expiresAt,
-					acceptedAt: workspaceInvitations.acceptedAt,
-					revokedAt: workspaceInvitations.revokedAt,
-					createdAt: workspaceInvitations.createdAt,
-				})
-				.from(workspaceInvitations)
-				.where(eq(workspaceInvitations.invitedByUserId, userId)),
-		])
+	const [
+		user,
+		userSessions,
+		members,
+		identities,
+		passkeys,
+		mfa,
+		invitations,
+		auditLogEntries,
+	] = await Promise.all([
+		db
+			.select({
+				id: users.id,
+				email: users.email,
+				displayName: users.displayName,
+				emailVerifiedAt: users.emailVerifiedAt,
+				createdAt: users.createdAt,
+				updatedAt: users.updatedAt,
+			})
+			.from(users)
+			.where(eq(users.id, userId))
+			.limit(1)
+			.then((r) => r[0] ?? null),
+		db
+			.select({
+				createdAt: sessions.createdAt,
+				expiresAt: sessions.expiresAt,
+				ipAddress: sessions.ipAddress,
+				userAgent: sessions.userAgent,
+			})
+			.from(sessions)
+			.where(eq(sessions.userId, userId)),
+		db
+			.select({
+				workspaceId: workspaceMembers.workspaceId,
+				name: workspaces.name,
+				slug: workspaces.slug,
+				role: workspaceMembers.role,
+				createdAt: workspaceMembers.createdAt,
+			})
+			.from(workspaceMembers)
+			.innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
+			.where(eq(workspaceMembers.userId, userId)),
+		db
+			.select({
+				provider: socialIdentities.provider,
+				email: socialIdentities.email,
+				displayName: socialIdentities.displayName,
+				createdAt: socialIdentities.createdAt,
+			})
+			.from(socialIdentities)
+			.where(eq(socialIdentities.userId, userId)),
+		db
+			.select({
+				name: passkeyCredentials.name,
+				deviceType: passkeyCredentials.deviceType,
+				backedUp: passkeyCredentials.backedUp,
+				lastUsedAt: passkeyCredentials.lastUsedAt,
+				createdAt: passkeyCredentials.createdAt,
+			})
+			.from(passkeyCredentials)
+			.where(eq(passkeyCredentials.userId, userId)),
+		db
+			.select({
+				verifiedAt: mfaCredentials.verifiedAt,
+				createdAt: mfaCredentials.createdAt,
+			})
+			.from(mfaCredentials)
+			.where(eq(mfaCredentials.userId, userId))
+			.limit(1)
+			.then((r) => r[0] ?? null),
+		db
+			.select({
+				workspaceId: workspaceInvitations.workspaceId,
+				email: workspaceInvitations.email,
+				role: workspaceInvitations.role,
+				expiresAt: workspaceInvitations.expiresAt,
+				acceptedAt: workspaceInvitations.acceptedAt,
+				revokedAt: workspaceInvitations.revokedAt,
+				createdAt: workspaceInvitations.createdAt,
+			})
+			.from(workspaceInvitations)
+			.where(eq(workspaceInvitations.invitedByUserId, userId)),
+		db
+			.select({
+				workspaceId: auditLog.workspaceId,
+				action: auditLog.action,
+				targetType: auditLog.targetType,
+				targetId: auditLog.targetId,
+				targetLabel: auditLog.targetLabel,
+				metadata: auditLog.metadata,
+				createdAt: auditLog.createdAt,
+			})
+			.from(auditLog)
+			.where(eq(auditLog.actorId, userId)),
+	])
 
 	return {
 		exportedAt: new Date().toISOString(),
@@ -108,6 +133,7 @@ export async function exportUserData(
 		passkeys,
 		mfaEnabled: mfa !== null,
 		workspaceInvitationsSent: invitations,
+		auditLogEntries,
 	}
 }
 
