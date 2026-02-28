@@ -100,22 +100,13 @@ function applyMigrations(sqlite: DatabaseSync): void {
 
 /**
  * Creates a fully-migrated Drizzle D1 instance backed by a fresh in-memory
- * SQLite database.  Call once per test (or per `beforeEach`) for full
- * isolation.
- *
- * Foreign keys are OFF by default in SQLite, so you can insert records
- * referencing non-existent parent rows — ideal for unit tests that only care
- * about the table under test.
+ * SQLite database.  Foreign key enforcement is ON (left at the state the
+ * migrations leave it in).  Use factory helpers from `./factories` to create
+ * any required parent rows before inserting dependent records.
  */
-
 export function createTestDb(): TestDb {
 	const sqlite = new DatabaseSync(':memory:')
 	applyMigrations(sqlite)
-	// Some migrations (e.g. 0002) emit `PRAGMA foreign_keys=ON` as part of their
-	// ALTER TABLE pattern.  Disable FK enforcement after migrations so that tests
-	// can insert records with arbitrary foreign-key values (e.g. fake workspace
-	// IDs) without needing to create the parent rows.
-	sqlite.exec('PRAGMA foreign_keys = OFF')
 	// The internal `as any` bridges NodeSqliteD1Shim to the Cloudflare D1Database
 	// type that Drizzle expects.  The cast is safe: the shim implements all
 	// methods Drizzle's D1 adapter actually calls at runtime.
