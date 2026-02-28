@@ -1,11 +1,13 @@
 import type { Route } from './+types/sitemap[.]xml'
+import { allPosts } from '~/utils/blog.server'
 
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin
 
-	const staticPages = ['/', '/login', '/signup', '/privacy', '/terms']
+	const staticPages = ['/', '/login', '/signup', '/privacy', '/terms', '/blog']
+	const blogPages = allPosts.map((post) => `/blog/${post.slug}`)
 
-	const urls = staticPages
+	const urls = [...staticPages, ...blogPages]
 		.map(
 			(loc) => `  <url>
     <loc>${origin}${loc}</loc>
