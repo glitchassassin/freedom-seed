@@ -1,8 +1,32 @@
+import type { MDXComponents } from 'mdx/types'
+import { lazy, Suspense } from 'react'
 import { data, Link } from 'react-router'
 import type { Route } from './+types/index'
 import { BlogProse, blogComponents } from '~/components/blog-prose'
-import { getPost } from '~/utils/blog'
+import { getPost } from '~/utils/blog.server'
 import { seoMeta } from '~/utils/seo'
+
+type MDXContentComponent = (props: {
+	components?: MDXComponents
+}) => React.ReactElement | null
+
+type MDXModule = { default: MDXContentComponent }
+
+const mdxModules = import.meta.glob<MDXModule>('/content/blog/*.mdx')
+const lazyComponentCache = new Map<
+	string,
+	React.LazyExoticComponent<MDXContentComponent>
+>()
+
+function getLazyMDXComponent(slug: string) {
+	if (lazyComponentCache.has(slug)) return lazyComponentCache.get(slug)!
+	const key = `/content/blog/${slug}.mdx`
+	const loader = mdxModules[key]
+	if (!loader) return null
+	const component = lazy(loader)
+	lazyComponentCache.set(slug, component)
+	return component
+}
 
 export function loader({ params, request }: Route.LoaderArgs) {
 	const { slug } = params
@@ -42,9 +66,8 @@ export function headers() {
 
 export default function BlogPost({ loaderData }: Route.ComponentProps) {
 	const { post, formattedDate } = loaderData
-	const result = getPost(post.slug)
-	if (!result) return null
-	const { Component } = result
+	const LazyComponent = getLazyMDXComponent(post.slug)
+	if (!LazyComponent) return null
 	return (
 		<main className="container mx-auto px-4 py-16">
 			<div className="mx-auto mb-8 max-w-prose">
@@ -67,7 +90,9 @@ export default function BlogPost({ loaderData }: Route.ComponentProps) {
 				</div>
 			</div>
 			<BlogProse>
-				<Component components={blogComponents} />
+				<Suspense fallback={null}>
+					<LazyComponent components={blogComponents} />
+				</Suspense>
 			</BlogProse>
 		</main>
 	)

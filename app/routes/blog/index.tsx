@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import type { Route } from './+types/index'
-import { allPosts } from '~/utils/blog'
+import { allPosts } from '~/utils/blog.server'
 import { seoMeta } from '~/utils/seo'
 
 export const links: Route.LinksFunction = () => [

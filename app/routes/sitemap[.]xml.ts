@@ -1,5 +1,5 @@
 import type { Route } from './+types/sitemap[.]xml'
-import { allPosts } from '~/utils/blog'
+import { allPosts } from '~/utils/blog.server'
 
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin
