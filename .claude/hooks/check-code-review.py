@@ -109,7 +109,7 @@ def main():
                 file_path = item.get("input", {}).get(path_key, "")
                 if not is_docs_only_path(file_path, cwd):
                     events.append("code_change")
-            elif name == "Task":
+            elif name in ("Task", "Agent"):
                 subagent_type = item.get("input", {}).get("subagent_type", "")
                 if subagent_type in CODE_REVIEW_AGENT_TYPES:
                     events.append("code_review")
