@@ -71,6 +71,13 @@ export default [
 			'app/**/*.test.ts',
 		],
 	},
+	// Test setup helpers — not React code, so hooks rules don't apply
+	{
+		files: ['tests/setup/*.ts'],
+		rules: {
+			'react-hooks/rules-of-hooks': 'off',
+		},
+	},
 	// Facet docs: enforce 100-line limit so files stay context-window friendly
 	{
 		files: ['docs/facets/**/*.md'],

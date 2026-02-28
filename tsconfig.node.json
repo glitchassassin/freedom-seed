@@ -7,7 +7,8 @@
 		"playwright.config.ts",
 		"drizzle.config.ts",
 		"tests/**/*",
-		"scripts/**/*"
+		"scripts/**/*",
+		"app/db/schema.ts"
 	],
 	"compilerOptions": {
 		"composite": true,
