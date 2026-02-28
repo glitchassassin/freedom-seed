@@ -1,11 +1,33 @@
 import { Link } from 'react-router'
 import type { Route } from './+types/index'
-import { allPosts } from '~/utils/blog.server'
+import { allPosts } from '~/utils/blog'
 import { seoMeta } from '~/utils/seo'
+
+export const links: Route.LinksFunction = () => [
+	{
+		rel: 'alternate',
+		type: 'application/rss+xml',
+		title: 'Seed Vault Blog',
+		href: '/blog/rss.xml',
+	},
+]
 
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin
-	return { posts: allPosts, origin }
+	return {
+		posts: allPosts.map((post) => ({
+			...post,
+			formattedDate: new Date(
+				post.frontmatter.date + 'T00:00:00Z',
+			).toLocaleDateString('en-US', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				timeZone: 'UTC',
+			}),
+		})),
+		origin,
+	}
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -42,11 +64,7 @@ export default function BlogIndex({ loaderData }: Route.ComponentProps) {
 									dateTime={post.frontmatter.date}
 									className="text-muted-foreground text-sm"
 								>
-									{new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-									})}
+									{post.formattedDate}
 								</time>
 								<h2 className="text-h3 mt-1 mb-2">
 									<Link to={`/blog/${post.slug}`} className="hover:underline">

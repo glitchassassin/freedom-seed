@@ -1,5 +1,5 @@
 import type { Route } from './+types/rss[.]xml'
-import { allPosts } from '~/utils/blog.server'
+import { allPosts } from '~/utils/blog'
 
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin

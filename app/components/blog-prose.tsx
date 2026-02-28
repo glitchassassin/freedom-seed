@@ -4,10 +4,10 @@ const components: MDXComponents = {
 	h1: (props) => <h1 className="text-h1 mb-4" {...props} />,
 	h2: (props) => <h2 className="text-h3 mt-10 mb-3" {...props} />,
 	h3: (props) => <h3 className="text-h4 mt-8 mb-2" {...props} />,
-	p: (props) => <p className="text-body mb-4 leading-relaxed" {...props} />,
+	p: (props) => <p className="text-body-md mb-4 leading-relaxed" {...props} />,
 	ul: (props) => <ul className="mb-4 list-disc space-y-1 pl-6" {...props} />,
 	ol: (props) => <ol className="mb-4 list-decimal space-y-1 pl-6" {...props} />,
-	li: (props) => <li className="text-body" {...props} />,
+	li: (props) => <li className="text-body-md" {...props} />,
 	a: (props) => (
 		<a className="text-primary underline hover:no-underline" {...props} />
 	),
