@@ -283,6 +283,33 @@ export const socialIdentities = sqliteTable(
 	],
 )
 
+export const fileStatusEnum = ['pending', 'complete'] as const
+export type FileStatus = (typeof fileStatusEnum)[number]
+
+export const files = sqliteTable(
+	'files',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		ownerId: text('owner_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		key: text('key').notNull().unique(), // R2 object key
+		filename: text('filename').notNull(), // original filename
+		contentType: text('content_type').notNull(), // MIME type
+		size: integer('size').notNull(), // bytes
+		status: text('status').$type<FileStatus>().notNull().default('pending'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(unixepoch('now') * 1000)`),
+	},
+	(table) => [index('files_owner_id_idx').on(table.ownerId)],
+)
+
 export const featureFlags = sqliteTable(
 	'feature_flags',
 	{

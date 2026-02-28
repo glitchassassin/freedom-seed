@@ -34,6 +34,13 @@
 		"GITHUB_CLIENT_SECRET": "",
 		// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 		"SENTRY_DSN": "",
+		// File storage (R2) — set real values via `wrangler secret put`
+		// Run `wrangler r2 bucket create <name>` to create the bucket first.
+		// Generate R2 API tokens at https://dash.cloudflare.com/ → R2 → Manage R2 API Tokens.
+		"R2_ACCOUNT_ID": "",
+		"R2_BUCKET_NAME": "",
+		"R2_ACCESS_KEY_ID": "",
+		"R2_SECRET_ACCESS_KEY": "",
 	},
 	"env": {
 		"development": {
@@ -53,6 +60,10 @@
 				"GITHUB_CLIENT_SECRET": "",
 				// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 				"SENTRY_DSN": "",
+				"R2_ACCOUNT_ID": "",
+				"R2_BUCKET_NAME": "",
+				"R2_ACCESS_KEY_ID": "",
+				"R2_SECRET_ACCESS_KEY": "",
 			},
 			"d1_databases": [
 				{
@@ -68,6 +79,8 @@
 					"id": "00000000-0000-0000-0000-000000000000",
 				},
 			],
+			// Uncomment and configure after running `wrangler r2 bucket create <name>`
+			// "r2_buckets": [{ "binding": "FILE_BUCKET", "bucket_name": "freedom-seed-files" }],
 		},
 		"test": {
 			"vars": {
@@ -90,6 +103,10 @@
 				"GITHUB_CLIENT_SECRET": "",
 				// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 				"SENTRY_DSN": "",
+				"R2_ACCOUNT_ID": "",
+				"R2_BUCKET_NAME": "",
+				"R2_ACCESS_KEY_ID": "",
+				"R2_SECRET_ACCESS_KEY": "",
 			},
 			"d1_databases": [
 				{
@@ -126,6 +143,8 @@
 			"id": "TODO",
 		},
 	],
+	// Run `wrangler r2 bucket create <name>` and uncomment/configure below
+	// "r2_buckets": [{ "binding": "FILE_BUCKET", "bucket_name": "TODO" }],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

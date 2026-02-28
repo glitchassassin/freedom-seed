@@ -44,6 +44,17 @@ export const envSchema = z.object({
 	// Sentry — set SENTRY_DSN via `wrangler secret put SENTRY_DSN`
 	// Omit or leave empty to disable error tracking.
 	SENTRY_DSN: z.string().default(''),
+
+	// File storage (R2) — configure to enable the file-storage facet.
+	// Run `wrangler r2 bucket create <name>` and add the binding to wrangler.jsonc.
+	// Generate R2 API tokens at https://dash.cloudflare.com/ → R2 → Manage R2 API Tokens.
+	FILE_BUCKET: z.custom<R2Bucket>((val) => val != null).optional(),
+	R2_ACCOUNT_ID: z.string().default(''),
+	R2_BUCKET_NAME: z.string().default(''),
+	// Set via `wrangler secret put R2_ACCESS_KEY_ID`
+	R2_ACCESS_KEY_ID: z.string().default(''),
+	// Set via `wrangler secret put R2_SECRET_ACCESS_KEY`
+	R2_SECRET_ACCESS_KEY: z.string().default(''),
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>
