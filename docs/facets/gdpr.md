@@ -3,26 +3,19 @@
 ## Description
 
 GDPR compliance primitives: a data export endpoint that generates a JSON archive
-of all personal data for a user, a soft-delete account deletion flow that
-anonymizes PII and schedules hard deletion after a 30-day grace period, and a
-cookie consent banner shown to all visitors. Consent choices are stored in a
-cookie; analytics scripts are conditionally loaded based on consent state.
+of all personal data for a user, and a soft-delete account deletion flow that
+anonymizes PII and schedules hard deletion after a 30-day grace period.
 
 ## Related Files
 
-- `app/utils/consent.server.ts` — reads and builds the `en_consent` cookie.
 - `app/utils/gdpr.server.ts` — `exportUserData()` and `softDeleteUser()`.
 - `app/emails/account-deletion.tsx` — deletion confirmation email template.
-- `app/components/cookie-consent-banner.tsx` — sticky banner shown when consent
-  is `null`; submits to the consent resource route.
-- `app/routes/resources.consent-cookie/route.tsx` — POST action that sets the
-  `en_consent` cookie and redirects back to the originating page.
 - `app/routes/resources.account.export-data/route.ts` — GET endpoint; returns
   all user data as a JSON download (`my-data.json`).
 - `app/routes/_authenticated.settings.delete-account/route.tsx` — settings page
   with email-confirmation form; soft-deletes account and logs out user.
-- `app/root.tsx` — reads consent in the loader; gates the analytics script on
-  `consentState === 'granted'`; renders `<CookieConsentBanner>` when `null`.
+- `app/root.tsx` — renders the Plausible analytics script when `plausibleDomain`
+  is set.
 - `app/db/schema.ts` — `users.scheduledForDeletionAt` column (set 30 days out on
   soft-delete).
 - `migrations/0008_cultured_changeling.sql` — adds `scheduled_for_deletion_at`.
@@ -46,14 +39,9 @@ permanently removed along with all other personal data.
 
 ## Removal
 
-1. Delete `app/utils/consent.server.ts` and `app/utils/gdpr.server.ts`.
+1. Delete `app/utils/gdpr.server.ts`.
 2. Delete `app/emails/account-deletion.tsx`.
-3. Delete `app/components/cookie-consent-banner.tsx`.
-4. Delete `app/routes/resources.consent-cookie/`,
-   `app/routes/resources.account.export-data/`, and
+3. Delete `app/routes/resources.account.export-data/` and
    `app/routes/_authenticated.settings.delete-account/`.
-5. Remove the `getConsentState` import and call from `app/root.tsx`; revert the
-   analytics script to render unconditionally on `plausibleDomain`; remove the
-   `<CookieConsentBanner>` render.
-6. Remove `scheduledForDeletionAt` from `app/db/schema.ts` and generate a new
+4. Remove `scheduledForDeletionAt` from `app/db/schema.ts` and generate a new
    migration.

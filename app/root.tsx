@@ -4,13 +4,11 @@ import { toast } from 'sonner'
 
 import type { Route } from './+types/root'
 import './app.css'
-import { CookieConsentBanner } from './components/cookie-consent-banner'
 import { GeneralErrorBoundary } from './components/error-boundary'
 import { Toaster } from './components/ui/sonner'
 import { useOptionalTheme } from './routes/resources/theme-switch/index'
 import { ClientHintCheck, getHints } from './utils/client-hints'
 import { getCloudflare } from './utils/cloudflare-context'
-import { getConsentState } from './utils/consent.server'
 import { sessionContext } from './utils/session-context'
 import { getSessionUser, makeSessionCookie } from './utils/session.server'
 import { getTheme } from './utils/theme.server'
@@ -69,13 +67,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 	}
 
 	const toastData = context.get(toastContext)
-	const consentState = getConsentState(request)
 	return {
 		hints: getHints(request),
 		userPrefs: { theme: getTheme(request) },
 		plausibleDomain,
 		plausibleHost,
-		consentState,
 		toast: toastData,
 		toastKey: toastData ? crypto.randomUUID() : null,
 	}
@@ -119,7 +115,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
 	const {
 		plausibleDomain,
 		plausibleHost,
-		consentState,
 		toast: toastData,
 		toastKey,
 	} = loaderData
@@ -134,7 +129,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<>
-			{plausibleDomain && consentState === 'granted' && (
+			{plausibleDomain && (
 				<script
 					defer
 					data-domain={plausibleDomain}
@@ -143,7 +138,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
 			)}
 			<Outlet />
 			<Toaster />
-			{consentState === null && <CookieConsentBanner />}
 		</>
 	)
 }
