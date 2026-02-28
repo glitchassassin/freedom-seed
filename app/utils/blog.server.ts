@@ -1,21 +1,14 @@
-import type { PostFrontmatter, Post } from '~/types/blog'
+import type { Post, PostFrontmatter } from '~/types/blog'
 
-type BlogModule = {
-	default: unknown
-	frontmatter: PostFrontmatter
-}
-
-const modules = import.meta.glob<BlogModule>('/content/blog/*.mdx', {
+const modules = import.meta.glob<PostFrontmatter>('/content/blog/*.mdx', {
 	eager: true,
+	import: 'frontmatter',
 })
 
 export const allPosts: Post[] = Object.entries(modules)
-	.map(([path, mod]) => {
+	.map(([path, frontmatter]) => {
 		const slug = path.replace(/^\/content\/blog\//, '').replace(/\.mdx$/, '')
-		return {
-			slug,
-			frontmatter: mod.frontmatter,
-		}
+		return { slug, frontmatter }
 	})
 	.sort(
 		(a, b) =>
@@ -28,11 +21,6 @@ export function getPost(slug: string): { post: Post } | null {
 		path.endsWith(`/${slug}.mdx`),
 	)
 	if (!entry) return null
-	const [, mod] = entry
-	return {
-		post: {
-			slug,
-			frontmatter: mod.frontmatter,
-		},
-	}
+	const [, frontmatter] = entry
+	return { post: { slug, frontmatter } }
 }
