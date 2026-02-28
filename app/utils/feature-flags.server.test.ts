@@ -11,20 +11,24 @@ import {
 // ── getFlag ───────────────────────────────────────────────────────────────────
 
 describe('getFlag', () => {
-	test('returns the code default when no overrides exist', async ({ db }) => {
-		const result = await getFlag(db, 'new-dashboard', 'ws-1')
+	test('returns the code default when no overrides exist', async ({
+		db,
+		workspace,
+	}) => {
+		const result = await getFlag(db, 'new-dashboard', workspace.id)
 		expect(result).toBe(FLAG_REGISTRY['new-dashboard'].defaultEnabled)
 	})
 
 	test('returns the global override when one exists and no workspace override', async ({
 		db,
+		workspace,
 	}) => {
 		await db.insert(featureFlags).values({
 			key: 'new-dashboard',
 			workspaceId: null,
 			enabled: true,
 		})
-		const result = await getFlag(db, 'new-dashboard', 'ws-1')
+		const result = await getFlag(db, 'new-dashboard', workspace.id)
 		expect(result).toBe(true)
 	})
 
@@ -42,13 +46,14 @@ describe('getFlag', () => {
 
 	test('returns the global override when workspaceId is provided but only a global override exists', async ({
 		db,
+		workspace,
 	}) => {
 		await db.insert(featureFlags).values({
 			key: 'ai-assistant',
 			workspaceId: null,
 			enabled: true,
 		})
-		const result = await getFlag(db, 'ai-assistant', 'ws-99')
+		const result = await getFlag(db, 'ai-assistant', workspace.id)
 		expect(result).toBe(true)
 	})
 
@@ -63,8 +68,11 @@ describe('getFlag', () => {
 // ── getAllFlags ───────────────────────────────────────────────────────────────
 
 describe('getAllFlags', () => {
-	test('returns all defaults when no overrides exist', async ({ db }) => {
-		const result = await getAllFlags(db, 'ws-1')
+	test('returns all defaults when no overrides exist', async ({
+		db,
+		workspace,
+	}) => {
+		const result = await getAllFlags(db, workspace.id)
 		for (const key of featureFlagKeys) {
 			expect(result[key]).toBe(FLAG_REGISTRY[key].defaultEnabled)
 		}
