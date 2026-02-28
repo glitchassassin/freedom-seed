@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import { featureFlags } from '../db/schema'
-import { createTestDb } from '../../tests/setup/db'
+import { createTestDb, type TestDb } from '../../tests/setup/db'
 import {
 	FLAG_REGISTRY,
 	featureFlagKeys,
@@ -12,7 +12,7 @@ import {
 // Each test gets a fresh isolated in-memory database via createTestDb().
 // Foreign keys are OFF by default in SQLite, so workspace IDs like 'ws-1'
 // can be used without creating corresponding workspace rows.
-let db: ReturnType<typeof createTestDb>
+let db: TestDb
 
 beforeEach(() => {
 	db = createTestDb()
