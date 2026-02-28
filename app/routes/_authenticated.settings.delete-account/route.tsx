@@ -33,7 +33,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const submission = parseWithZod(formData, { schema })
 	if (submission.status !== 'success') return submission.reply()
 
-	if (submission.value.confirmEmail !== user.email) {
+	if (submission.value.confirmEmail.toLowerCase() !== user.email) {
 		return submission.reply({
 			fieldErrors: { confirmEmail: ['Email address does not match'] },
 		})

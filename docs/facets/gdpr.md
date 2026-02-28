@@ -34,6 +34,16 @@ to 30 days from now. Hard deletion (removing the DB row) must be performed by a
 scheduled Cloudflare Worker cron that queries
 `WHERE scheduled_for_deletion_at <= unixepoch('now') * 1000`.
 
+### Audit log email retention (GDPR Article 17)
+
+`softDeleteUser()` does not anonymise `actorEmail` in the `audit_log` table.
+Audit log entries therefore retain the original email address until the
+hard-delete cron removes the associated workspace rows (which cascade-deletes
+the audit log). This is intentional: audit trails must remain intact for legal
+compliance and fraud investigation purposes during the 30-day grace period. Once
+the hard-delete cron runs, all audit log rows for the user's workspaces are
+permanently removed along with all other personal data.
+
 ## Removal
 
 1. Delete `app/utils/consent.server.ts` and `app/utils/gdpr.server.ts`.

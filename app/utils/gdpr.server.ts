@@ -8,6 +8,7 @@ import {
 	sessions,
 	socialIdentities,
 	users,
+	workspaceInvitations,
 	workspaceMembers,
 } from '~/db/schema'
 
@@ -24,7 +25,7 @@ export async function exportUserData(
 ): Promise<Record<string, unknown>> {
 	const db = getDb(env)
 
-	const [user, userSessions, members, identities, passkeys, mfa] =
+	const [user, userSessions, members, identities, passkeys, mfa, invitations] =
 		await Promise.all([
 			db
 				.select({
@@ -84,6 +85,18 @@ export async function exportUserData(
 				.where(eq(mfaCredentials.userId, userId))
 				.limit(1)
 				.then((r) => r[0] ?? null),
+			db
+				.select({
+					workspaceId: workspaceInvitations.workspaceId,
+					email: workspaceInvitations.email,
+					role: workspaceInvitations.role,
+					expiresAt: workspaceInvitations.expiresAt,
+					acceptedAt: workspaceInvitations.acceptedAt,
+					revokedAt: workspaceInvitations.revokedAt,
+					createdAt: workspaceInvitations.createdAt,
+				})
+				.from(workspaceInvitations)
+				.where(eq(workspaceInvitations.invitedByUserId, userId)),
 		])
 
 	return {
@@ -94,6 +107,7 @@ export async function exportUserData(
 		connectedAccounts: identities,
 		passkeys,
 		mfaEnabled: mfa !== null,
+		workspaceInvitationsSent: invitations,
 	}
 }
 
