@@ -136,7 +136,7 @@ describe('exportUserData', () => {
 
 		expect(result).toHaveProperty('auditLogEntries')
 		const entries = result.auditLogEntries as Array<Record<string, unknown>>
-		expect(Array.isArray(entries)).toBe(true)
+		expect(entries).toBeInstanceOf(Array)
 		expect(entries).toHaveLength(1)
 		expect(entries[0]).toHaveProperty('action', 'member.invite')
 		expect(entries[0]).toHaveProperty('workspaceId', 'ws-1')
@@ -153,7 +153,7 @@ describe('exportUserData', () => {
 		const result = await exportUserData(mockEnv, 'u1')
 
 		expect(result).toHaveProperty('auditLogEntries')
-		expect(Array.isArray(result.auditLogEntries)).toBe(true)
-		expect((result.auditLogEntries as unknown[]).length).toBe(0)
+		expect(result.auditLogEntries).toBeInstanceOf(Array)
+		expect(result.auditLogEntries).toHaveLength(0)
 	})
 })
