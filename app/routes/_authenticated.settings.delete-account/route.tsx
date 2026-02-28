@@ -9,7 +9,7 @@ import { Label } from '~/components/ui/label'
 import { AccountDeletionEmail } from '~/emails/account-deletion'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { sendEmail } from '~/utils/email.server'
-import { softDeleteUser } from '~/utils/gdpr.server'
+import { findBlockingWorkspaces, softDeleteUser } from '~/utils/gdpr.server'
 import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { requireUser } from '~/utils/session-context'
 import { clearSessionCookie } from '~/utils/session.server'
@@ -39,21 +39,35 @@ export async function action({ request, context }: Route.ActionArgs) {
 		})
 	}
 
+	const blockingWorkspaces = await findBlockingWorkspaces(env, user.id)
+	if (blockingWorkspaces.length > 0) {
+		const names = blockingWorkspaces.map((w) => w.name).join(', ')
+		return submission.reply({
+			formErrors: [
+				`You are the sole owner of: ${names}. Transfer ownership or delete these workspaces before deleting your account.`,
+			],
+		})
+	}
+
 	// `user` is an in-memory snapshot from the session middleware and retains
 	// the original email/displayName even after softDeleteUser anonymises the DB.
 	// softDeleteUser returns the scheduled deletion date so we stay in sync.
 	const { scheduledForDeletionAt } = await softDeleteUser(env, user.id)
 
-	await sendEmail(env, {
-		to: user.email,
-		subject: 'Your account deletion request',
-		react: (
-			<AccountDeletionEmail
-				displayName={user.displayName ?? user.email}
-				scheduledForDeletionAt={scheduledForDeletionAt}
-			/>
-		),
-	})
+	try {
+		await sendEmail(env, {
+			to: user.email,
+			subject: 'Your account deletion request',
+			react: (
+				<AccountDeletionEmail
+					displayName={user.displayName ?? user.email}
+					scheduledForDeletionAt={scheduledForDeletionAt}
+				/>
+			),
+		})
+	} catch {
+		// Email delivery is best-effort; the deletion has already completed.
+	}
 
 	return redirect('/login', {
 		headers: [

@@ -5,7 +5,12 @@ vi.mock('../db/client.server', () => ({
 }))
 
 import { getDb } from '../db/client.server'
-import { exportUserData } from './gdpr.server'
+import {
+	exportUserData,
+	findBlockingWorkspaces,
+	softDeleteUser,
+} from './gdpr.server'
+import { DELETION_GRACE_PERIOD_MS } from './gdpr.server'
 
 const mockEnv = { DB: {} as D1Database }
 
@@ -31,13 +36,14 @@ function buildMockDb(querySlots: unknown[][]): ReturnType<typeof getDb> {
 		// that call .limit(1).then(...)
 		function makeTerminal() {
 			const p = Promise.resolve(rows)
-			const withLimit = Object.assign(p, {
+			const withExtras = Object.assign(p, {
 				limit: (_n: number) => Promise.resolve(rows),
+				groupBy: (..._args: unknown[]) => Promise.resolve(rows),
 			})
-			return withLimit
+			return withExtras
 		}
 
-		// Chain: .from(table).innerJoin?(...).where(pred)
+		// Chain: .from(table).innerJoin?(...).where(pred).groupBy?(...)
 		const whereResult = makeTerminal()
 		const innerJoinResult = {
 			where: vi.fn().mockReturnValue(whereResult),
@@ -55,6 +61,28 @@ function buildMockDb(querySlots: unknown[][]): ReturnType<typeof getDb> {
 	return {
 		select: vi.fn().mockImplementation(makeSelect),
 	} as unknown as ReturnType<typeof getDb>
+}
+
+/**
+ * Builds a mock `db` for softDeleteUser that captures the batch call.
+ * Returns the mock db and a reference to the batch spy.
+ */
+function buildBatchMockDb() {
+	const batchSpy = vi.fn().mockResolvedValue([])
+
+	const whereStub = vi.fn().mockReturnValue({})
+	const deleteSpy = vi.fn().mockReturnValue({ where: whereStub })
+	const updateSpy = vi.fn().mockReturnValue({
+		set: vi.fn().mockReturnValue({ where: whereStub }),
+	})
+
+	const db = {
+		batch: batchSpy,
+		delete: deleteSpy,
+		update: updateSpy,
+	} as unknown as ReturnType<typeof getDb>
+
+	return { db, batchSpy, deleteSpy, updateSpy }
 }
 
 // ── exportUserData ─────────────────────────────────────────────────────────────
@@ -155,5 +183,96 @@ describe('exportUserData', () => {
 		expect(result).toHaveProperty('auditLogEntries')
 		expect(result.auditLogEntries).toBeInstanceOf(Array)
 		expect(result.auditLogEntries).toHaveLength(0)
+	})
+})
+
+// ── softDeleteUser ─────────────────────────────────────────────────────────────
+
+describe('softDeleteUser', () => {
+	test('returns scheduledForDeletionAt approximately 30 days from now', async () => {
+		const { db, batchSpy } = buildBatchMockDb()
+		vi.mocked(getDb).mockReturnValue(db)
+
+		const before = Date.now()
+		const { scheduledForDeletionAt } = await softDeleteUser(mockEnv, 'u1')
+		const after = Date.now()
+
+		expect(scheduledForDeletionAt).toBeInstanceOf(Date)
+		expect(scheduledForDeletionAt.getTime()).toBeGreaterThanOrEqual(
+			before + DELETION_GRACE_PERIOD_MS,
+		)
+		expect(scheduledForDeletionAt.getTime()).toBeLessThanOrEqual(
+			after + DELETION_GRACE_PERIOD_MS,
+		)
+		expect(batchSpy).toHaveBeenCalledTimes(1)
+	})
+
+	test('calls db.batch() with 7 operations (1 update + 6 deletes)', async () => {
+		const { db, batchSpy, updateSpy, deleteSpy } = buildBatchMockDb()
+		vi.mocked(getDb).mockReturnValue(db)
+
+		await softDeleteUser(mockEnv, 'u1')
+
+		expect(batchSpy).toHaveBeenCalledTimes(1)
+		const [ops] = batchSpy.mock.calls[0] as [unknown[]]
+		expect(ops).toHaveLength(7)
+		// 1 update for users anonymisation
+		expect(updateSpy).toHaveBeenCalledTimes(1)
+		// 6 deletes for credential/session tables
+		expect(deleteSpy).toHaveBeenCalledTimes(6)
+	})
+})
+
+// ── findBlockingWorkspaces ─────────────────────────────────────────────────────
+
+describe('findBlockingWorkspaces', () => {
+	// findBlockingWorkspaces makes two sequential select() calls:
+	// Slot 0: owned non-personal workspaces (user is owner)
+	// Slot 1: owner counts per workspace
+
+	test('returns empty array when user owns no non-personal workspaces', async () => {
+		vi.mocked(getDb).mockReturnValue(
+			buildMockDb([
+				[], // slot 0: no owned workspaces
+			]),
+		)
+
+		const result = await findBlockingWorkspaces(mockEnv, 'u1')
+		expect(result).toEqual([])
+	})
+
+	test('returns empty array when user is co-owner (another owner exists)', async () => {
+		const ownedRow = { workspaceId: 'ws-1', name: 'Acme', slug: 'acme' }
+		const countRow = { workspaceId: 'ws-1', ownerCount: 2 }
+
+		vi.mocked(getDb).mockReturnValue(
+			buildMockDb([
+				[ownedRow], // slot 0: user is owner of ws-1
+				[countRow], // slot 1: ws-1 has 2 owners
+			]),
+		)
+
+		const result = await findBlockingWorkspaces(mockEnv, 'u1')
+		expect(result).toEqual([])
+	})
+
+	test('returns workspace when user is sole owner', async () => {
+		const ownedRow = { workspaceId: 'ws-1', name: 'Acme', slug: 'acme' }
+		const countRow = { workspaceId: 'ws-1', ownerCount: 1 }
+
+		vi.mocked(getDb).mockReturnValue(
+			buildMockDb([
+				[ownedRow], // slot 0: user is sole owner of ws-1
+				[countRow], // slot 1: ws-1 has 1 owner
+			]),
+		)
+
+		const result = await findBlockingWorkspaces(mockEnv, 'u1')
+		expect(result).toHaveLength(1)
+		expect(result[0]).toMatchObject({
+			workspaceId: 'ws-1',
+			name: 'Acme',
+			slug: 'acme',
+		})
 	})
 })

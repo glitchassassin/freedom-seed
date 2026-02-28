@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, count, eq, inArray } from 'drizzle-orm'
 import { getDb } from '~/db/client.server'
 import {
 	auditLog,
@@ -135,6 +135,67 @@ export async function exportUserData(
 		workspaceInvitationsSent: invitations,
 		auditLogEntries,
 	}
+}
+
+/**
+ * Returns non-personal workspaces where the user is the sole owner.
+ * Account deletion must be blocked until ownership is transferred or the
+ * workspace is deleted.
+ */
+export async function findBlockingWorkspaces(
+	env: { DB: D1Database },
+	userId: string,
+): Promise<Array<{ workspaceId: string; name: string; slug: string }>> {
+	const db = getDb(env)
+
+	// Find non-personal workspaces where this user is an owner
+	const ownedWorkspaces = await db
+		.select({
+			workspaceId: workspaceMembers.workspaceId,
+			name: workspaces.name,
+			slug: workspaces.slug,
+		})
+		.from(workspaceMembers)
+		.innerJoin(
+			workspaces,
+			and(
+				eq(workspaceMembers.workspaceId, workspaces.id),
+				eq(workspaces.isPersonal, false),
+			),
+		)
+		.where(
+			and(
+				eq(workspaceMembers.userId, userId),
+				eq(workspaceMembers.role, 'owner'),
+			),
+		)
+
+	if (ownedWorkspaces.length === 0) return []
+
+	// Count all owners per workspace to detect sole ownership
+	const ownerCounts = await db
+		.select({
+			workspaceId: workspaceMembers.workspaceId,
+			ownerCount: count(),
+		})
+		.from(workspaceMembers)
+		.where(
+			and(
+				inArray(
+					workspaceMembers.workspaceId,
+					ownedWorkspaces.map((w) => w.workspaceId),
+				),
+				eq(workspaceMembers.role, 'owner'),
+			),
+		)
+		.groupBy(workspaceMembers.workspaceId)
+
+	return ownedWorkspaces.filter((w) => {
+		const ownerCount =
+			ownerCounts.find((oc) => oc.workspaceId === w.workspaceId)?.ownerCount ??
+			0
+		return ownerCount <= 1
+	})
 }
 
 /**

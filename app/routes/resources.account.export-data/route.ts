@@ -1,6 +1,7 @@
 import type { Route } from './+types/route'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { exportUserData } from '~/utils/gdpr.server'
+import { requireRateLimit } from '~/utils/require-rate-limit.server'
 import { requireUser } from '~/utils/session-context'
 
 /**
@@ -11,8 +12,13 @@ import { requireUser } from '~/utils/session-context'
  * workspace memberships, and connected accounts. Sensitive secrets
  * (password hashes, TOTP keys) are excluded.
  */
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
 	const { env } = getCloudflare(context)
+	await requireRateLimit(env, request, {
+		prefix: 'export-data',
+		limit: 5,
+		windowSeconds: 3600,
+	})
 	const user = requireUser(context)
 
 	const data = await exportUserData(env, user.id)
