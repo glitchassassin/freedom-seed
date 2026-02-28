@@ -8,6 +8,12 @@
 const _emitWarning = process.emitWarning.bind(process)
 
 process.emitWarning = function (warning: any, ...args: any[]): void {
-	if (typeof warning === 'string' && warning.includes('SQLite')) return
+	// Suppress only the node:sqlite ExperimentalWarning; pass everything else through.
+	if (
+		typeof warning === 'string' &&
+		warning.includes('SQLite') &&
+		args[0] === 'ExperimentalWarning'
+	)
+		return
 	return _emitWarning(warning, ...args)
 }

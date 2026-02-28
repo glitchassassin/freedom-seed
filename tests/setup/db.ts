@@ -15,9 +15,13 @@ import { DatabaseSync } from 'node:sqlite'
 import type { SQLInputValue } from 'node:sqlite'
 
 import { drizzle } from 'drizzle-orm/d1'
+import type { DrizzleD1Database } from 'drizzle-orm/d1'
 
 // Using relative import to avoid tsconfig path alias issues in Node context.
 import * as schema from '../../app/db/schema'
+
+/** The return type of createTestDb() — a Drizzle D1 instance with the full app schema. */
+export type TestDb = DrizzleD1Database<typeof schema>
 
 const MIGRATIONS_DIR = join(import.meta.dirname, '../../migrations')
 
@@ -104,7 +108,7 @@ function applyMigrations(sqlite: DatabaseSync): void {
  * about the table under test.
  */
 
-export function createTestDb(): any {
+export function createTestDb(): TestDb {
 	const sqlite = new DatabaseSync(':memory:')
 	applyMigrations(sqlite)
 	// Some migrations (e.g. 0002) emit `PRAGMA foreign_keys=ON` as part of their
@@ -112,8 +116,10 @@ export function createTestDb(): any {
 	// can insert records with arbitrary foreign-key values (e.g. fake workspace
 	// IDs) without needing to create the parent rows.
 	sqlite.exec('PRAGMA foreign_keys = OFF')
-	// Cast through `any` because D1Database is a Cloudflare global not present
-	// in the Node.js test environment.  The shim is structurally compatible at
-	// runtime with what Drizzle's D1 adapter actually calls.
-	return drizzle(new NodeSqliteD1Shim(sqlite) as any, { schema })
+	// The internal `as any` bridges NodeSqliteD1Shim to the Cloudflare D1Database
+	// type that Drizzle expects.  The cast is safe: the shim implements all
+	// methods Drizzle's D1 adapter actually calls at runtime.
+	return drizzle(new NodeSqliteD1Shim(sqlite) as any, {
+		schema,
+	}) as unknown as TestDb
 }
