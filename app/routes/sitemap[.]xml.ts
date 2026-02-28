@@ -1,5 +1,5 @@
 import type { Route } from './+types/sitemap[.]xml'
-import { allPosts } from '~/utils/blog.server'
+import { allPosts } from '~/utils/blog'
 
 export function loader({ request }: Route.LoaderArgs) {
 	const origin = new URL(request.url).origin
@@ -22,7 +22,7 @@ ${urls}
 
 	return new Response(sitemap, {
 		headers: {
-			'Content-Type': 'application/xml',
+			'Content-Type': 'application/xml; charset=utf-8',
 			'Cache-Control': 'public, max-age=3600',
 		},
 	})
