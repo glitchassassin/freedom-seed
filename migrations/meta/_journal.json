@@ -57,6 +57,13 @@
 			"when": 1772230420566,
 			"tag": "0007_serious_killmonger",
 			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "6",
+			"when": 1772235346543,
+			"tag": "0008_cultured_changeling",
+			"breakpoints": true
 		}
 	]
 }
