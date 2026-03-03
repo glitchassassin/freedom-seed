@@ -5,6 +5,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+    types: [opened, reopened, synchronize, closed]
 
 concurrency:
   group:
@@ -15,6 +16,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    if: github.event.action != 'closed'
 
     steps:
       - name: Check out code
@@ -44,6 +46,7 @@ jobs:
   playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    if: github.event.action != 'closed'
 
     steps:
       - name: Check out code
@@ -73,6 +76,57 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  publish-report:
+    runs-on: ubuntu-latest
+    needs: [playwright]
+    if: >-
+      github.event_name == 'pull_request' && github.event.action != 'closed' &&
+      !cancelled()
+    concurrency:
+      group: pages-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Download Playwright report
+        uses: actions/download-artifact@v6
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Publish report to GitHub Pages
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: playwright-report/
+          action: deploy
+
+  cleanup-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    concurrency:
+      group: pages-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+
+      - name: Remove report preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: playwright-report/
+          action: remove
 
   deploy-preview:
     runs-on: ubuntu-latest
