@@ -95,6 +95,8 @@ your app doesn't need it.
   for generating test data.
 - [e2e-testing](./e2e-testing.md) — Playwright E2E tests with axe-core
   accessibility checks against the preview build.
+- [user-review](./user-review.md) — Per-PR Playwright report previews on GitHub
+  Pages with embedded trace viewer.
 
 ## Infrastructure
 

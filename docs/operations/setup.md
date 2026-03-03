@@ -48,20 +48,58 @@ The deployment jobs are disabled by default. To enable them:
 
 1. Open `.github/workflows/ci.yml`
 2. For **Preview Deployments** (PR previews):
-   - Change line 57 from `if: false` to:
+   - Find the `deploy-preview` job and change its `if: false` to:
      ```yaml
      if: github.event_name == 'pull_request'
      ```
    - Remove or comment out the `if: false` line
 
 3. For **Production Deployments**:
-   - Change line 112 from `if: false` to:
+   - Find the `deploy-production` job and change its `if: false` to:
      ```yaml
      if:
        github.event_name == 'push' && (github.ref == 'refs/heads/main' ||
        github.ref == 'refs/heads/master')
      ```
    - Remove or comment out the `if: false` line
+
+### Step 2b: Enable Playwright Report Previews (Optional)
+
+The CI workflow can publish Playwright HTML reports (with embedded trace viewer)
+to GitHub Pages per-PR. Reviewers get a clickable link in a PR comment instead
+of downloading artifacts.
+
+#### Enable GitHub Pages
+
+1. Go to **Settings** → **Pages**
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**
+3. Set **Branch** to `gh-pages` and folder to `/ (root)`
+4. Click **Save**
+
+The `gh-pages` branch is created automatically on the first report publish.
+
+#### Grant Workflow Permissions
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**, select **Read and write permissions**
+3. Click **Save**
+
+#### How It Works
+
+- The `publish-report` job downloads the Playwright report artifact and pushes
+  it to `gh-pages` under `pr-preview/pr-<N>/`
+- `rossjrw/pr-preview-action` posts a sticky PR comment with the preview URL
+- On PR close, the `cleanup-report` job removes the preview directory
+
+#### Troubleshooting
+
+- **404 on preview link**: GitHub Pages may take 1-2 minutes to deploy after the
+  job completes. If the `gh-pages` branch doesn't exist yet, the first publish
+  creates it automatically.
+- **Permission denied**: Verify workflow permissions are set to "Read and write"
+  in repository settings.
+- **Report not updating**: Check the `publish-report` job logs. The concurrency
+  group prevents overlapping pushes — wait for the previous run to finish.
 
 ### Step 3: Verify Workflow
 
