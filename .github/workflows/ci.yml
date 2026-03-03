@@ -47,10 +47,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     if: github.event.action != 'closed'
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       - name: Check out code
         uses: actions/checkout@v6
+
+      - name: Detect changed test files
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CHANGED=$(gh pr diff "$PR_NUMBER" --name-only | grep '^tests/.*\.spec\.ts$' || true)
+          DELIMITER=$(openssl rand -hex 16)
+          echo "CHANGED_TEST_FILES<<${DELIMITER}" >> "$GITHUB_ENV"
+          echo "$CHANGED" >> "$GITHUB_ENV"
+          echo "${DELIMITER}" >> "$GITHUB_ENV"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
