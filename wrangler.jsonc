@@ -34,6 +34,9 @@
 		"GITHUB_CLIENT_SECRET": "",
 		// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 		"SENTRY_DSN": "",
+		// Stripe — set real values via `wrangler secret put`
+		"STRIPE_SECRET_KEY": "",
+		"STRIPE_WEBHOOK_SECRET": "",
 	},
 	"env": {
 		"development": {
@@ -53,6 +56,9 @@
 				"GITHUB_CLIENT_SECRET": "",
 				// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 				"SENTRY_DSN": "",
+				// Stripe — set real values via `wrangler secret put`
+				"STRIPE_SECRET_KEY": "",
+				"STRIPE_WEBHOOK_SECRET": "",
 			},
 			"d1_databases": [
 				{
@@ -90,6 +96,9 @@
 				"GITHUB_CLIENT_SECRET": "",
 				// Sentry DSN — set the real value via `wrangler secret put SENTRY_DSN`
 				"SENTRY_DSN": "",
+				// Stripe — set real values via `wrangler secret put`
+				"STRIPE_SECRET_KEY": "",
+				"STRIPE_WEBHOOK_SECRET": "",
 			},
 			"d1_databases": [
 				{

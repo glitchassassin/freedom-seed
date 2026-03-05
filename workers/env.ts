@@ -44,6 +44,10 @@ export const envSchema = z.object({
 	// Sentry — set SENTRY_DSN via `wrangler secret put SENTRY_DSN`
 	// Omit or leave empty to disable error tracking.
 	SENTRY_DSN: z.string().default(''),
+
+	// Stripe — set real values via `wrangler secret put`
+	STRIPE_SECRET_KEY: z.string().default(''),
+	STRIPE_WEBHOOK_SECRET: z.string().default(''),
 })
 
 export type ValidatedEnv = z.infer<typeof envSchema>
