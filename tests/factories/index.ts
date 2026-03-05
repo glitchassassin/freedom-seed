@@ -20,6 +20,7 @@ export {
 	seedEmailVerificationToken,
 	createInvitation,
 } from './token'
+export { createBillingPlan, createSubscription } from './billing'
 export { createPasskey } from './passkey'
 export type { CreatePasskeyOptions, CreatePasskeyResult } from './passkey'
 export { createSocialIdentity } from './social-identity'
