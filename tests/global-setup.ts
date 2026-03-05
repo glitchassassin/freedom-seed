@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import { join } from 'node:path'
 import { start } from './mocks/resend-server'
+import { start as startStripe } from './mocks/stripe-server'
 import { cleanupLeftoverWorkerDirs } from './worker-server'
 
 const PROJECT_ROOT = join(import.meta.dirname, '..')
@@ -16,6 +17,7 @@ export default async function globalSetup() {
 		env: {
 			...process.env,
 			RESEND_BASE_URL: 'http://localhost:3001',
+			STRIPE_BASE_URL: 'http://localhost:3002',
 			CLOUDFLARE_ENV: 'test',
 		},
 	})
@@ -28,4 +30,7 @@ export default async function globalSetup() {
 
 	// Start mock Resend server
 	await start()
+
+	// Start mock Stripe server
+	await startStripe()
 }

@@ -42,5 +42,12 @@ export default defineConfig({
 					),
 				}
 			: {}),
+		...(process.env.STRIPE_BASE_URL
+			? {
+					'process.env.STRIPE_BASE_URL': JSON.stringify(
+						process.env.STRIPE_BASE_URL,
+					),
+				}
+			: {}),
 	},
 })
