@@ -17,7 +17,9 @@ test.describe('Home Page', () => {
 		await expect(page.getByText('Catalog your seed collection')).toBeVisible()
 
 		// Check that CTA buttons are present for unauthenticated users
-		await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
+		await expect(
+			page.getByRole('link', { name: 'Get started' }).first(),
+		).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
 
 		// Check that the features section is present
@@ -32,8 +34,10 @@ test.describe('Home Page', () => {
 	test('has working CTA links', async ({ page }) => {
 		await page.goto('/')
 
-		// Test Get started link
-		const getStartedLink = page.getByRole('link', { name: 'Get started' })
+		// Test Get started link (hero)
+		const getStartedLink = page
+			.getByRole('link', { name: 'Get started' })
+			.first()
 		await expect(getStartedLink).toHaveAttribute('href', '/signup')
 
 		// Test Sign in link
@@ -58,11 +62,19 @@ test.describe('Home Page', () => {
 			'Role-Based Access',
 		]
 
+		const featuresSection = page.locator('section', {
+			has: page.getByText('Everything you need to manage your seeds'),
+		})
+
 		for (const feature of expectedFeatures) {
-			await expect(page.getByRole('heading', { name: feature })).toBeVisible()
+			await expect(
+				featuresSection.getByRole('heading', { name: feature }),
+			).toBeVisible()
 		}
 
-		await expect(page.getByRole('article')).toHaveCount(expectedFeatures.length)
+		await expect(featuresSection.getByRole('article')).toHaveCount(
+			expectedFeatures.length,
+		)
 	})
 
 	test('displays footer', async ({ page }) => {
