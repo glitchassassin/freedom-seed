@@ -8,11 +8,9 @@ import {
 } from '~/utils/billing/billing.server'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import { requireRole } from '~/utils/rbac.server'
-import { requireWorkspaceMember } from '~/utils/workspace-context'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
 	requireRole(context, 'admin')
-	requireWorkspaceMember(context)
 	const { env } = getCloudflare(context)
 	const db = getDb(env)
 	const workspaceId = params.workspaceId!

@@ -23,11 +23,7 @@ test.describe('Billing', () => {
 		).toBeVisible()
 	})
 
-	test('billing settings hidden from members', async ({
-		page,
-		login,
-		browser,
-	}) => {
+	test('billing settings hidden from members', async ({ login, browser }) => {
 		const { user: owner } = await login()
 		const { createWorkspace, createWorkspaceMember } =
 			await import('./factories')

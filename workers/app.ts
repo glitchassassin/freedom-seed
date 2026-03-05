@@ -107,7 +107,7 @@ export default Sentry.withSentry<Env>(
 			headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
 			headers.set(
 				'Permissions-Policy',
-				'camera=(), microphone=(), geolocation=(), payment=()',
+				'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")',
 			)
 
 			return new Response(response.body, {

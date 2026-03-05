@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, or } from 'drizzle-orm'
 import type Stripe from 'stripe'
 import type { Db } from '~/db/client.server'
 import { billingPlans, subscriptions, workspaces } from '~/db/schema'
@@ -56,19 +56,27 @@ export async function syncSubscriptionFromStripe(
 	if (!stripePriceId) throw new Error('No price found on subscription')
 
 	// Find the billing plan by matching the stripe price ID
-	const plans = await db.select().from(billingPlans)
-	const matchedPlan = plans.find(
-		(p) =>
-			p.stripePriceIdMonthly === stripePriceId ||
-			p.stripePriceIdYearly === stripePriceId,
-	)
+	const [matchedPlan] = await db
+		.select()
+		.from(billingPlans)
+		.where(
+			or(
+				eq(billingPlans.stripePriceIdMonthly, stripePriceId),
+				eq(billingPlans.stripePriceIdYearly, stripePriceId),
+			),
+		)
+		.limit(1)
 	if (!matchedPlan)
 		throw new Error(`No billing plan found for price ${stripePriceId}`)
+
+	const workspaceId = stripeSubscription.metadata.workspaceId
+	if (!workspaceId)
+		throw new Error('Missing workspaceId in subscription metadata')
 
 	const firstItem = stripeSubscription.items.data[0]
 	const now = new Date()
 	const values = {
-		workspaceId: stripeSubscription.metadata.workspaceId!,
+		workspaceId,
 		billingPlanId: matchedPlan.id,
 		stripeSubscriptionId: stripeSubscription.id,
 		stripePriceId,

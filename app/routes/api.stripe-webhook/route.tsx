@@ -15,10 +15,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 	const stripe = getStripe(env)
 	const db = getDb(env)
 
+	const origin = new URL(request.url).origin
 	const body = await request.text()
 	const signature = request.headers.get('stripe-signature')
 
-	// In test environments, skip signature verification if webhook secret is empty
 	let event: Stripe.Event
 	if (env.STRIPE_WEBHOOK_SECRET) {
 		if (!signature) {
@@ -33,13 +33,15 @@ export async function action({ request, context }: Route.ActionArgs) {
 		} catch {
 			return new Response('Invalid signature', { status: 400 })
 		}
-	} else {
-		// No webhook secret (test environment) — parse body directly
+	} else if (env.ENVIRONMENT === 'development') {
+		// Development/test only — skip signature verification
 		try {
 			event = JSON.parse(body) as Stripe.Event
 		} catch {
 			return new Response('Invalid JSON', { status: 400 })
 		}
+	} else {
+		return new Response('Webhook secret not configured', { status: 500 })
 	}
 
 	switch (event.type) {
@@ -141,7 +143,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 									subject: `Payment failed for ${workspace[0].name}`,
 									react: PaymentFailedEmail({
 										workspaceName: workspace[0].name,
-										billingUrl: `/workspaces/${workspaceId}/settings/billing`,
+										billingUrl: `${origin}/workspaces/${workspaceId}/settings/billing`,
 									}),
 								}).catch(() => {
 									// Don't fail the webhook if email fails
