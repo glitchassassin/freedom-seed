@@ -78,12 +78,15 @@ export default Sentry.withSentry<Env>(
 				}
 			}
 
+			const stripeSrc = 'https://js.stripe.com'
+			const stripeConnect = 'https://api.stripe.com'
+
 			const scriptSrc = plausibleOrigin
-				? `'self' 'unsafe-inline' ${plausibleOrigin}`
-				: `'self' 'unsafe-inline'`
+				? `'self' 'unsafe-inline' ${plausibleOrigin} ${stripeSrc}`
+				: `'self' 'unsafe-inline' ${stripeSrc}`
 			const connectSrc = plausibleOrigin
-				? `'self' ${plausibleOrigin}`
-				: `'self'`
+				? `'self' ${plausibleOrigin} ${stripeConnect}`
+				: `'self' ${stripeConnect}`
 
 			const csp = [
 				`default-src 'self'`,
@@ -92,6 +95,7 @@ export default Sentry.withSentry<Env>(
 				`font-src 'self' https://fonts.gstatic.com`,
 				`img-src 'self' data:`,
 				`connect-src ${connectSrc}`,
+				`frame-src 'self' ${stripeSrc}`,
 				`frame-ancestors 'none'`,
 				`form-action 'self'`,
 				`base-uri 'self'`,

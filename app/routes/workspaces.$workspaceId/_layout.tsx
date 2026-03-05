@@ -11,6 +11,8 @@ import {
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { getDb } from '~/db/client.server'
+import { getWorkspacePlan } from '~/utils/billing/billing.server'
+import { subscriptionContext } from '~/utils/billing/subscription-context'
 import { getCloudflare } from '~/utils/cloudflare-context'
 import {
 	getLastWorkspaceId,
@@ -45,6 +47,8 @@ export const middleware: Route.MiddlewareFunction[] = [
 			isPersonal: !!workspace.isPersonal,
 			role: member.role,
 		})
+		const plan = await getWorkspacePlan(db, workspaceId)
+		context.set(subscriptionContext, plan)
 		return next()
 	},
 ]
@@ -127,6 +131,13 @@ export default function WorkspaceLayout({ loaderData }: Route.ComponentProps) {
 							<Button variant="ghost" size="sm" asChild>
 								<Link to={`/workspaces/${workspace.id}/settings/general`}>
 									Settings
+								</Link>
+							</Button>
+						)}
+						{isAdminOrOwner && (
+							<Button variant="ghost" size="sm" asChild>
+								<Link to={`/workspaces/${workspace.id}/settings/billing`}>
+									Billing
 								</Link>
 							</Button>
 						)}
