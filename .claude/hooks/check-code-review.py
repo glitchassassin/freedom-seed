@@ -9,7 +9,9 @@ import sys
 
 CODE_REVIEW_AGENT_TYPES = {"code-review", "best-practices-reviewer"}
 MAX_REVIEW_ATTEMPTS = 3
-DOCS_ONLY_PREFIXES = ("docs/",)
+NON_CODE_PREFIXES = ("docs/",)
+NON_CODE_FILES = ("plan.md",)
+NON_CODE_DIRS = (".claude/memory/",)
 RATE_LIMIT_MARKERS = ("rate_limit", "rate limit", "you've hit your limit", "hit your limit")
 
 # Maps each file-editing tool to the input key that holds the file path.
@@ -21,8 +23,8 @@ CODE_CHANGE_TOOLS = {
 }
 
 
-def is_docs_only_path(path: str, cwd: str = "") -> bool:
-    """Return True if the path is under a docs-only directory."""
+def is_non_code_path(path: str, cwd: str = "") -> bool:
+    """Return True if the path should not trigger a code review."""
     normalised = path
     # Strip the project root so absolute paths become project-relative.
     # Ensure cwd ends with "/" so we only match on a directory boundary.
@@ -33,7 +35,14 @@ def is_docs_only_path(path: str, cwd: str = "") -> bool:
     normalised = normalised.lstrip("/")
     if normalised.startswith("./"):
         normalised = normalised[2:]
-    return any(normalised.startswith(prefix) for prefix in DOCS_ONLY_PREFIXES)
+    if any(normalised.startswith(prefix) for prefix in NON_CODE_PREFIXES):
+        return True
+    if any(normalised.startswith(d) for d in NON_CODE_DIRS):
+        return True
+    basename = normalised.rsplit("/", 1)[-1] if "/" in normalised else normalised
+    if basename in NON_CODE_FILES:
+        return True
+    return False
 
 
 def main():
@@ -107,7 +116,7 @@ def main():
             if name in CODE_CHANGE_TOOLS:
                 path_key = CODE_CHANGE_TOOLS[name]
                 file_path = item.get("input", {}).get(path_key, "")
-                if not is_docs_only_path(file_path, cwd):
+                if not is_non_code_path(file_path, cwd):
                     events.append("code_change")
             elif name in ("Task", "Agent"):
                 subagent_type = item.get("input", {}).get("subagent_type", "")

@@ -15,6 +15,7 @@ import {
 	createWorkspace,
 	createWorkspaceMember,
 	createInvitation,
+	createBillingPlan,
 } from '../tests/factories/index'
 
 async function main() {
@@ -68,6 +69,55 @@ async function main() {
 		email: 'dave@example.com',
 	})
 	console.log(`  ✓ Invitation: dave@example.com → Acme Corp`)
+
+	const freePlan = createBillingPlan({
+		slug: 'free',
+		name: 'Free',
+		seatLimit: 5,
+		features: {
+			seedCatalog: true,
+			photoUploads: true,
+			collaboration: false,
+			prioritySupport: false,
+		},
+		sortOrder: 0,
+	})
+	console.log(`  ✓ Billing Plan: ${freePlan.name} (${freePlan.slug})`)
+
+	const proPlan = createBillingPlan({
+		slug: 'pro',
+		name: 'Pro',
+		stripePriceIdMonthly: 'price_pro_monthly_placeholder',
+		stripePriceIdYearly: 'price_pro_yearly_placeholder',
+		seatLimit: 25,
+		trialDays: 14,
+		features: {
+			seedCatalog: true,
+			photoUploads: true,
+			collaboration: true,
+			prioritySupport: false,
+		},
+		sortOrder: 1,
+	})
+	console.log(`  ✓ Billing Plan: ${proPlan.name} (${proPlan.slug})`)
+
+	const enterprisePlan = createBillingPlan({
+		slug: 'enterprise',
+		name: 'Enterprise',
+		stripePriceIdMonthly: 'price_enterprise_monthly_placeholder',
+		stripePriceIdYearly: 'price_enterprise_yearly_placeholder',
+		seatLimit: 0,
+		features: {
+			seedCatalog: true,
+			photoUploads: true,
+			collaboration: true,
+			prioritySupport: true,
+		},
+		sortOrder: 2,
+	})
+	console.log(
+		`  ✓ Billing Plan: ${enterprisePlan.name} (${enterprisePlan.slug})`,
+	)
 
 	console.log('\nDone! All users have password: Password1!')
 }

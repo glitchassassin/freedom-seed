@@ -52,6 +52,57 @@ export const features: {
 	},
 ]
 
+export const pricing: {
+	slug: string
+	name: string
+	monthlyPrice: number | null
+	yearlyPrice: number | null
+	description: string
+	features: string[]
+	highlighted?: boolean
+}[] = [
+	{
+		slug: 'free',
+		name: 'Free',
+		monthlyPrice: null,
+		yearlyPrice: null,
+		description: 'Perfect for personal seed collections.',
+		features: [
+			'Unlimited seeds',
+			'Photo uploads',
+			'Personal vault',
+			'Up to 5 members',
+		],
+	},
+	{
+		slug: 'pro',
+		name: 'Pro',
+		monthlyPrice: 12,
+		yearlyPrice: 120,
+		description: 'For serious gardeners and small teams.',
+		features: [
+			'Everything in Free',
+			'Workspace collaboration',
+			'Up to 25 members',
+			'14-day free trial',
+		],
+		highlighted: true,
+	},
+	{
+		slug: 'enterprise',
+		name: 'Enterprise',
+		monthlyPrice: 49,
+		yearlyPrice: 490,
+		description: 'For organizations and gardening clubs.',
+		features: [
+			'Everything in Pro',
+			'Unlimited members',
+			'Priority support',
+			'Custom integrations',
+		],
+	},
+]
+
 export const faq: { question: string; answer: string }[] = [
 	{
 		question: 'Is Seed Vault free to use?',

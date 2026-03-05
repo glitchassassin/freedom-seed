@@ -1,7 +1,15 @@
 import { Link, redirect } from 'react-router'
 
 import type { Route } from './+types/route'
-import { cta, faq, features, footer, hero, siteConfig } from './content'
+import {
+	cta,
+	faq,
+	features,
+	footer,
+	hero,
+	pricing,
+	siteConfig,
+} from './content'
 import { Button } from '~/components/ui/button'
 import { Icon } from '~/components/ui/icon'
 import { getDb } from '~/db/client.server'
@@ -99,6 +107,73 @@ function FeaturesSection() {
 	)
 }
 
+function PricingSection() {
+	return (
+		<section className="border-border border-t py-16 sm:py-24">
+			<div className="mx-auto max-w-6xl px-6">
+				<h2 className="text-h3 sm:text-h2 mb-4 text-center">
+					Simple, transparent pricing
+				</h2>
+				<p className="text-muted-foreground text-body-md mx-auto mb-12 max-w-2xl text-center">
+					Start free and upgrade as your collection grows.
+				</p>
+
+				<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+					{pricing.map((tier) => (
+						<article
+							key={tier.slug}
+							className={`bg-card border-border flex flex-col rounded-lg border p-6 ${
+								tier.highlighted ? 'ring-primary ring-2' : ''
+							}`}
+						>
+							<h3 className="text-h5">{tier.name}</h3>
+							<p className="text-muted-foreground text-body-sm mt-2">
+								{tier.description}
+							</p>
+							<p className="text-h3 mt-4">
+								{tier.monthlyPrice != null ? (
+									<>
+										${tier.monthlyPrice}
+										<span className="text-muted-foreground text-body-sm">
+											/mo
+										</span>
+									</>
+								) : (
+									'Free'
+								)}
+							</p>
+							<ul className="mt-6 flex-1 space-y-3">
+								{tier.features.map((feature) => (
+									<li
+										key={feature}
+										className="text-body-sm flex items-start gap-2"
+									>
+										<span className="text-primary mt-0.5">✓</span>
+										{feature}
+									</li>
+								))}
+							</ul>
+							<Button
+								asChild
+								variant={tier.highlighted ? 'default' : 'outline'}
+								className="mt-6 w-full"
+							>
+								<Link to={tier.slug === 'enterprise' ? '/contact' : '/signup'}>
+									{tier.slug === 'free'
+										? 'Get started'
+										: tier.slug === 'pro'
+											? 'Start free trial'
+											: 'Contact us'}
+								</Link>
+							</Button>
+						</article>
+					))}
+				</div>
+			</div>
+		</section>
+	)
+}
+
 function FaqSection() {
 	return (
 		<section className="border-border border-t py-16 sm:py-24">
@@ -177,6 +252,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 		<main className="bg-background text-foreground min-h-screen">
 			<HeroSection user={user} />
 			<FeaturesSection />
+			<PricingSection />
 			<FaqSection />
 			<CtaSection user={user} />
 			<Footer />

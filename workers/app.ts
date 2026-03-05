@@ -78,12 +78,15 @@ export default Sentry.withSentry<Env>(
 				}
 			}
 
+			const stripeSrc = 'https://js.stripe.com'
+			const stripeConnect = 'https://api.stripe.com'
+
 			const scriptSrc = plausibleOrigin
-				? `'self' 'unsafe-inline' ${plausibleOrigin}`
-				: `'self' 'unsafe-inline'`
+				? `'self' 'unsafe-inline' ${plausibleOrigin} ${stripeSrc}`
+				: `'self' 'unsafe-inline' ${stripeSrc}`
 			const connectSrc = plausibleOrigin
-				? `'self' ${plausibleOrigin}`
-				: `'self'`
+				? `'self' ${plausibleOrigin} ${stripeConnect}`
+				: `'self' ${stripeConnect}`
 
 			const csp = [
 				`default-src 'self'`,
@@ -92,6 +95,7 @@ export default Sentry.withSentry<Env>(
 				`font-src 'self' https://fonts.gstatic.com`,
 				`img-src 'self' data:`,
 				`connect-src ${connectSrc}`,
+				`frame-src 'self' ${stripeSrc}`,
 				`frame-ancestors 'none'`,
 				`form-action 'self'`,
 				`base-uri 'self'`,
@@ -103,7 +107,7 @@ export default Sentry.withSentry<Env>(
 			headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
 			headers.set(
 				'Permissions-Policy',
-				'camera=(), microphone=(), geolocation=(), payment=()',
+				'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")',
 			)
 
 			return new Response(response.body, {

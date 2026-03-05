@@ -34,6 +34,7 @@ export const workspaces = sqliteTable('workspaces', {
 	isPersonal: integer('is_personal', { mode: 'boolean' })
 		.notNull()
 		.default(false),
+	stripeCustomerId: text('stripe_customer_id'),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.default(sql`(unixepoch('now') * 1000)`),
@@ -282,6 +283,74 @@ export const socialIdentities = sqliteTable(
 		index('social_identities_user_id_idx').on(table.userId),
 	],
 )
+
+export const billingPlanStatusEnum = ['active', 'deprecated'] as const
+export type BillingPlanStatus = (typeof billingPlanStatusEnum)[number]
+
+export const billingPlans = sqliteTable('billing_plans', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	slug: text('slug').notNull().unique(),
+	name: text('name').notNull(),
+	stripePriceIdMonthly: text('stripe_price_id_monthly'),
+	stripePriceIdYearly: text('stripe_price_id_yearly'),
+	seatLimit: integer('seat_limit').notNull().default(0),
+	trialDays: integer('trial_days').notNull().default(0),
+	features: text('features', { mode: 'json' })
+		.$type<Record<string, boolean>>()
+		.default(sql`'{}'`),
+	status: text('status').$type<BillingPlanStatus>().notNull().default('active'),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
+
+export const subscriptionStatusEnum = [
+	'active',
+	'trialing',
+	'past_due',
+	'canceled',
+	'unpaid',
+] as const
+export type SubscriptionStatus = (typeof subscriptionStatusEnum)[number]
+
+export const subscriptions = sqliteTable('subscriptions', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	workspaceId: text('workspace_id')
+		.notNull()
+		.references(() => workspaces.id, { onDelete: 'cascade' })
+		.unique(),
+	billingPlanId: text('billing_plan_id')
+		.notNull()
+		.references(() => billingPlans.id),
+	stripeSubscriptionId: text('stripe_subscription_id').notNull().unique(),
+	stripePriceId: text('stripe_price_id').notNull(),
+	status: text('status').$type<SubscriptionStatus>().notNull(),
+	quantity: integer('quantity').notNull().default(1),
+	currentPeriodStart: integer('current_period_start', {
+		mode: 'timestamp_ms',
+	}).notNull(),
+	currentPeriodEnd: integer('current_period_end', {
+		mode: 'timestamp_ms',
+	}).notNull(),
+	trialEndsAt: integer('trial_ends_at', { mode: 'timestamp_ms' }),
+	cancelAtPeriodEnd: integer('cancel_at_period_end', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	createdAt: integer('created_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
+		.default(sql`(unixepoch('now') * 1000)`),
+})
 
 export const featureFlags = sqliteTable(
 	'feature_flags',
